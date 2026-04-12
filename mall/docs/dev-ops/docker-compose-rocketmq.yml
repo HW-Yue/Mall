@@ -1,0 +1,73 @@
+# 本地启动 RocketMQ：在 docs/dev-ops 目录执行
+#   docker compose -f docker-compose-rocketmq.yml up -d
+#
+# 端口：9876 NameServer | 10909/10911 Broker | 3003 Dashboard（宿主机直连，与控制台默认 CORS 一致）
+# 详细说明见 rocketmq/README.md
+
+version: "3.9"
+
+services:
+  rmq-namesrv:
+    image: apache/rocketmq:5.2.0
+    container_name: rmq-namesrv
+    restart: unless-stopped
+    ports:
+      - "9876:9876"
+    environment:
+      TZ: Asia/Shanghai
+      JAVA_OPT: "-server -Xms256m -Xmx256m -Xmn128m"
+    # 官方镜像已配置 PATH，可直接 mqnamesrv
+    command: sh mqnamesrv
+    volumes:
+      - ./rocketmq/data/namesrv/logs:/home/rocketmq/logs
+      - ./rocketmq/data/namesrv/store:/home/rocketmq/store
+    networks:
+      - rocketmq-net
+
+  rmq-broker:
+    image: apache/rocketmq:5.2.0
+    container_name: rmq-broker
+    restart: unless-stopped
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+    environment:
+      TZ: Asia/Shanghai
+      NAMESRV_ADDR: "rmq-namesrv:9876"
+    volumes:
+      - ./rocketmq/broker.conf:/home/rocketmq/broker.conf
+      - ./rocketmq/data/broker/logs:/home/rocketmq/logs
+      - ./rocketmq/data/broker/store:/home/rocketmq/store
+    depends_on:
+      - rmq-namesrv
+    command: sh mqbroker -c /home/rocketmq/broker.conf
+    networks:
+      rocketmq-net:
+        ipv4_address: 172.23.0.10
+        aliases:
+          - my-rocketmq-broker # 给容器起个好记的名字
+
+
+  rmq-dashboard:
+    image: apacherocketmq/rocketmq-dashboard:2.1.0
+    container_name: rmq-dashboard
+    restart: unless-stopped
+    ports:
+      # 与 Dashboard 内置 CORS 允许的 http://localhost:3003 一致，否则 POST 易 403
+      - "3003:8080"
+    environment:
+      TZ: Asia/Shanghai
+      NAMESRV_ADDR: "rmq-namesrv:9876"
+      ROCKETMQ_CONFIG_LOGINREQUIRED: "false"
+      JAVA_OPTS: "-Drocketmq.config.loginRequired=false -Dserver.port=8080 -Xms256m -Xmx256m"
+    depends_on:
+      - rmq-namesrv
+    networks:
+      - rocketmq-net
+
+networks:
+  rocketmq-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.23.0.0/24

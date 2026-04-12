@@ -1,0 +1,33 @@
+package com.yue.groupbuy.infrastructure.dao.po;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+import java.util.Date;
+
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class TOrderGroup {
+
+    private String orderId;
+    private String userId;
+    private String teamId;
+    private Long activityId;
+    private String goodsId;
+    private String outTradeNo;
+    /** 0=锁定 1=已支付 2=已退单 */
+    private Integer status;
+    private BigDecimal originalPrice;
+    private BigDecimal deductionPrice;
+    private BigDecimal payPrice;
+    private Date outTradeTime;
+    private Date startTime;
+    private Date endTime;
+    private Date createTime;
+    private Date updateTime;
+}

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.infrastructure.dao.ISkuResourceDetailDao">
+
+    <resultMap id="dataMap" type="com.yue.infrastructure.dao.po.SkuResourceDetail">
+        <id column="id" property="id"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="res_key" property="resKey"/>
+        <result column="res_value" property="resValue"/>
+        <result column="unit" property="unit"/>
+    </resultMap>
+
+    <select id="queryById" resultMap="dataMap">
+        select id, goods_id, res_key, res_value, unit
+        from sku_resource_detail
+        where id = #{id}
+    </select>
+
+    <select id="listByGoodsId" resultMap="dataMap">
+        select id, goods_id, res_key, res_value, unit
+        from sku_resource_detail
+        where goods_id = #{goodsId}
+        order by id
+    </select>
+
+    <select id="getByGoodsIdAndResKey" resultMap="dataMap">
+        select id, goods_id, res_key, res_value, unit
+        from sku_resource_detail
+        where goods_id = #{goodsId} and res_key = #{resKey}
+    </select>
+
+    <select id="queryList" parameterType="com.yue.infrastructure.dao.po.SkuResourceDetail" resultMap="dataMap">
+        select id, goods_id, res_key, res_value, unit
+        from sku_resource_detail
+        <where>
+            <if test="goodsId != null and goodsId != ''">and goods_id = #{goodsId}</if>
+            <if test="resKey != null and resKey != ''">and res_key = #{resKey}</if>
+        </where>
+        order by id
+    </select>
+
+    <insert id="insert" parameterType="com.yue.infrastructure.dao.po.SkuResourceDetail" useGeneratedKeys="true" keyProperty="id">
+        insert into sku_resource_detail (goods_id, res_key, res_value, unit)
+        values (#{goodsId}, #{resKey}, #{resValue}, #{unit})
+    </insert>
+
+    <update id="update" parameterType="com.yue.infrastructure.dao.po.SkuResourceDetail">
+        update sku_resource_detail
+        set res_value = #{resValue}, unit = #{unit}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from sku_resource_detail where id = #{id}
+    </delete>
+
+    <delete id="deleteByGoodsId">
+        delete from sku_resource_detail where goods_id = #{goodsId}
+    </delete>
+</mapper>

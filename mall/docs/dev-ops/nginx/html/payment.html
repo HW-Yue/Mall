@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>确认支付</title>
+    <script src="js/common.js"></script>
+    <script src="js/api-config.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f3f4f6; min-height: 100vh; }
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0 16px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header .back-btn {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            font-size: 14px;
+            cursor: pointer;
+            padding: 6px 0;
+        }
+        .header h1 { font-size: 17px; font-weight: 600; color: #111827; }
+        .container { max-width: 480px; margin: 24px auto; padding: 0 16px; }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+            margin-bottom: 16px;
+        }
+        .order-label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+        .order-id { font-size: 15px; font-weight: 500; color: #111827; word-break: break-all; }
+        .divider { height: 1px; background: #f3f4f6; margin: 16px 0; }
+        .amount-row { display: flex; justify-content: space-between; align-items: center; }
+        .amount-label { font-size: 14px; color: #374151; }
+        .amount-value { font-size: 22px; font-weight: 700; color: #ef4444; }
+        .pay-btn {
+            width: 100%;
+            padding: 14px;
+            background: #3b82f6;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .15s;
+        }
+        .pay-btn:hover { background: #2563eb; }
+        .pay-btn:disabled { background: #93c5fd; cursor: not-allowed; }
+        .tip { font-size: 12px; color: #9ca3af; text-align: center; margin-top: 12px; }
+        #errorMsg { color: #ef4444; font-size: 13px; text-align: center; margin-top: 8px; display: none; }
+        .loading-mask {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.3);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading-mask.show { display: flex; }
+        .loading-spinner {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px 32px;
+            font-size: 14px;
+            color: #374151;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <button class="back-btn" onclick="history.back()">← 返回</button>
+        <h1>确认支付</h1>
+        <span></span>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <div class="order-label">订单号</div>
+            <div class="order-id" id="orderIdDisplay">—</div>
+            <div class="divider"></div>
+            <div class="amount-row">
+                <span class="amount-label">应付金额</span>
+                <span class="amount-value" id="amountDisplay">—</span>
+            </div>
+        </div>
+
+        <button class="pay-btn" id="payBtn" onclick="doPayment()">立即支付</button>
+        <div id="errorMsg"></div>
+        <p class="tip">点击"立即支付"后将跳转至支付宝完成付款</p>
+    </div>
+
+    <div class="loading-mask" id="loadingMask">
+        <div class="loading-spinner">正在获取支付链接...</div>
+    </div>
+
+    <script src="js/payment.js"></script>
+</body>
+</html>

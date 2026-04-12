@@ -1,0 +1,103 @@
+server:
+  port: 8090
+
+spring:
+  redis:
+    host: 127.0.0.1
+    port: 16379
+    database: 0
+    lettuce:
+      pool:
+        max-active: 10
+        max-wait: 1000
+        max-idle: 5
+        min-idle: 3
+  application:
+    name: xfg-dev-tech-springcloud-gateway
+  cloud:
+    nacos:
+      discovery:
+        ip: 100.67.209.67
+        server-addr: 127.0.0.1:8848
+        username: nacos
+        password: nacos
+        locator:
+          enabled: true
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: false
+            maxAge: 3600
+      routes:
+        - id: 1
+          uri: lb://mall
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/mall/**
+          filters:
+            - StripPrefix=1
+#            - name: RequestRateLimiter
+#              args:
+#                key-resolver: "#{@ipKeyResolver}" # 限流方式：Bean名称
+#                redis-rate-limiter.replenishRate: 1 # 生成令牌速率：个/秒
+#                redis-rate-limiter.burstCapacity: 3 # 令牌桶容量
+#                redis-rate-limiter.requestedTokens: 1 # 每次消费的Token数量
+        - id: 2
+          uri: lb://login-pay
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/login-pay/**
+          filters:
+            - StripPrefix=1
+        - id: order-service
+          uri: lb://order-service
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/order/**
+          filters:
+            - StripPrefix=1
+        - id: group-buy-service
+          uri: lb://group-buy-service
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/group-buy/**
+          filters:
+            - StripPrefix=1
+        - id: seckill-service
+          uri: lb://seckill-service
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/seckill/**
+          filters:
+            - StripPrefix=1
+      # 网关连接池配置（防止压测时连接耗尽）
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 60s
+        pool:
+          type: elastic
+          max-connections: 10000
+          max-life-time: 60s
+          eviction-interval: 30s
+
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml
+
+# 日志上报 ELK
+logstash:
+  host: 127.0.0.1

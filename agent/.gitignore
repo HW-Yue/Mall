@@ -1,0 +1,56 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# VS Code
+.vscode/
+
+# Mac OS
+.DS_Store
+
+# Logs & runtime data
+/data/
+/logs/
+*.log
+
+# ai-agent-station runtime artifacts
+ai-agent-station/arthas-output/
+ai-agent-station/data/
+ai-agent-station/browser-state-*.json
+
+# ai-agent-station-front (React/Node)
+ai-agent-station-front/node_modules/
+ai-agent-station-front/dist/
+ai-agent-station-front/.env.local
+ai-agent-station-front/.env.*.local
+
+# MCP servers runtime
+mcp-server-*/data/
+mcp-server-*/logs/

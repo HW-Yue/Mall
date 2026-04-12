@@ -1,0 +1,52 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA ###
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
+*.iws
+*.iml
+*.ipr
+
+# 忽略整个配置目录
+.idea/
+
+
+
+### Eclipse ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+### Mac OS ###
+.DS_Store
+/data/log/
+/data/
+/.vscode/
+/data/
+/group-buy-market-app/data/
+/docs/dev-ops/rocketmq/data/
+/docs/dev-ops/data/nodes/0/indices/CGW0vJ-zSqSulbxOcfGGWQ/0/index/_1.si
+/docs/dev-ops/data/
+/mall-app/data/

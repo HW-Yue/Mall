@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.permissionsystem.mapper.UserRoleMapper">
+    <insert id="addUserRole" parameterType="java.util.List">
+        insert into user_role(user_id, role_id) values
+        <foreach collection="userRoleList" item="item" separator=",">
+            (#{item.userId},#{item.roleId})
+        </foreach>
+    </insert>
+    <select id="getRoles" parameterType="int" resultType="java.lang.Integer">
+        select role_id
+        from user_role
+        where user_id = #{id}
+    </select>
+    <delete id="deleteByRoleIds">
+        delete from user_role
+        where role_id in
+        <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <delete id="deleteByUserIds">
+        delete from user_role
+        where user_id in
+        <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>

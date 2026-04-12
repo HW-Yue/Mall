@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    全链路日志基础配置
+    使用方式：在用户的 logback-spring.xml 中添加 <include resource="com/yue/common/log/logback/base.xml"/>
+
+    提供的 appender：
+    - CONSOLE：控制台输出（带 trace-id）
+    - ASYNC_FILE_INFO：异步文件输出（INFO 级别）
+    - ASYNC_FILE_ERROR：异步文件输出（ERROR 级别）
+
+    若需上报 Logstash（ELK），请另行 include logstash-appender.xml，并引入 logstash-logback-encoder（见 README）。
+-->
+<included>
+    <!-- 引入 Spring Boot 的颜色转换器 -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex" converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+    <!-- ==================== 变量定义 ==================== -->
+    <!-- 日志格式（带 trace-id） -->
+    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} -%X{trace-id} - %msg%n"/>
+    <property name="LOG_PATTERN_COLOR" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %clr([%thread]){faint} %clr(%-5level){highlight} %clr(%logger{36}){cyan} %clr(-%X{trace-id}){magenta} - %msg%n"/>
+
+    <!-- 日志文件路径（可在用户配置中覆盖） -->
+    <property name="LOG_PATH" value="${LOG_PATH:-./data/log}"/>
+    <property name="LOG_FILE_NAME" value="${LOG_FILE_NAME:-app}"/>
+
+    <!-- ==================== Appender ==================== -->
+
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${CONSOLE_LOG_THRESHOLD:-INFO}</level>
+        </filter>
+        <encoder>
+            <pattern>${CONSOLE_LOG_PATTERN:-${LOG_PATTERN_COLOR}}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- INFO 级别文件输出 -->
+    <appender name="FILE_INFO" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE_NAME}_info.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN:-${LOG_PATTERN}}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}_info-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>15</maxHistory>
+            <totalSizeCap>10GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ERROR 级别文件输出 -->
+    <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE_NAME}_error.log</file>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN:-${LOG_PATTERN}}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${LOG_FILE_NAME}_error-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>100MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>5GB</totalSizeCap>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+    </appender>
+
+    <!-- 异步 INFO 文件输出 -->
+    <appender name="ASYNC_FILE_INFO" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>8192</queueSize>
+        <neverBlock>true</neverBlock>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE_INFO"/>
+    </appender>
+
+    <!-- 异步 ERROR 文件输出 -->
+    <appender name="ASYNC_FILE_ERROR" class="ch.qos.logback.classic.AsyncAppender">
+        <discardingThreshold>0</discardingThreshold>
+        <queueSize>1024</queueSize>
+        <neverBlock>true</neverBlock>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE_ERROR"/>
+    </appender>
+
+    <!-- ==================== Root Logger ==================== -->
+    <!-- 注意：这里不定义 root logger，留给用户自己定义，确保灵活性 -->
+
+</included>

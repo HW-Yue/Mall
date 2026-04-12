@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.order.infrastructure.dao.IOrderDao">
+
+    <resultMap id="orderMap" type="com.yue.order.infrastructure.dao.po.OrderPO">
+        <id     column="id"              property="id"/>
+        <result column="order_id"        property="orderId"/>
+        <result column="user_id"         property="userId"/>
+        <result column="goods_id"        property="goodsId"/>
+        <result column="goods_name"      property="goodsName"/>
+        <result column="goods_image_url" property="goodsImageUrl"/>
+        <result column="source"          property="source"/>
+        <result column="channel"         property="channel"/>
+        <result column="original_price"  property="originalPrice"/>
+        <result column="deduction_price" property="deductionPrice"/>
+        <result column="pay_price"       property="payPrice"/>
+        <result column="status"          property="status"/>
+        <result column="out_trade_no"    property="outTradeNo"/>
+        <result column="out_trade_time"  property="outTradeTime"/>
+        <result column="biz_id"          property="bizId"/>
+        <result column="notify_type"     property="notifyType"/>
+        <result column="notify_url"      property="notifyUrl"/>
+        <result column="pay_url"         property="payUrl"/>
+        <result column="market_type"     property="marketType"/>
+        <result column="create_time"     property="createTime"/>
+        <result column="update_time"     property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.yue.order.infrastructure.dao.po.OrderPO" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_order (
+            order_id, user_id, goods_id, goods_name, goods_image_url,
+            source, channel,
+            original_price, deduction_price, pay_price,
+            status, out_trade_no, biz_id, notify_type, notify_url,
+            market_type, create_time, update_time
+        ) VALUES (
+            #{orderId}, #{userId}, #{goodsId}, #{goodsName}, #{goodsImageUrl},
+            #{source}, #{channel},
+            #{originalPrice}, #{deductionPrice}, #{payPrice},
+            #{status}, #{outTradeNo}, #{bizId}, #{notifyType}, #{notifyUrl},
+            #{marketType}, NOW(), NOW()
+        )
+    </insert>
+
+    <select id="queryByUserIdAndOrderId" resultMap="orderMap">
+        SELECT id, order_id, user_id, goods_id, goods_name, goods_image_url,
+               source, channel,
+               original_price, deduction_price, pay_price,
+               status, out_trade_no, out_trade_time, pay_url,
+               biz_id, notify_type, notify_url, market_type,
+               create_time, update_time
+        FROM t_order
+        WHERE user_id = #{userId}
+          AND order_id = #{orderId}
+        LIMIT 1
+    </select>
+
+    <select id="queryByOutTradeNo" resultMap="orderMap">
+        SELECT id, order_id, user_id, goods_id, goods_name, goods_image_url,
+               source, channel,
+               original_price, deduction_price, pay_price,
+               status, out_trade_no, out_trade_time, pay_url,
+               biz_id, notify_type, notify_url, market_type,
+               create_time, update_time
+        FROM t_order
+        WHERE out_trade_no = #{outTradeNo}
+        LIMIT 1
+    </select>
+
+    <update id="updatePayUrl">
+        UPDATE t_order
+        SET pay_url = #{payUrl}, update_time = NOW()
+        WHERE user_id = #{userId}
+          AND out_trade_no = #{outTradeNo}
+    </update>
+
+    <update id="updatePaySuccess">
+        UPDATE t_order
+        SET status = 1, out_trade_time = #{outTradeTime}, update_time = NOW()
+        WHERE out_trade_no = #{outTradeNo}
+          AND status = 0
+    </update>
+
+    <update id="updateRefund">
+        UPDATE t_order
+        SET status = 2, update_time = NOW()
+        WHERE user_id = #{userId}
+          AND order_id = #{orderId}
+    </update>
+
+    <select id="queryUserOrderList" resultMap="orderMap">
+        SELECT id, order_id, user_id, goods_id, goods_name, goods_image_url,
+               original_price, deduction_price,
+               pay_price, status, market_type, create_time
+        FROM t_order
+        WHERE user_id = #{userId}
+        <if test="lastId != null">
+            AND id &lt; #{lastId}
+        </if>
+        ORDER BY id DESC
+        LIMIT #{count}
+    </select>
+
+</mapper>

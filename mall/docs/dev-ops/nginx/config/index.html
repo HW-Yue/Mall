@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商城后端配置</title>
+    <link rel="stylesheet" href="css/config.css">
+</head>
+<body>
+    <header class="header">
+        <h1>商城后端配置</h1>
+        <div class="base-url-wrap">
+            <label>接口地址</label>
+            <input type="text" id="baseUrl" value="http://localhost:8091" placeholder="http://localhost:8091">
+            <button type="button" id="btnSaveBaseUrl">保存</button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <nav class="nav">
+            <button type="button" class="nav-item active" data-panel="activity_types">活动类型</button>
+            <button type="button" class="nav-item" data-panel="categories">商品类目</button>
+            <button type="button" class="nav-item" data-panel="skus">商品 SKU</button>
+        </nav>
+
+        <main class="main">
+            <!-- 活动类型 -->
+            <section id="panel-activity_types" class="panel active">
+                <div class="panel-head">
+                    <h2>活动类型</h2>
+                    <button type="button" class="btn btn-primary" data-form="activity_type">新增</button>
+                    <button type="button" class="btn btn-refresh" data-refresh="activity_types">刷新</button>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table"><thead><tr><th>type_name 名称</th><th>type_code 编码</th><th>status 状态</th><th>操作</th></tr></thead><tbody id="tbody-activity_types"></tbody></table>
+                </div>
+            </section>
+
+            <!-- 商品类目 -->
+            <section id="panel-categories" class="panel">
+                <div class="panel-head">
+                    <h2>商品类目</h2>
+                    <button type="button" class="btn btn-primary" data-form="category">新增</button>
+                    <button type="button" class="btn btn-refresh" data-refresh="categories">刷新</button>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table"><thead><tr><th>name 名称</th><th>code 编码</th><th>icon_url 图标</th><th>sort_order 排序</th><th>status 状态</th><th>操作</th></tr></thead><tbody id="tbody-categories"></tbody></table>
+                </div>
+            </section>
+
+            <!-- 商品 SKU -->
+            <section id="panel-skus" class="panel">
+                <div class="panel-head">
+                    <h2>商品 SKU</h2>
+                    <button type="button" class="btn btn-primary" data-form="sku">新增商品</button>
+                    <button type="button" class="btn btn-refresh" data-refresh="skus">刷新</button>
+                </div>
+                <div class="table-wrap">
+                    <table class="data-table">
+                        <thead><tr><th>source 渠道</th><th>channel 来源</th><th>goods_id 商品ID</th><th>goods_name 商品名称</th><th>original_price 原价</th><th>操作</th></tr></thead>
+                        <tbody id="tbody-skus"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 通用弹窗 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">编辑</h3>
+                <button type="button" class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="modalCancel">取消</button>
+                <button type="button" class="btn btn-primary" id="modalSubmit">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+</body>
+</html>

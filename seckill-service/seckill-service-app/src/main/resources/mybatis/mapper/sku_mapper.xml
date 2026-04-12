@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.seckill.infrastructure.dao.ISkuDao">
+
+    <resultMap id="dataMap" type="com.yue.seckill.infrastructure.dao.po.Sku">
+        <result column="sku_id" property="goodsId"/>
+        <result column="spu_name" property="goodsName"/>
+        <result column="goods_image_url" property="goodsImageUrl"/>
+        <result column="goods_detail" property="goodsDetail"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="category_id" property="categoryId"/>
+    </resultMap>
+
+    <select id="queryByGoodsId" parameterType="java.lang.String" resultMap="dataMap">
+        select sku_id, spu_name, goods_image_url, goods_detail, original_price, category_id
+        from sms_seckill_sku
+        where sku_id = #{goodsId}
+        limit 1
+    </select>
+
+    <select id="queryAll" resultMap="dataMap">
+        select sku_id, spu_name, goods_image_url, goods_detail, original_price, category_id
+        from sms_seckill_sku
+    </select>
+
+</mapper>

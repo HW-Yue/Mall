@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.groupbuy.infrastructure.dao.IDiscountDao">
+
+    <resultMap id="dataMap" type="com.yue.groupbuy.infrastructure.dao.po.Discount">
+        <result column="discount_id" property="discountId"/>
+        <result column="market_plan" property="marketPlan"/>
+        <result column="market_expr" property="marketExpr"/>
+    </resultMap>
+
+    <select id="queryByDiscountId" parameterType="java.lang.String" resultMap="dataMap">
+        select discount_id, market_plan, market_expr
+        from group_buy_discount
+        where discount_id = #{discountId}
+    </select>
+
+</mapper>

@@ -1,0 +1,64 @@
+server:
+  port: 8094
+  tomcat:
+    # 最大的工作线程数，建议设为 1000~2000
+    threads:
+      max: 1000
+      min-spare: 100
+    # 允许排队的连接数
+    accept-count: 2000
+    # 最大连接数
+    max-connections: 10000
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:13306/seckill_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    username: root
+    password: 123456
+  redis:
+    host: localhost
+    port: 16379
+  cloud:
+    nacos:
+      discovery:
+        ip: 100.67.209.67
+        server-addr: 127.0.0.1:8848
+
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: seckill-service-producer
+
+# Redis
+redis:
+  sdk:
+    config:
+      host: localhost
+      port: 16379
+      pool-size: 1000
+      min-idle-size: 100
+      idle-timeout: 30000
+      connect-timeout: 5000
+      retry-attempts: 3
+      retry-interval: 1000
+      ping-interval: 60000
+      keep-alive: true
+
+app:
+  rocketmq:
+    topic:
+      seckillOrderCreate: seckill-order-create
+    consumerGroup:
+      seckillOrderCreate: CG_SECKILL_ORDER_CREATE
+
+logging:
+  level:
+    com.yue.seckill: info
+
+# 日志上报 ELK
+logstash:
+  host: 127.0.0.1

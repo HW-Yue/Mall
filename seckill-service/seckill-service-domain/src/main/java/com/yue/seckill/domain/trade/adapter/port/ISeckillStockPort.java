@@ -1,0 +1,34 @@
+package com.yue.seckill.domain.trade.adapter.port;
+
+/**
+ * 秒杀库存 Redis 端口
+ */
+public interface ISeckillStockPort {
+
+    void preloadStock(Long activityId, String goodsId, Integer stock);
+
+    /**
+     * 预热库存到 Redis（带过期时间）
+     *
+     * @param expireSeconds 过期时间（秒）
+     */
+    void preloadStock(Long activityId, String goodsId, Integer stock, long expireSeconds);
+
+    /**
+     * 查询 Redis 中的库存值
+     *
+     * @return 库存值字符串，null 表示未预热
+     */
+    String getStockValue(Long activityId, String goodsId);
+
+    /**
+     * Lua 扣减库存
+     * @return 1: 扣减成功, 0: 库存不足, -1: 重复购买
+     */
+    int deductByLua(Long activityId, String goodsId, String userId);
+
+    void recoverStock(Long activityId, String goodsId);
+
+    void saveSeckillToken(String seckillToken, String userId, String goodsId, Long activityId);
+
+}

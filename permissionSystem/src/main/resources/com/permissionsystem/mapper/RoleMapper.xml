@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.permissionsystem.mapper.RoleMapper">
+
+
+    <select id="listRole" resultType="com.permissionsystem.dto.RoleDTO">
+        select * from role
+        <where>
+            <if test="name != null and name != ''">
+                and name like concat('%',#{name},'%')
+            </if>
+        </where>
+        order by created_at desc
+    </select>
+
+    <insert id="addRolePermission">
+        insert into role_permissions (role_id, permission_id)
+        values
+        <foreach collection="permissions" item="permission" separator=",">
+            (#{roleId}, #{permission})
+        </foreach>
+    </insert>
+
+    <resultMap id="roleWithPermissionsMap" type="com.permissionsystem.dto.RoleDTO">
+        <id property="id" column="role_id"/>
+        <result property="name" column="role_name"/>
+
+        <collection property="permissions" ofType="java.lang.Integer">
+            <result column="permission_id"/>
+        </collection>
+    </resultMap>
+    <select id="getById" resultMap="roleWithPermissionsMap">
+        select
+            r.id as role_id,
+            r.name as role_name,
+            rp.permission_id
+        from role r
+        left join role_permissions rp on r.id = rp.role_id
+        where r.id = #{id}
+    </select>
+
+    <delete id="deleteRolePermissionById">
+        delete from role_permissions
+        where role_id = #{roleId}
+    </delete>
+    <delete id="deleteRoleByIds">
+        delete from role
+        where id in
+        <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <delete id="deleteRolePermissionByIds">
+        delete from role_permissions
+        where role_id in
+        <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <select id="getRoleNamesByRoleIds" resultType="java.lang.String">
+        select
+            r.name
+        from role r
+        where r.id in
+        <foreach item="item" index="index" collection="roleIds" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <select id="getPermissionNamesByPermissionIds" resultType="java.lang.String">
+        select
+            p.name
+        from permissions p
+        where p.id in
+        <foreach item="item" index="index" collection="permissions" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+    <insert id="updateRole" parameterType="com.permissionsystem.dto.RoleDTO">
+            update role
+            <set>
+                <if test="name != null">
+                    name = #{name},
+                </if>
+                <if test="uuid != null">
+                    uuid = #{uuid},
+                </if>
+                <if test="createdAt != null">
+                    created_at = #{createdAt},
+                </if>
+                <if test="updatedAt != null">
+                    updated_at = #{updatedAt},
+                </if>
+            </set>
+            where id = #{id}
+    </insert>
+</mapper>

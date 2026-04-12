@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.seckill.infrastructure.dao.IScSkuActivityDao">
+
+    <resultMap id="dataMap" type="com.yue.seckill.infrastructure.dao.po.ScSkuActivity">
+        <result column="source" property="source"/>
+        <result column="channel" property="channel"/>
+        <result column="activity_id" property="activityId"/>
+        <result column="activity_type" property="activityType"/>
+        <result column="sku_id" property="goodsId"/>
+    </resultMap>
+
+    <select id="queryByScGoodsId" parameterType="java.lang.String" resultMap="dataMap">
+        select source, channel, activity_id, activity_type, sku_id
+        from sc_sku_activity
+        where source = #{source}
+          and channel = #{channel}
+          and sku_id = #{goodsId}
+          and activity_type = 'seckill'
+        limit 1
+    </select>
+
+    <select id="queryByActivityId" parameterType="java.lang.Long" resultMap="dataMap">
+        select source, channel, activity_id, activity_type, sku_id
+        from sc_sku_activity
+        where activity_id = #{activityId}
+          and activity_type = 'seckill'
+    </select>
+
+</mapper>

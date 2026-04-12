@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.groupbuy.infrastructure.dao.ISkuResourceDetailDao">
+
+    <resultMap id="dataMap" type="com.yue.groupbuy.infrastructure.dao.po.SkuResourceDetail">
+        <result column="goods_id" property="goodsId"/>
+        <result column="res_key" property="resKey"/>
+        <result column="res_value" property="resValue"/>
+    </resultMap>
+
+    <select id="listByGoodsId" parameterType="java.lang.String" resultMap="dataMap">
+        select goods_id, res_key, res_value
+        from sku_resource_detail
+        where goods_id = #{goodsId}
+        order by id
+    </select>
+
+</mapper>

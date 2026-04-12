@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: ai-mcp-knowledge
+  profiles:
+    active: dev

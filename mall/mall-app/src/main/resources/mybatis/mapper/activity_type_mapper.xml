@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.infrastructure.dao.IActivityTypeDao">
+
+    <resultMap id="dataMap" type="com.yue.infrastructure.dao.po.ActivityType">
+        <id column="id" property="id"/>
+        <result column="type_name" property="typeName"/>
+        <result column="type_code" property="typeCode"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <select id="queryActivityTypeById" parameterType="java.lang.Integer" resultMap="dataMap">
+        select id, type_name, type_code, status, create_time
+        from activity_type
+        where id = #{id}
+    </select>
+
+    <select id="queryActivityTypeByCode" parameterType="java.lang.String" resultMap="dataMap">
+        select id, type_name, type_code, status, create_time
+        from activity_type
+        where type_code = #{typeCode}
+    </select>
+
+    <select id="queryActivityTypeList" resultMap="dataMap">
+        select id, type_name, type_code, status, create_time
+        from activity_type
+        where status = 1
+        order by id asc
+    </select>
+
+    <select id="queryActivityTypeListAll" resultMap="dataMap">
+        select id, type_name, type_code, status, create_time
+        from activity_type
+        order by id asc
+    </select>
+
+    <insert id="insert" parameterType="com.yue.infrastructure.dao.po.ActivityType" useGeneratedKeys="true" keyProperty="id">
+        insert into activity_type (type_name, type_code, status)
+        values (#{typeName}, #{typeCode}, #{status})
+    </insert>
+
+    <update id="update" parameterType="com.yue.infrastructure.dao.po.ActivityType">
+        update activity_type
+        set type_name = #{typeName}, type_code = #{typeCode}, status = #{status}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="java.lang.Integer">
+        delete from activity_type where id = #{id}
+    </delete>
+</mapper>

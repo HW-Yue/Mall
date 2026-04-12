@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.groupbuy.infrastructure.dao.ITOrderGroupDao">
+
+    <resultMap id="dataMap" type="com.yue.groupbuy.infrastructure.dao.po.TOrderGroup">
+        <id column="order_id" property="orderId"/>
+        <result column="user_id" property="userId"/>
+        <result column="team_id" property="teamId"/>
+        <result column="activity_id" property="activityId"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="out_trade_no" property="outTradeNo"/>
+        <result column="status" property="status"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="deduction_price" property="deductionPrice"/>
+        <result column="pay_price" property="payPrice"/>
+        <result column="out_trade_time" property="outTradeTime"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.yue.groupbuy.infrastructure.dao.po.TOrderGroup">
+        insert into t_order(
+            order_id, user_id, team_id, activity_id, goods_id,
+            out_trade_no, status, original_price, deduction_price, pay_price,
+            start_time, end_time, create_time, update_time
+        ) values(
+            #{orderId}, #{userId}, #{teamId}, #{activityId}, #{goodsId},
+            #{outTradeNo}, 0, #{originalPrice}, #{deductionPrice}, #{payPrice},
+            #{startTime}, #{endTime}, now(), now()
+        )
+    </insert>
+
+    <select id="queryByUserIdAndOutTradeNo" resultMap="dataMap">
+        select order_id, user_id, team_id, activity_id, goods_id,
+               out_trade_no, status, original_price, deduction_price, pay_price, out_trade_time
+        from t_order
+        where user_id = #{userId} and out_trade_no = #{outTradeNo}
+        limit 1
+    </select>
+
+    <select id="queryByUserIdAndOrderId" resultMap="dataMap">
+        select order_id, user_id, team_id, out_trade_no, status
+        from t_order
+        where user_id = #{userId} and order_id = #{orderId}
+        limit 1
+    </select>
+
+    <!-- 通过 outTradeNo 查询 teamId + activityId -->
+    <select id="queryTeamInfoByOutTradeNo" parameterType="java.lang.String" resultType="java.util.Map">
+        select team_id as teamId, activity_id as activityId
+        from t_order
+        where out_trade_no = #{outTradeNo}
+        limit 1
+    </select>
+
+    <!-- 通过 userId + orderId 查询 teamId -->
+    <select id="queryTeamIdByOrder" resultType="java.lang.String">
+        select team_id
+        from t_order
+        where user_id = #{userId} and order_id = #{orderId}
+        limit 1
+    </select>
+
+    <!-- 查询队伍所有已支付订单（status=1） -->
+    <select id="queryCompletedOrdersForTeam" parameterType="java.lang.String" resultType="java.util.Map">
+        select order_id as orderId, user_id as userId, goods_id as goodsId, pay_price as payPrice
+        from t_order
+        where team_id = #{teamId} and status = 1
+    </select>
+
+    <!-- 查询用户在某商品的参团次数（未退单） -->
+    <select id="queryUserOrderCount" resultType="java.lang.Integer">
+        select count(1)
+        from t_order
+        where goods_id = #{goodsId} and user_id = #{userId} and status != 2
+    </select>
+
+    <!-- 查询队伍已完成订单的 outTradeNo 列表 -->
+    <select id="queryCompleteOutTradeNoListByTeamId" resultType="java.lang.String">
+        select out_trade_no
+        from t_order
+        where team_id = #{teamId} and status = 1
+    </select>
+
+    <!-- 查询指定商品进行中（status=0）的用户参团记录 -->
+    <select id="queryInProgressOrdersByActivityAndUser" resultType="java.util.Map">
+        select user_id as userId, team_id as teamId, out_trade_no as outTradeNo
+        from t_order
+        where goods_id = #{goodsId} and user_id = #{userId} and status = 0
+        limit #{count}
+    </select>
+
+    <!-- 查询指定商品进行中（status=0）的所有参团记录 -->
+    <select id="queryInProgressOrdersByActivity" resultType="java.util.Map">
+        select user_id as userId, team_id as teamId, out_trade_no as outTradeNo
+        from t_order
+        where goods_id = #{goodsId} and status = 0
+    </select>
+
+    <!-- 支付成功：status = 1，记录支付时间 -->
+    <update id="updateStatus2Complete">
+        update t_order
+        set status = 1, out_trade_time = #{outTradeTime}, update_time = now()
+        where out_trade_no = #{outTradeNo} and status = 0
+    </update>
+
+    <!-- 退单：status = 2 -->
+    <update id="update2Refund">
+        update t_order
+        set status = 2, update_time = now()
+        where user_id = #{userId} and order_id = #{orderId} and status != 2
+    </update>
+
+</mapper>

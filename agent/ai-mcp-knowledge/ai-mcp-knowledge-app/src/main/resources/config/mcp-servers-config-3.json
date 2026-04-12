@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mcp-server-csdn": {
+      "command": "java",
+      "args": [
+        "-Dspring.ai.mcp.server.stdio=true",
+        "-jar",
+        "填写你的路径/Users/fuzhengwei/Applications/apache-maven-3.8.4/repository/cn/bugstack/mcp/mcp-server-csdn/1.0.0/mcp-server-csdn-1.0.0.jar",
+        "--csdn.api.categories=Java场景面试宝典",
+        "--csdn.api.cookie=dc_sid=4f39db19db5e07b3712c8252f5192a49填写你的cookie"
+      ]
+    }
+  }
+}

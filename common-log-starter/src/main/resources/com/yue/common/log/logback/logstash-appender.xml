@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Logstash TCP 上报（可选）
+    使用前提：classpath 上必须有 net.logstash.logback:logstash-logback-encoder（见 README）。
+
+    在 logback-spring.xml 中，于 base.xml 之后增加一行：
+    <include resource="com/yue/common/log/logback/logstash-appender.xml"/>
+-->
+<included>
+    <!-- 上报地址与端口（Spring：logstash.host / logstash.port） -->
+    <springProperty name="LOG_STASH_HOST" scope="context" source="logstash.host" defaultValue="127.0.0.1"/>
+    <springProperty name="LOG_STASH_PORT" scope="context" source="logstash.port" defaultValue="4560"/>
+    <!-- JSON 字段 service，供 ES 按服务建索引（来源 spring.application.name） -->
+    <springProperty name="LOG_STASH_SERVICE" scope="context" source="spring.application.name" defaultValue="unknown"/>
+
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>${LOG_STASH_HOST}:${LOG_STASH_PORT}</destination>
+        <encoder charset="UTF-8" class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service":"${LOG_STASH_SERVICE}"}</customFields>
+        </encoder>
+    </appender>
+</included>

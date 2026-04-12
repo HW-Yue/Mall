@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.groupbuy.infrastructure.dao.IGroupBuyOrderDao">
+
+    <resultMap id="dataMap" type="com.yue.groupbuy.infrastructure.dao.po.GroupBuyOrder">
+        <id column="id" property="id"/>
+        <result column="team_id" property="teamId"/>
+        <result column="activity_id" property="activityId"/>
+        <result column="source" property="source"/>
+        <result column="channel" property="channel"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="deduction_price" property="deductionPrice"/>
+        <result column="pay_price" property="payPrice"/>
+        <result column="target_count" property="targetCount"/>
+        <result column="complete_count" property="completeCount"/>
+        <result column="lock_count" property="lockCount"/>
+        <result column="status" property="status"/>
+        <result column="valid_start_time" property="validStartTime"/>
+        <result column="valid_end_time" property="validEndTime"/>
+        <result column="notify_type" property="notifyType"/>
+        <result column="notify_url" property="notifyUrl"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.yue.groupbuy.infrastructure.dao.po.GroupBuyOrder">
+        insert into team_order(
+            team_id, activity_id, source, channel, original_price,
+            deduction_price, pay_price, target_count, complete_count, lock_count, status,
+            notify_url, notify_type, valid_start_time, valid_end_time, create_time, update_time
+        ) values(
+            #{teamId}, #{activityId}, #{source}, #{channel}, #{originalPrice},
+            #{deductionPrice}, #{payPrice}, #{targetCount}, #{completeCount}, #{lockCount},
+            0, #{notifyUrl}, #{notifyType}, #{validStartTime}, #{validEndTime}, now(), now()
+        )
+    </insert>
+
+    <update id="updateAddLockCount" parameterType="java.lang.String">
+        <![CDATA[
+        update team_order
+        set lock_count = lock_count + 1, update_time = now()
+        where team_id = #{teamId} and lock_count < target_count
+        ]]>
+    </update>
+
+    <update id="updateSubLockCount" parameterType="java.lang.String">
+        update team_order
+        set lock_count = lock_count - 1, update_time = now()
+        where team_id = #{teamId} and lock_count > 0
+    </update>
+
+    <update id="updateAddCompleteCount" parameterType="java.lang.String">
+        <![CDATA[
+        update team_order
+        set complete_count = complete_count + 1, update_time = now()
+        where team_id = #{teamId} and complete_count < target_count
+        ]]>
+    </update>
+
+    <update id="updateOrderStatus2Complete" parameterType="java.lang.String">
+        update team_order
+        set status = 1, update_time = now()
+        where team_id = #{teamId} and status = 0
+    </update>
+
+    <select id="queryGroupBuyProgress" parameterType="java.lang.String" resultMap="dataMap">
+        select target_count, complete_count, lock_count, status
+        from team_order
+        where team_id = #{teamId}
+    </select>
+
+    <select id="queryGroupBuyTeamByTeamId" parameterType="java.lang.String" resultMap="dataMap">
+        select team_id, activity_id, target_count, complete_count, lock_count,
+               status, valid_start_time, valid_end_time, notify_url, notify_type
+        from team_order
+        where team_id = #{teamId}
+    </select>
+
+    <!-- 退款（未支付）: lockCount - 1 -->
+    <update id="refundUnpaid" parameterType="java.lang.String">
+        update team_order
+        set lock_count = lock_count - 1, update_time = now()
+        where team_id = #{teamId} and lock_count > 0 and status = 0
+    </update>
+
+    <!-- 退款（已支付但未成团）: lockCount - 1, completeCount - 1 -->
+    <update id="refundPaid" parameterType="java.lang.String">
+        update team_order
+        set lock_count = lock_count - 1,
+            complete_count = complete_count - 1,
+            update_time = now()
+        where team_id = #{teamId} and lock_count > 0 and complete_count > 0
+    </update>
+
+    <!-- 拼团完成：status = COMPLETE(1)（与 updateOrderStatus2Complete 同义） -->
+    <update id="updateOrderStatus2COMPLETE" parameterType="java.lang.String">
+        update team_order
+        set status = 1, update_time = now()
+        where team_id = #{teamId} and status = 0
+    </update>
+
+    <!-- 逆向-未支付退单：lockCount - 1 -->
+    <update id="unpaid2Refund" parameterType="com.yue.groupbuy.infrastructure.dao.po.GroupBuyOrder">
+        update team_order
+        set lock_count = lock_count - 1, update_time = now()
+        where team_id = #{teamId} and lock_count > 0 and status = 0
+    </update>
+
+    <!-- 逆向-已付未成团退单：lockCount - 1, completeCount - 1 -->
+    <update id="paid2Refund" parameterType="com.yue.groupbuy.infrastructure.dao.po.GroupBuyOrder">
+        update team_order
+        set lock_count = lock_count - 1,
+            complete_count = complete_count - 1,
+            update_time = now()
+        where team_id = #{teamId} and lock_count > 0 and complete_count > 0
+    </update>
+
+    <!-- 逆向-已付已成团部分退单：status = COMPLETE_FAIL(3) -->
+    <update id="paidTeam2Refund" parameterType="com.yue.groupbuy.infrastructure.dao.po.GroupBuyOrder">
+        update team_order
+        set status = 3, update_time = now()
+        where team_id = #{teamId} and status = 1
+    </update>
+
+    <!-- 逆向-已付已成团全部退单：status = FAIL(2) -->
+    <update id="paidTeam2RefundFail" parameterType="com.yue.groupbuy.infrastructure.dao.po.GroupBuyOrder">
+        update team_order
+        set status = 2, update_time = now()
+        where team_id = #{teamId} and status = 1
+    </update>
+
+    <select id="queryGroupBuyProgressByTeamIds" resultMap="dataMap">
+        select team_id, activity_id, target_count, complete_count, lock_count,
+               status, valid_start_time, valid_end_time
+        from team_order
+        where team_id in
+        <foreach collection="teamIds" item="teamId" open="(" separator="," close=")">
+            #{teamId}
+        </foreach>
+    </select>
+
+    <select id="queryAllTeamCount" resultType="java.lang.Integer">
+        select count(1)
+        from team_order
+        where team_id in
+        <foreach collection="teamIds" item="teamId" open="(" separator="," close=")">
+            #{teamId}
+        </foreach>
+    </select>
+
+    <select id="queryAllTeamCompleteCount" resultType="java.lang.Integer">
+        select count(1)
+        from team_order
+        where team_id in
+        <foreach collection="teamIds" item="teamId" open="(" separator="," close=")">
+            #{teamId}
+        </foreach>
+        and status = 1
+    </select>
+
+    <select id="queryAllUserCount" resultType="java.lang.Integer">
+        select sum(complete_count)
+        from team_order
+        where team_id in
+        <foreach collection="teamIds" item="teamId" open="(" separator="," close=")">
+            #{teamId}
+        </foreach>
+    </select>
+
+</mapper>

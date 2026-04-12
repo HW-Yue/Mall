@@ -1,0 +1,119 @@
+server:
+  port: 8080
+
+# 应用配置
+app:
+  config:
+    # 版本，方便通过接口版本升级
+    api-version: v1
+    # 跨域，开发阶段可以设置为 * 不限制
+    cross-origin: '*'
+    # SC 渠道配置 - 拼团对接渠道值、回调通知
+    group-buy-market:
+      api-url: http://127.0.0.1:8091
+
+      source: s01
+      chanel: c01
+    no-market:
+      api-url: http://127.0.0.1:8091
+
+      source: s01
+      chanel: c01
+
+# 线程池配置
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        policy: CallerRunsPolicy
+
+# 数据库配置；启动时配置数据库资源信息
+spring:
+  application:
+    name: login-pay
+  cloud:
+    nacos:
+      # 账号密码建议放在最外层， discovery 和 config 都能共享
+      username: nacos
+      password: nacos
+      discovery:
+        ip: 100.67.209.67
+        server-addr: 127.0.0.1:8848
+        locator:
+          enabled: true
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://127.0.0.1:13306/s-pay-mall-ddd-market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  hikari:
+    pool-name: Retail_HikariCP
+    minimum-idle: 15 #最小空闲连接数量
+    idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
+    maximum-pool-size: 25 #连接池最大连接数，默认是10
+    auto-commit: true  #此属性控制从池返回的连接的默认自动提交行为,默认值：true
+    max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+    connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
+    connection-test-query: SELECT 1
+  type: com.zaxxer.hikari.HikariDataSource
+
+
+# MyBatis 配置【如需使用记得打开】
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  config-location:  classpath:/mybatis/config/mybatis-config.xml
+
+# 微信公众号对接
+weixin:
+  config:
+    originalid: gh_7fe298abcb91
+    token: aldf
+    app-id: wx62a8a225daee8e88
+    app-secret: 72d44d94b649f0d3a903c7f0fcf333f2
+    template_id: D5JeVK-9D-S2jsS75TMngJXeboj4_223wzQVo4AJ-6A
+
+# 支付宝支付 - 沙箱 https://opendocs.alipay.com/common/02kkv7
+alipay:
+  enabled: true
+  app_id: 9021000156676042
+  merchant_private_key: MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCDEuGEtUnhhMKgmse63EALkQFvlUxKZpfEQ3ZIM3PWdUogwwP8BmeWnyVNHlEiy4nmU+hpKbpAlmBVbOvOjByCNNkjA0sPfSlaWNYrcFE8NzcefVXxmT5EZBthbAET+X/od8826GmUUuaPjtJhAK1bbLzE6Zqs7n6bAS7HEgjcoToBzQ3T+jTx8Can6yzGUsnVYRWhf/uHLN9SBV8S0v83q+pe4TdwFSOLepfKjfPev7xsBfpzEqSMQiZ/ltyyKYZOTaDmPKCguV1Y/O5YCLdOjveODeVHiTZjtRR5IkSlBY7ZWQXKTz5626CqBI/pZBjeCwU8H/LzzbIwHDP/0ov9AgMBAAECggEAZLhFg2yrcRhLVo6ZnAVTUZADwnK/RQzA4pfUdHbVNJ68b6Brl2Z0g1GXoEMDpfEx7kPb+7OM48SqEfq42ObhoUxq7nTBYQ2UkVBigs60HclwGYXGXPic2ID0aVBNI8Q9fa1TFaZSOx/Y+8eL8e5LSE2uYMIBkZFSyFmIUICTPrWmX/6x5huuaZJp8afF26fPZ2XN2PiFHz1JZ7zOWnYrDgo9xOHQPSaEy4if2wK6ue/U5xpCa2AkmtlY4xgHMGFR6QK1yQptTqtYq2qjtBq0dA7nEDW1PMAmLJUcvNjjeaf2+TFgdCwurmj/uVe9FmxqEz+5onPgk38Q1/PGDNp+AQKBgQDf4XlsbTCqo4Ijx6FV8yNbKdP/NPffkkP2zmM4KQjyFlr4DJOZHCMZnAHLJ4YjZHEfzAC4q5ougk+NnA+R8n+Xc4oKB7r4Ii3G0vUObLLcrrfbmd4Xz96AJV2sfDbYKtLC6omu+SkFyyADtLkBDzgQA6ylLPnpo1XGz5udNZw8jQKBgQCV4NwuaTLtORNDzQtLpPVieVdhVtLdfjsNfuzToWtZmo8REgKu90/ZH9aZ8nC/SuBJoPXLsZQdaOp8RvSDMVN2girZdoT160k49GJ8VOpeJfv6fUBoZZ+3hVRj3uDuEh0Tvse52qRQ3slT06Ac8+geKhE0aYYTsAnFRtvGaHIJMQKBgHsx2J44i4IqjW9g57+jFn6Qys5xeEC3fNyv/1slAX4tnQtH6GRlXk82UKpY6nBJUhKcMH1uOF6FaH9VNCAsn9dYRcp1LIZkUGpLJXw1hkr3fcbCqbrSsO41IZHLnGZhUi7d3rvA8bj1aH2BkhgqJsBxNSyDTlYpggbvsQLWQE31AoGBAJK/9ba3qHaf4N4NIVcysFV4K/eSFKts0pNXSLm6nqrAa/6x3NDGNHeK9gwMVxrmTI+rO5/zQuw88wM2Umk2Xdt2flAo/OzxMOPEXb4RQt1mYb+U7gCKKIV/1e5np2NTdwcDUPoIO8U3LneWiXpv00HdvLTN8crLHfX8eGpfj/CxAoGAFOBSEjBUv0sFFMu2VkvnwdVFilcYcddxNKBGhXd6r+QCW6FI+4QDeFEW5WruF+jciu3MUvTVV4w6OyCYwVTIiSbrvt+27JHMyFD04bKfmsZeQ/gokVzuu88kIX747HilzgJSyS3kvYLSPn4a946I+xkTDueCQXurVmGDPDekz3U=
+  alipay_public_key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxQnlTHWARNnL28x9ggM5zRGFfQCIHMqk9q3l8hbv3x9HeVloyTc8OP/rI5lYifWzlRgPsW0wcN6H7V2iErxEDjGbxg51gIIZlV71THr9uMpA8R+b5xj4eIuL+uAGQa8mneW+TJ3ZVBrXeYUgexrC/591WoFCqiwzw3CMf/wHiZHamVyCe1kYNgbzneGHadsxBBXL3zgrsH3PsKXTq6PpS4K2VrIxxBSRS2G+PAjInh0rMqVsdJizCTPRdKgpUY2qNspzm4CuKZc19kqp99ApLecvOqz+/unNxLP7HrBF4OMyBstdRzRFyGqS0kOVr/Wfczu1kfWwnuS86bLjI4RoIwIDAQAB
+  notify_url: http://hongwei.natapp1.cc/api/v1/alipay/alipay_notify_url
+  return_url: https://gaga.plus
+  gatewayUrl: https://openapi-sandbox.dl.alipaydev.com/gateway.do
+
+# SC 渠道配置 - 拼团对接渠道值
+sc:
+  group:
+    buy:
+      market:
+        source: s01
+        chanel: c01
+
+# Apache RocketMQ（docker-compose-rocketmq.yml 启动后可用；前缀必须为 rocketmq，勿放在 spring 下）
+rocketmq:
+  name-server: localhost:9876
+  producer:
+    group: alipay-producer
+    send-message-timeout: 3000
+  consumer:
+    group: alipay-consumer
+  # 业务 Topic — 按营销类型路由（需在 Broker 预先创建以下三个 Topic）
+  topic:
+    pay_success_normal: pay-success-normal
+    pay_success_group_buy: pay-success-group-buy
+    pay_success_seckill: pay-success-seckill
+
+# 日志
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml
+
+# 日志上报 ELK
+logstash:
+  host: 127.0.0.1

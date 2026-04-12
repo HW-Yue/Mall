@@ -1,0 +1,15 @@
+.idea/
+*.iml
+
+# Build outputs
+target/
+**/target/
+*.class
+
+# Logs
+*.log
+data/
+
+# OS files
+.DS_Store
+Thumbs.db

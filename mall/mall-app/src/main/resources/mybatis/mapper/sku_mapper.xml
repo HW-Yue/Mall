@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.infrastructure.dao.ISkuDao">
+
+    <resultMap id="dataMap" type="com.yue.infrastructure.dao.po.Sku">
+        <id column="id" property="id"/>
+        <result column="goods_id" property="goodsId"/>
+        <result column="goods_name" property="goodsName"/>
+        <result column="goods_image_url" property="goodsImageUrl"/>
+        <result column="goods_detail" property="goodsDetail"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="total_stock" property="totalStock"/>
+        <result column="locked_stock" property="lockedStock"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="querySkuByGoodsId" parameterType="java.lang.String" resultMap="dataMap">
+        select id, goods_id, goods_name, goods_image_url, goods_detail, original_price, category_id, total_stock, locked_stock, create_time, update_time
+        from sku
+        where goods_id = #{goodsId}
+    </select>
+
+    <select id="querySkuList" resultMap="dataMap">
+        select id, goods_id, goods_name, goods_image_url, goods_detail, original_price, category_id, total_stock, locked_stock, create_time, update_time
+        from sku
+        order by id desc
+    </select>
+
+    <select id="countByCategoryId" resultType="int">
+        select count(*) from sku
+        <where>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+        </where>
+    </select>
+
+    <select id="querySkuPageByCategoryId" resultMap="dataMap">
+        select id, goods_id, goods_name, goods_image_url, goods_detail, original_price, category_id, total_stock, locked_stock, create_time, update_time
+        from sku
+        <where>
+            <if test="categoryId != null">
+                and category_id = #{categoryId}
+            </if>
+        </where>
+        order by id desc
+        limit #{offset}, #{pageSize}
+    </select>
+
+    <insert id="insert" parameterType="com.yue.infrastructure.dao.po.Sku" useGeneratedKeys="true" keyProperty="id">
+        insert into sku (goods_id, goods_name, goods_image_url, original_price, category_id, total_stock, locked_stock)
+        values (#{goodsId}, #{goodsName}, #{goodsImageUrl}, #{originalPrice}, #{categoryId}, #{totalStock}, #{lockedStock})
+    </insert>
+
+    <update id="update" parameterType="com.yue.infrastructure.dao.po.Sku">
+        update sku
+        set goods_name = #{goodsName}, goods_image_url = #{goodsImageUrl}, original_price = #{originalPrice}, category_id = #{categoryId}, total_stock = #{totalStock}, locked_stock = #{lockedStock}
+        where goods_id = #{goodsId}
+    </update>
+
+    <delete id="deleteByGoodsId" parameterType="java.lang.String">
+        delete from sku where goods_id = #{goodsId}
+    </delete>
+
+    <!-- 悲观锁：锁单时使用，保证可售库存 = total_stock - locked_stock 计算一致 -->
+    <select id="selectByGoodsIdForUpdate" resultMap="dataMap">
+        select id, goods_id, goods_name, goods_image_url, goods_detail, original_price, category_id, total_stock, locked_stock, create_time, update_time
+        from sku
+        where goods_id = #{goodsId}
+        for update
+    </select>
+
+    <!-- 增加锁单量（需在 FOR UPDATE 同一事务内调用） -->
+    <update id="addLockedStock">
+        update sku
+        set locked_stock = locked_stock + #{count}
+        where goods_id = #{goodsId}
+    </update>
+
+    <!-- 扣减锁单量（结算完成时调用） -->
+    <update id="subLockedStock">
+        update sku
+        set locked_stock = locked_stock - #{count}
+        where goods_id = #{goodsId} and locked_stock >= #{count}
+    </update>
+</mapper>

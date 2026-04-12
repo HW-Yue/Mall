@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    网关服务日志配置
+    引入 common-log-starter 的基础配置，自动支持 trace-id 全链路追踪
+-->
+<configuration scan="true" scanPeriod="10 seconds">
+
+    <!-- 预占 Nacos 内部 appender 名称，防止 Nacos Client 注册同名 appender 产生冲突 -->
+    <appender name="CONFIG_LOG_FILE" class="ch.qos.logback.core.helpers.NOPAppender"/>
+    <appender name="NAMING_LOG_FILE" class="ch.qos.logback.core.helpers.NOPAppender"/>
+    <appender name="REMOTE_LOG_FILE" class="ch.qos.logback.core.helpers.NOPAppender"/>
+
+    <!-- 引入 common-log-starter 的基础配置（带 trace-id 支持） -->
+    <include resource="com/yue/common/log/logback/base.xml"/>
+
+    <!-- 开发环境：增加调试日志 -->
+    <springProfile name="dev">
+        <logger name="cn.bugstack" level="info"/>
+        <logger name="com.yue.common.log" level="info"/>
+    </springProfile>
+
+    <!-- 生产环境：只保留 INFO 及以上 -->
+    <springProfile name="prod">
+        <logger name="cn.bugstack" level="INFO"/>
+    </springProfile>
+
+    <!-- Root Logger -->
+    <root level="info">
+        <!-- 控制台输出 -->
+        <appender-ref ref="CONSOLE"/>
+        <!-- 异步文件输出（INFO 级别） -->
+        <appender-ref ref="ASYNC_FILE_INFO"/>
+        <!-- 异步文件输出（ERROR 级别） -->
+        <appender-ref ref="ASYNC_FILE_ERROR"/>
+        <!-- 上报日志-ELK -->
+        <appender-ref ref="LOGSTASH"/>
+    </root>
+
+</configuration>

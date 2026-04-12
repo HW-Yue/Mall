@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'mall'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8077'] # 确认你的 Java 端口是 8077
+        labels:
+          application: 'mall' # 必须叫 application，Grafana 靠它过滤
+
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '.*:(.*)'
+        replacement: 'host.docker.internal:${1}'
+        target_label: __address__

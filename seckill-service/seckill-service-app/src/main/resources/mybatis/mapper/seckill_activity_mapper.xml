@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yue.seckill.infrastructure.dao.ISeckillActivityDao">
+
+    <resultMap id="dataMap" type="com.yue.seckill.infrastructure.dao.po.SeckillActivity">
+        <result column="activity_id" property="activityId"/>
+        <result column="activity_name" property="activityName"/>
+        <result column="discount_id" property="discountId"/>
+        <result column="stock_count" property="stockCount"/>
+        <result column="remain_count" property="remainCount"/>
+        <result column="take_limit_count" property="takeLimitCount"/>
+        <result column="status" property="status"/>
+        <result column="start_time" property="startTime"/>
+        <result column="end_time" property="endTime"/>
+        <result column="tag_id" property="tagId"/>
+        <result column="tag_scope" property="tagScope"/>
+    </resultMap>
+
+    <select id="queryByActivityId" parameterType="java.lang.Long" resultMap="dataMap">
+        select activity_id, activity_name, discount_id, stock_count, remain_count, take_limit_count,
+               status, start_time, end_time, tag_id, tag_scope
+        from seckill_activity
+        where activity_id = #{activityId}
+    </select>
+
+    <select id="queryEffectiveActivities" resultMap="dataMap">
+        select activity_id, activity_name, discount_id, stock_count, remain_count, take_limit_count,
+               status, start_time, end_time, tag_id, tag_scope
+        from seckill_activity
+        where status = 1
+          and start_time &lt;= NOW()
+          and end_time &gt;= NOW()
+    </select>
+
+    <update id="deductStock" parameterType="java.lang.Long">
+        update seckill_activity
+        set remain_count = remain_count - 1
+        where activity_id = #{activityId}
+          and remain_count &gt; 0
+    </update>
+
+    <update id="recoverStock" parameterType="java.lang.Long">
+        update seckill_activity
+        set remain_count = remain_count + 1
+        where activity_id = #{activityId}
+          and remain_count &lt; stock_count
+    </update>
+
+</mapper>

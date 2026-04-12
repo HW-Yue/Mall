@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>抢购成功</title>
+    <script src="js/common.js"></script>
+    <script src="js/api-config.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f3f4f6; min-height: 100vh; }
+        .container { max-width: 520px; margin: 40px auto; padding: 0 16px; }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+            padding: 24px;
+        }
+        .title { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 12px; }
+        .desc { font-size: 14px; color: #4b5563; margin-bottom: 20px; line-height: 1.7; }
+        .token {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            color: #111827;
+            word-break: break-all;
+            margin-bottom: 16px;
+        }
+        .status { font-size: 14px; color: #2563eb; margin-bottom: 14px; }
+        .actions { display: flex; gap: 10px; }
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-primary { background: #3b82f6; color: #fff; }
+        .btn-secondary { background: #e5e7eb; color: #111827; }
+        #errorMsg { color: #dc2626; margin-top: 12px; display: none; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <div class="title">抢购成功，正在生成订单</div>
+        <div class="desc">系统正在为你创建订单，请稍候。创建成功后会自动跳转到支付页。</div>
+        <div class="token">seckillToken：<span id="tokenText">-</span></div>
+        <div class="status" id="statusText">正在轮询订单状态...</div>
+        <div class="actions">
+            <button class="btn btn-primary" id="retryBtn">立即重试</button>
+            <button class="btn btn-secondary" onclick="window.location.href='order-list.html'">去订单列表</button>
+        </div>
+        <div id="errorMsg"></div>
+    </div>
+</div>
+<script src="js/seckill-wait.js"></script>
+</body>
+</html>

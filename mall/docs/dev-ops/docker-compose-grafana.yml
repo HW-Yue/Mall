@@ -1,0 +1,59 @@
+# Grafana MCP server https://github.com/grafana/mcp-grafana
+version: '3.9'
+# 执行脚本；docker-compose -f docker-compose-grafana-aliyun.yml up -d
+services:
+  # 数据采集
+  prometheus:
+    image: prom/prometheus:latest # 换成官方原版，功能最全
+    container_name: prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # 允许容器通过这个域名访问宿主机
+    networks:
+      - my-network
+
+  # 监控界面；
+  # 数据库配置说明，本地docker，链接非docker内的本地mysql，可以配置 host.docker.internal 或者本地IP地址。
+  grafana:
+    image: registry.cn-hangzhou.aliyuncs.com/xfg-studio/grafana:10.2.0
+    container_name: grafana
+    restart: always
+    ports:
+      - 4000:4000
+    depends_on:
+      - prometheus
+    volumes:
+      - ./grafana:/etc/grafana
+    environment:
+      - GF_DATABASE_TYPE=mysql
+      - GF_DATABASE_HOST=mysql:3306
+      - GF_DATABASE_NAME=grafana
+      - GF_DATABASE_USER=root
+      - GF_DATABASE_PASSWORD=123456
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=qwertyuiop  # 这里填你想设的密码
+    networks:
+      - my-network
+
+  # 监控服务 mcp https://github.com/grafana/mcp-grafana
+  grafana-mcp:
+    image: registry.cn-hangzhou.aliyuncs.com/xfg-studio/grafana-mcp:latest
+    container_name: grafana-mcp
+    ports:
+      - "8000:8000"
+    environment:
+      - GRAFANA_URL=http://grafana:4000
+      - GRAFANA_API_KEY=glsa_eab5ZxOL6jBZ6URxjoCYepRcf7boRiqy_6e61bb1a
+    restart: unless-stopped
+    networks:
+      - my-network
+
+
+
+networks:
+  my-network:
+    driver: bridge
