@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -112,6 +112,11 @@ public class OrderService extends AbstractOrderService {
     }
 
     @Override
+    public boolean changeOrderPayAfterClose(String orderId) {
+        return repository.changeOrderPayAfterClose(orderId);
+    }
+
+    @Override
     public void changeOrderMarketSettlement(List<String> outTradeNoList) {
         repository.changeOrderMarketSettlement(outTradeNoList);
     }
@@ -191,6 +196,60 @@ public class OrderService extends AbstractOrderService {
         // 状态变更
         repository.refundOrder(userId, orderId);
 
+        return true;
+    }
+
+    @Override
+    public boolean closePayOrder(String outTradeNo) {
+        OrderEntity orderEntity = repository.queryOrderByOrderId(outTradeNo);
+        if (null == orderEntity) {
+            log.warn("关单失败，支付订单不存在 outTradeNo:{}", outTradeNo);
+            return false;
+        }
+        if (OrderStatusVO.PAY_WAIT.getCode().equals(orderEntity.getOrderStatusVO().getCode())) {
+            boolean result = repository.changeOrderClose(outTradeNo);
+            if (result) {
+                log.info("支付订单关单成功 outTradeNo:{}", outTradeNo);
+            } else {
+                log.warn("支付订单关单失败 outTradeNo:{}", outTradeNo);
+            }
+            return result;
+        }
+        log.info("支付订单状态非等待支付，无需关单 outTradeNo:{} status:{}", outTradeNo, orderEntity.getOrderStatusVO().getCode());
+        return true;
+    }
+
+    @Override
+    public boolean refundPayOrderByOutTradeNo(String outTradeNo) throws AlipayApiException {
+        OrderEntity orderEntity = repository.queryOrderByOrderId(outTradeNo);
+        if (null == orderEntity) {
+            log.warn("退款失败，支付订单不存在 outTradeNo:{}", outTradeNo);
+            return false;
+        }
+
+        // 只有已支付状态才需要调支付宝退款
+        if (!OrderStatusVO.PAY_SUCCESS.getCode().equals(orderEntity.getOrderStatusVO().getCode())) {
+            log.info("支付订单状态非支付成功，跳过支付宝退款 outTradeNo:{} status:{}", outTradeNo, orderEntity.getOrderStatusVO().getCode());
+            // 仍然更新本地状态为关闭
+            repository.refundOrder(orderEntity.getUserId(), outTradeNo);
+            return true;
+        }
+
+        AlipayTradeRefundRequest request = new AlipayTradeRefundRequest();
+        AlipayTradeRefundModel refundModel = new AlipayTradeRefundModel();
+        refundModel.setOutTradeNo(orderEntity.getOrderId());
+        refundModel.setRefundAmount(orderEntity.getPayAmount().toString());
+        refundModel.setRefundReason("拼团超时退款");
+        request.setBizModel(refundModel);
+
+        AlipayTradeRefundResponse execute = alipayClient.execute(request);
+        if (!execute.isSuccess()) {
+            log.error("支付宝退款失败 outTradeNo:{} msg:{}", outTradeNo, execute.getMsg());
+            return false;
+        }
+
+        repository.refundOrder(orderEntity.getUserId(), outTradeNo);
+        log.info("支付订单退款成功 outTradeNo:{}", outTradeNo);
         return true;
     }
 

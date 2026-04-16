@@ -27,6 +27,9 @@ public interface IGroupBuyOrderDao {
     /** 拼团完成：status = COMPLETE(1) */
     int updateOrderStatus2COMPLETE(@Param("teamId") String teamId);
 
+    /** 拼团失败（超时未成团）：status = 2，仅当 status = 0 时生效 */
+    int updateOrderStatus2Fail(@Param("teamId") String teamId);
+
     GroupBuyOrder queryGroupBuyProgress(@Param("teamId") String teamId);
 
     GroupBuyOrder queryGroupBuyTeamByTeamId(@Param("teamId") String teamId);

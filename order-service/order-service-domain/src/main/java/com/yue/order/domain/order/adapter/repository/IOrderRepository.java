@@ -31,6 +31,12 @@ public interface IOrderRepository {
     /** 标记退款：更新 status=2 */
     void updateRefund(String userId, String orderId);
 
+    /** 按外部交易单号关单 */
+    void updateCloseByOutTradeNo(String outTradeNo);
+
+    /** 释放普通商品库存（仅在 normal 类型时实际调用 mall 服务） */
+    void unlockStock(OrderEntity orderEntity);
+
     /** 查询用户订单列表（游标分页，返回 count 条） */
     List<OrderEntity> queryUserOrderList(String userId, Long lastId, int count);
 }

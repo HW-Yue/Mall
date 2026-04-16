@@ -34,6 +34,8 @@ services:
     environment:
       TZ: Asia/Shanghai
       NAMESRV_ADDR: "rmq-namesrv:9876"
+      JAVA_OPT_EXT: "-server -Xms256m -Xmx512m -Xmn128m -XX:MaxDirectMemorySize=512m"
+
     volumes:
       - ./rocketmq/broker.conf:/home/rocketmq/broker.conf
       - ./rocketmq/data/broker/logs:/home/rocketmq/logs
@@ -46,6 +48,7 @@ services:
         ipv4_address: 172.23.0.10
         aliases:
           - my-rocketmq-broker # 给容器起个好记的名字
+
 
 
   rmq-dashboard:

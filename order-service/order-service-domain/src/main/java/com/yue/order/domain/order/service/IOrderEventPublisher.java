@@ -13,5 +13,5 @@ public interface IOrderEventPublisher {
      * → order-paid-group_buy  被 group-buy-service 消费（拼团结算）
      * → order-paid-seckill    被 seckill-service 消费（秒杀结算）
      */
-    void publishOrderPaid(String userId, String outTradeNo, String marketType, Date outTradeTime);
+    void publishOrderPaid(String userId, String orderId, String outTradeNo, String marketType, Date outTradeTime);
 }

@@ -22,10 +22,16 @@ public interface ISeckillStockPort {
     String getStockValue(Long activityId, String goodsId);
 
     /**
-     * Lua 扣减库存
-     * @return 1: 扣减成功, 0: 库存不足, -1: 重复购买
+     * Lua 扣减可售库存（下单时调用，含用户去重）
+     * @return 1: 扣减成功, 0: 库存不足, -1: 重复购买, -2: 未初始化
      */
     int deductByLua(Long activityId, String goodsId, String userId);
+
+    /**
+     * Lua 扣减真实库存（支付成功后调用，无需用户去重）
+     * @return 1: 扣减成功, 0: 库存不足, -2: 未初始化
+     */
+    int deductRealStockByLua(Long activityId, String goodsId);
 
     void recoverStock(Long activityId, String goodsId);
 

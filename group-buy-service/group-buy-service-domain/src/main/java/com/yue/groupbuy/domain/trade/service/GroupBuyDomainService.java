@@ -1,5 +1,6 @@
 package com.yue.groupbuy.domain.trade.service;
 
+import com.yue.groupbuy.domain.trade.adapter.port.IGroupBuyRefundMqProducer;
 import com.yue.groupbuy.domain.trade.adapter.port.IOrderServicePort;
 import com.yue.groupbuy.domain.trade.adapter.repository.IGroupBuyRepository;
 import com.yue.groupbuy.domain.trade.adapter.repository.ITradeRepository;
@@ -13,7 +14,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -31,6 +33,8 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
     private ITradeSettlementOrderService tradeSettlementOrderService;
     @Resource
     private ITradeRefundOrderService tradeRefundOrderService;
+    @Resource
+    private IGroupBuyRefundMqProducer groupBuyRefundMqProducer;
 
     @Override
     public MarketPayOrderEntity createGroupBuyOrder(LockOrderCommand command) {
@@ -154,6 +158,53 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
             log.error("拼团退款失败 userId:{} orderId:{}", userId, orderId, e);
             if (e instanceof AppException) throw (AppException) e;
         }
+    }
+
+    @Override
+    public void handleTimeoutRefund(String teamId) {
+        log.info("拼团超时退款处理开始 teamId:{}", teamId);
+
+        // 1. 乐观锁更新团队状态为失败（仅当当前为拼单中 status=0 时生效）
+        int updated = tradeRepository.updateTeamStatus2Fail(teamId);
+        if (updated == 0) {
+            log.info("拼团超时退款处理跳过，团队状态已变更 teamId:{}", teamId);
+            return;
+        }
+
+        // 2. 处理未支付订单：本地关单 + 发送 order-close-group-buy MQ
+        List<TeamOrderEntity> unpaidOrders = tradeRepository.queryUnpaidOrdersByTeamId(teamId);
+        if (unpaidOrders != null && !unpaidOrders.isEmpty()) {
+            // 先批量关闭未支付订单
+            int closedCount = tradeRepository.closeUnpaidOrdersByTeamId(teamId);
+            log.info("拼团超时退款处理，批量关闭未支付订单 teamId:{} closedCount:{}", teamId, closedCount);
+            for (TeamOrderEntity order : unpaidOrders) {
+                try {
+                    groupBuyRefundMqProducer.sendOrderCloseMessage(order.getOutTradeNo(), order.getUserId());
+                } catch (Exception e) {
+                    log.error("拼团超时退款处理，发送未支付关单 MQ 失败 teamId:{} userId:{} orderId:{}", teamId, order.getUserId(), order.getOrderId(), e);
+                }
+            }
+        }
+
+        // 3. 处理已支付订单：本地退单 + 发送 pay-refund-group-buy MQ
+        List<TeamOrderEntity> paidOrders = tradeRepository.queryPaidOrdersByTeamId(teamId);
+        if (paidOrders != null && !paidOrders.isEmpty()) {
+            for (TeamOrderEntity order : paidOrders) {
+                try {
+                    // 本地更新为已退单
+                    tradeRepository.updateOrder2Refund(order.getUserId(), order.getOrderId());
+                    // 发送 MQ 给 order-service 和 pay-service
+                    groupBuyRefundMqProducer.sendPayRefundMessage(order.getOutTradeNo(), order.getUserId());
+                } catch (Exception e) {
+                    log.error("拼团超时退款处理，发送已支付退款 MQ 失败 teamId:{} userId:{} orderId:{}", teamId, order.getUserId(), order.getOrderId(), e);
+                }
+            }
+        }
+
+        log.info("拼团超时退款处理完成 teamId:{} unpaidCount:{} paidCount:{}",
+                teamId,
+                unpaidOrders == null ? 0 : unpaidOrders.size(),
+                paidOrders == null ? 0 : paidOrders.size());
     }
 
 }

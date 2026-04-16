@@ -12,7 +12,7 @@ import com.alibaba.fastjson.JSON;
 import com.google.common.eventbus.EventBus;
 import org.springframework.stereotype.Repository;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Date;
@@ -127,6 +127,11 @@ public class OrderRepository implements IOrderRepository {
     @Override
     public boolean changeOrderClose(String orderId) {
         return orderDao.changeOrderClose(orderId);
+    }
+
+    @Override
+    public boolean changeOrderPayAfterClose(String orderId) {
+        return orderDao.changeOrderPayAfterClose(orderId);
     }
 
     @Override

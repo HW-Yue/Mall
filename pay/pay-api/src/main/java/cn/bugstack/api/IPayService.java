@@ -5,7 +5,7 @@ import cn.bugstack.api.dto.CreatePayRequestDTO;
 import cn.bugstack.api.response.Response;
 import com.alipay.api.AlipayApiException;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.text.ParseException;
 
 public interface IPayService {

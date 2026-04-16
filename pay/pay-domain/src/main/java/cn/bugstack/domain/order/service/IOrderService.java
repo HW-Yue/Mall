@@ -20,6 +20,8 @@ public interface IOrderService {
 
     boolean changeOrderClose(String orderId);
 
+    boolean changeOrderPayAfterClose(String orderId);
+
     void changeOrderMarketSettlement(List<String> outTradeNoList);
 
     OrderEntity queryOrderByOrderId(String orderId);
@@ -40,5 +42,15 @@ public interface IOrderService {
      * 接收拼团退单消息
      */
     boolean refundPayOrder(String userId, String orderId) throws AlipayApiException;
+
+    /**
+     * 根据 outTradeNo 关闭支付订单（超时未支付场景）
+     */
+    boolean closePayOrder(String outTradeNo);
+
+    /**
+     * 根据 outTradeNo 执行支付宝退款
+     */
+    boolean refundPayOrderByOutTradeNo(String outTradeNo) throws AlipayApiException;
 
 }

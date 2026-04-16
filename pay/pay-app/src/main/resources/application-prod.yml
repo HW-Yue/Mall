@@ -85,7 +85,15 @@ rocketmq:
   consumer:
     group: alipay-consumer
   topic:
-    order_pay_success: pay-success
+    pay_success_normal: pay-success-normal
+    pay_success_group_buy: pay-success-group-buy
+    pay_success_seckill: pay-success-seckill
+    order_close_normal: order-close-normal
+    order_close_group_buy: order-close-group-buy
+    order_close_seckill: order-close-seckill
+    pay_refund_normal: pay-refund-normal
+    pay_refund_group_buy: pay-refund-group-buy
+    pay_refund_seckill: pay-refund-seckill
 
 # 日志
 logging:

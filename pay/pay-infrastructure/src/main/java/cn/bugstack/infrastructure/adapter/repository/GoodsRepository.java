@@ -4,7 +4,7 @@ import cn.bugstack.domain.goods.adapter.repository.IGoodsRepository;
 import cn.bugstack.infrastructure.dao.IOrderDao;
 import org.springframework.stereotype.Repository;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author Fuzhengwei bugstack.cn @小傅哥

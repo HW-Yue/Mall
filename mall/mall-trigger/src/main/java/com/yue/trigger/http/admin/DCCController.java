@@ -6,7 +6,7 @@ import com.yue.trigger.service.admin.DCCAppServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author Fuzhengwei bugstack.cn @小傅哥

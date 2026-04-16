@@ -6,7 +6,7 @@ import com.yue.groupbuy.domain.activity.model.entity.TrialBalanceEntity;
 import com.yue.groupbuy.domain.activity.service.trial.factory.DefaultActivityStrategyFactory;
 import cn.bugstack.wrench.design.framework.tree.AbstractMultiThreadStrategyRouter;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 

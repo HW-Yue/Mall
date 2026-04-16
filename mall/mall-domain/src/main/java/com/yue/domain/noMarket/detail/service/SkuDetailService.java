@@ -5,7 +5,7 @@ import com.yue.domain.noMarket.detail.model.entity.SkuDetailEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * 普通商品详情服务

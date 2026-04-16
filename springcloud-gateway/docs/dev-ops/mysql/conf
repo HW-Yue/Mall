@@ -1,6 +1,0 @@
-[mysqld]
-log-bin=mysql-bin
-binlog-format=ROW
-server-id=1
-# 允许外部访问（虽然你已经配了，但加上更稳）
-bind-address=0.0.0.0

@@ -47,4 +47,13 @@ public interface ITOrderGroupDao {
 
     /** 退单：status = 2 */
     int update2Refund(@Param("userId") String userId, @Param("orderId") String orderId);
+
+    /** 查询团队中已支付的个人订单（status = 1） */
+    List<TOrderGroup> queryPaidOrdersByTeamId(@Param("teamId") String teamId);
+
+    /** 查询团队中未支付的个人订单（status = 0） */
+    List<TOrderGroup> queryUnpaidOrdersByTeamId(@Param("teamId") String teamId);
+
+    /** 批量关闭团队中未支付的个人订单（status = 0 -> 3） */
+    int closeUnpaidOrdersByTeamId(@Param("teamId") String teamId);
 }

@@ -44,16 +44,15 @@ thread:
 
 # 数据库配置；启动时配置数据库资源信息
 spring:
+  main:
+    allow-bean-definition-overriding: true
   application:
     name: mall
   cloud:
     nacos:
-      # 账号密码建议放在最外层， discovery 和 config 都能共享
       discovery:
-        ip: 100.67.209.67
+        ip: 127.0.0.1
         server-addr: 127.0.0.1:8848
-#        username: nacos
-#        password: nacos
         # 注意：locator 必须和 server-addr 对齐！！
         locator:
           enabled: true
@@ -113,7 +112,9 @@ xfg:
 
 # 日志；logstash部署的服务器IP
 logstash:
+  enabled: true
   host: 127.0.0.1
+  port: 4560
 
 # 监控配置 Prometheus + Grafana
 management:

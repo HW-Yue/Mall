@@ -16,13 +16,14 @@ spring:
     url: jdbc:mysql://127.0.0.1:13306/seckill_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
     username: root
     password: 123456
-  redis:
-    host: localhost
-    port: 16379
+  data:
+    redis:
+      host: localhost
+      port: 16379
   cloud:
     nacos:
       discovery:
-        ip: 100.67.209.67
+        ip: 127.0.0.1
         server-addr: 127.0.0.1:8848
 
 mybatis:
@@ -52,13 +53,19 @@ app:
   rocketmq:
     topic:
       seckillOrderCreate: seckill-order-create
+      orderPaidSeckill: order-paid-seckill
+      seckillStockDeduct: seckill-stock-deduct
     consumerGroup:
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE
+      orderPaidSeckill: CG_ORDER_PAID_SECKILL
+      seckillStockDeduct: CG_SECKILL_STOCK_DEDUCT
 
 logging:
   level:
-    com.yue.seckill: info
+    com.yue.seckill: DEBUG
 
 # 日志上报 ELK
 logstash:
+  enabled: true
   host: 127.0.0.1
+  port: 4560

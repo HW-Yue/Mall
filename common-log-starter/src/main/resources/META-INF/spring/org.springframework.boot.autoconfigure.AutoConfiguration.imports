@@ -1,1 +1,2 @@
 com.yue.common.log.CommonLogAutoConfiguration
+com.yue.common.log.logback.LogstashAutoConfiguration

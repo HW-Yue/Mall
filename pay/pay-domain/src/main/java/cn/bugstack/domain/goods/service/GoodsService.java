@@ -3,7 +3,7 @@ package cn.bugstack.domain.goods.service;
 import cn.bugstack.domain.goods.adapter.repository.IGoodsRepository;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author Fuzhengwei bugstack.cn @小傅哥

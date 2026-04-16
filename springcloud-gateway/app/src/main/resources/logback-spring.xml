@@ -32,8 +32,6 @@
         <appender-ref ref="ASYNC_FILE_INFO"/>
         <!-- 异步文件输出（ERROR 级别） -->
         <appender-ref ref="ASYNC_FILE_ERROR"/>
-        <!-- 上报日志-ELK -->
-        <appender-ref ref="LOGSTASH"/>
     </root>
 
 </configuration>

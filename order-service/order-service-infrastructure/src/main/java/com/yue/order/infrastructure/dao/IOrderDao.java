@@ -29,6 +29,8 @@ public interface IOrderDao {
     int updateRefund(@Param("userId") String userId,
                      @Param("orderId") String orderId);
 
+    int updateCloseByOutTradeNo(@Param("outTradeNo") String outTradeNo);
+
     List<OrderPO> queryUserOrderList(@Param("userId") String userId,
                                      @Param("lastId") Long lastId,
                                      @Param("count") int count);

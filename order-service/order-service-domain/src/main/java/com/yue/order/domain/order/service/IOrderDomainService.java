@@ -43,4 +43,18 @@ public interface IOrderDomainService {
      * 查询用户订单列表（游标分页），返回 count 条
      */
     List<OrderEntity> queryUserOrderList(String userId, Long lastId, int count);
+
+    /**
+     * 处理订单关单通知（由 MQ 消费者调用）
+     *
+     * @param outTradeNo 外部交易单号
+     */
+    void handleOrderClose(String outTradeNo);
+
+    /**
+     * 处理关单后退款通知（由 MQ 消费者调用）
+     *
+     * @param outTradeNo 外部交易单号
+     */
+    void handlePayRefund(String outTradeNo);
 }

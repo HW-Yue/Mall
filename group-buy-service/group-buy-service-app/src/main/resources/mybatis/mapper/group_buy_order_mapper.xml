@@ -99,6 +99,13 @@
         where team_id = #{teamId} and status = 0
     </update>
 
+    <!-- 拼团失败（超时未成团）：status = 2，仅当 status = 0 时生效 -->
+    <update id="updateOrderStatus2Fail" parameterType="java.lang.String">
+        update team_order
+        set status = 2, update_time = now()
+        where team_id = #{teamId} and status = 0
+    </update>
+
     <!-- 逆向-未支付退单：lockCount - 1 -->
     <update id="unpaid2Refund" parameterType="com.yue.groupbuy.infrastructure.dao.po.GroupBuyOrder">
         update team_order

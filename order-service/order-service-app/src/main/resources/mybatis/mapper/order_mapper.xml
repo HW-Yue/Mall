@@ -88,6 +88,12 @@
           AND order_id = #{orderId}
     </update>
 
+    <update id="updateCloseByOutTradeNo">
+        UPDATE t_order
+        SET status = 2, update_time = NOW()
+        WHERE out_trade_no = #{outTradeNo}
+    </update>
+
     <select id="queryUserOrderList" resultMap="orderMap">
         SELECT id, order_id, user_id, goods_id, goods_name, goods_image_url,
                original_price, deduction_price,

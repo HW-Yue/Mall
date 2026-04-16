@@ -113,4 +113,25 @@
         where user_id = #{userId} and order_id = #{orderId} and status != 2
     </update>
 
+    <!-- 查询团队中已支付的个人订单 -->
+    <select id="queryPaidOrdersByTeamId" parameterType="java.lang.String" resultMap="dataMap">
+        select order_id, user_id, out_trade_no, status
+        from t_order
+        where team_id = #{teamId} and status = 1
+    </select>
+
+    <!-- 查询团队中未支付的个人订单 -->
+    <select id="queryUnpaidOrdersByTeamId" parameterType="java.lang.String" resultMap="dataMap">
+        select order_id, user_id, out_trade_no, status
+        from t_order
+        where team_id = #{teamId} and status = 0
+    </select>
+
+    <!-- 批量关闭团队中未支付的个人订单（status = 0 -> 3） -->
+    <update id="closeUnpaidOrdersByTeamId" parameterType="java.lang.String">
+        update t_order
+        set status = 3, update_time = now()
+        where team_id = #{teamId} and status = 0
+    </update>
+
 </mapper>

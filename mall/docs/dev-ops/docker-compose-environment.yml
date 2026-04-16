@@ -2,6 +2,7 @@
 # docker 代理和使用文档；https://bugstack.cn/md/road-map/docker.html
 version: '3.9'
 services:
+  # MySQL 增加健康检测，避免
   mysql:
     image: mysql:8.0.32
     container_name: mysql
@@ -10,36 +11,40 @@ services:
     environment:
       TZ: Asia/Shanghai
       MYSQL_ROOT_PASSWORD: 123456
+    networks:
+      - my-network
     ports:
       - "13306:3306"
     volumes:
-      - ./mysql/my.cnf:/etc/mysql/conf.d/mysql.cnf:ro
       - ./mysql/sql:/docker-entrypoint-initdb.d
+      - ./mysql/conf/my.cnf:/etc/mysql/my.cnf
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
       interval: 5s
       timeout: 10s
       retries: 10
       start_period: 15s
+
+  canal-server:
+    image: canal/canal-server:v1.1.6
+    container_name: canal-server
+    ports:
+      - "11111:11111"
+    environment:
+      - canal.instance.master.address=mysql:3306 # 注意：这里用docker内部服务名
+      - canal.instance.dbUsername=canal
+      - canal.instance.dbPassword=canal
+      - canal.instance.connectionCharset=UTF-8
+      - canal.instance.tsdb.enable=true
+      - canal.instance.gtid.enable=false
+      # 这里的 slaveId 必须和 MySQL 的 server-id (1) 不同
+      - canal.instance.mysql.slaveId=100
+      # 过滤哪些库哪些表。格式：数据库\.表名
+      - canal.instance.filter.regex=nexus_product\..*
     networks:
-      - my-network
+      - my-network # 确保和你的 MySQL 在同一个网络
 
   # phpmyadmin https://hub.docker.com/_/phpmyadmin
-  phpmyadmin:
-    image: phpmyadmin:5.2.1
-    container_name: phpmyadmin
-    hostname: phpmyadmin
-    ports:
-      - 8899:80
-    environment:
-      - PMA_HOST=mysql
-      - PMA_PORT=3306
-      - MYSQL_ROOT_PASSWORD=123456
-    depends_on:
-      mysql:
-        condition: service_healthy
-    networks:
-      - my-network
 
   # Redis
   redis:
@@ -82,23 +87,45 @@ services:
       redis:
         condition: service_healthy
 
-  # rabbitmq
-  # 账密 admin/admin
-  # rabbitmq-plugins enable rabbitmq_management
-  rabbitmq:
-    image: rabbitmq:3.12.9
-    container_name: rabbitmq
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # 重点看下面这一行：把当前目录下的 docker 文件夹映射到容器里的 /data
+      - ./docker:/data
+    ports:
+      - "9000:9000"
+
+  nacos:
+    image: nacos/nacos-server:v2.2.3-slim
+    container_name: nacos
     restart: always
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "8848:8848"
+      - "9848:9848"
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-    command: rabbitmq-server
-    volumes:
-      - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
-
+      - JVM_MS=256M  # 初始堆内存
+      - JVM_MX=256M  # 最大堆内存
+      - PREFER_HOST_MODE=hostname
+      - MODE=standalone
+      - SPRING_DATASOURCE_PLATFORM=mysql
+      - MYSQL_SERVICE_HOST=mysql
+      - MYSQL_SERVICE_DB_NAME=nacos_config
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_USER=root
+      - MYSQL_SERVICE_PASSWORD=123456
+      - MYSQL_SERVICE_DB_PARAM=characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+      - NACOS_AUTH_ENABLE=false
+      - NACOS_AUTH_IDENTITY_KEY=2222
+      - NACOS_AUTH_IDENTITY_VALUE=2xxx
+      - NACOS_AUTH_TOKEN=SecretKey012345678901234567890123456789012345678901234567890123456789
+    networks:
+      - my-network
+    depends_on:
+      mysql:
+        condition: service_healthy
 
 networks:
   my-network:

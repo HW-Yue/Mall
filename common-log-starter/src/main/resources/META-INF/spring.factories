@@ -1,7 +1,3 @@
-# Spring Boot 2.x 自动配置
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.yue.common.log.CommonLogAutoConfiguration
-
 # Nacos 日志冲突处理（必须在 spring.factories 中注册，.imports 文件不支持此类型）
 org.springframework.boot.env.EnvironmentPostProcessor=\
 com.yue.common.log.listener.NacosLoggingEnvironmentPostProcessor

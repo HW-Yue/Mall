@@ -10,23 +10,24 @@ spring:
         server-addr: 127.0.0.1:8848
         locator:
           enabled: true
-        ip: 100.67.209.67
+        ip: 127.0.0.1
   datasource:
     username: root
     password: 123456
     url: jdbc:mysql://localhost:13306/order_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
-  redis:
-    host: localhost
-    port: 16379
-    database: 0
-    timeout: 3000ms
-    lettuce:
-      pool:
-        min-idle: 5
-        max-idle: 10
-        max-active: 20
+  data:
+    redis:
+      host: localhost
+      port: 16379
+      database: 0
+      timeout: 3000ms
+      lettuce:
+        pool:
+          min-idle: 5
+          max-idle: 10
+          max-active: 20
   hikari:
     pool-name: Order_HikariCP
     minimum-idle: 5
@@ -52,6 +53,12 @@ app:
       paySuccessNormal: pay-success-normal
       paySuccessGroupBuy: pay-success-group-buy
       paySuccessSeckill: pay-success-seckill
+      orderCloseNormal: order-close-normal
+      orderCloseGroupBuy: order-close-group-buy
+      orderCloseSeckill: order-close-seckill
+      payRefundNormal: pay-refund-normal
+      payRefundGroupBuy: pay-refund-group-buy
+      payRefundSeckill: pay-refund-seckill
       # 发布（下游消费）
       orderPaidNormal: order-paid-normal
       orderPaidGroupBuy: order-paid-group_buy
@@ -62,6 +69,12 @@ app:
       paySuccessNormal: CG_PAY_SUCCESS_NORMAL
       paySuccessGroupBuy: CG_PAY_SUCCESS_GROUP_BUY
       paySuccessSeckill: CG_PAY_SUCCESS_SECKILL
+      orderCloseNormal: CG_ORDER_CLOSE_NORMAL
+      orderCloseGroupBuy: CG_ORDER_CLOSE_GROUP_BUY
+      orderCloseSeckill: CG_ORDER_CLOSE_SECKILL
+      payRefundNormal: CG_PAY_REFUND_NORMAL
+      payRefundGroupBuy: CG_PAY_REFUND_GROUP_BUY
+      payRefundSeckill: CG_PAY_REFUND_SECKILL
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE_ORDER
 
 # MyBatis
@@ -77,4 +90,6 @@ logging:
 
 # 日志上报 ELK
 logstash:
+  enabled: true
   host: 127.0.0.1
+  port: 4560

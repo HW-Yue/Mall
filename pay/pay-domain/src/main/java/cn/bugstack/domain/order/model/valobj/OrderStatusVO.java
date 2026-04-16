@@ -11,7 +11,8 @@ public enum OrderStatusVO {
     PAY_WAIT("PAY_WAIT", "等待支付 - 订单创建完成后，创建支付单"),
     PAY_SUCCESS("PAY_SUCCESS", "支付成功 - 接收到支付回调消息"),
     DEAL_DONE("DEAL_DONE", "交易完成 - 商品发货完成"),
-    CLOSE("CLOSE", "超时关单 - 超市未支付"),
+    CLOSE("CLOSE", "超时关单 - 超时未支付"),
+    PAY_AFTER_CLOSE("PAY_AFTER_CLOSE", "关单后收到付款 - 需退款"),
     MARKET("MARKET", "营销结算 - 拼团组队完成"),
     WAIT_REFUND("WAIT_REFUND", "营销退单待退款"),
     ;

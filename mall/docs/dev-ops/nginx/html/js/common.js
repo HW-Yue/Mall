@@ -20,6 +20,9 @@ const AppUtils = {
     
     // 获取当前登录用户ID
     getCurrentUserId: function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlUserId = urlParams.get('userId');
+        if (urlUserId) return urlUserId;
         const userId = this.getCookie("loginToken");
         if (!userId) {
             window.location.href = "login.html"; // 跳转到登录页

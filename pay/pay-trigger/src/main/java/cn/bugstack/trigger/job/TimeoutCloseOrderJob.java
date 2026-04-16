@@ -1,11 +1,13 @@
 package cn.bugstack.trigger.job;
 
+import cn.bugstack.domain.order.model.entity.OrderEntity;
 import cn.bugstack.domain.order.service.IOrderService;
+import cn.bugstack.infrastructure.adapter.port.PaySuccessRocketMqPort;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
@@ -20,6 +22,9 @@ public class TimeoutCloseOrderJob {
     @Resource
     private IOrderService orderService;
 
+    @Resource
+    private PaySuccessRocketMqPort paySuccessRocketMqPort;
+
     @Scheduled(cron = "0 0/30 * * * ?")
     public void exec() {
         try {
@@ -30,11 +35,27 @@ public class TimeoutCloseOrderJob {
                 return;
             }
             for (String orderId : orderIds) {
+                // 查询订单详情，获取用户ID和营销类型
+                OrderEntity orderEntity = orderService.queryOrderByOrderId(orderId);
+                if (null == orderEntity) {
+                    log.warn("定时任务，超时订单不存在 orderId: {}", orderId);
+                    continue;
+                }
+
                 boolean status = orderService.changeOrderClose(orderId);
                 log.info("定时任务，超时30分钟订单关闭 orderId: {} status：{}", orderId, status);
+
+                if (status) {
+                    // 发送MQ通知订单服务关单
+                    paySuccessRocketMqPort.sendOrderCloseMessage(
+                            orderEntity.getUserId(),
+                            orderId,
+                            orderEntity.getMarketType()
+                    );
+                }
             }
         } catch (Exception e) {
-            log.error("定时任务，超时15分钟订单关闭失败", e);
+            log.error("定时任务，超时30分钟订单关闭失败", e);
         }
     }
 

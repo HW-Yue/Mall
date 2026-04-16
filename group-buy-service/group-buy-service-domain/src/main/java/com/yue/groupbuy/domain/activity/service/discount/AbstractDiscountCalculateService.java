@@ -5,7 +5,7 @@ import com.yue.groupbuy.domain.activity.model.valobj.DiscountTypeEnum;
 import com.yue.groupbuy.domain.activity.model.valobj.GroupBuyActivityDiscountVO;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 
 @Slf4j

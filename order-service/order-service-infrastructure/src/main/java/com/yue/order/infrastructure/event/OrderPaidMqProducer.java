@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,10 +35,11 @@ public class OrderPaidMqProducer implements IOrderEventPublisher {
     private String orderPaidSeckillTopic;
 
     @Override
-    public void publishOrderPaid(String userId, String outTradeNo, String marketType, Date outTradeTime) {
+    public void publishOrderPaid(String userId, String orderId, String outTradeNo, String marketType, Date outTradeTime) {
         String topic = resolveTopic(marketType);
         Map<String, Object> msg = new HashMap<>();
         msg.put("userId", userId);
+        msg.put("orderId", orderId);
         msg.put("outTradeNo", outTradeNo);
         msg.put("marketType", marketType);
         msg.put("outTradeTime", outTradeTime != null ? outTradeTime.getTime() : null);

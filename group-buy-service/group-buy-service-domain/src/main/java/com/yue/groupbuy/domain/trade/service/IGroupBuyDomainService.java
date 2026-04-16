@@ -21,4 +21,9 @@ public interface IGroupBuyDomainService {
      * 拼团退款
      */
     void refundGroupBuyOrder(String userId, String orderId);
+
+    /**
+     * 拼团超时处理：未成团则改团状态为失败，已支付订单退款，未支付订单关单
+     */
+    void handleTimeoutRefund(String teamId);
 }

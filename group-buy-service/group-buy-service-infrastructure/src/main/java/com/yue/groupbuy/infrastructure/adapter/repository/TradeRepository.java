@@ -28,7 +28,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.*;
 
 @Slf4j
@@ -360,6 +360,57 @@ public class TradeRepository implements ITradeRepository {
     public String queryOutTradeNoByOrderId(String userId, String orderId) {
         TOrderGroup res = tOrderGroupDao.queryByUserIdAndOrderId(userId, orderId);
         return null == res ? null : res.getOutTradeNo();
+    }
+
+    @Override
+    public int updateTeamStatus2Fail(String teamId) {
+        return groupBuyOrderDao.updateOrderStatus2Fail(teamId);
+    }
+
+    @Override
+    public List<TeamOrderEntity> queryPaidOrdersByTeamId(String teamId) {
+        List<TOrderGroup> list = tOrderGroupDao.queryPaidOrdersByTeamId(teamId);
+        if (list == null || list.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<TeamOrderEntity> result = new ArrayList<>(list.size());
+        for (TOrderGroup po : list) {
+            result.add(TeamOrderEntity.builder()
+                    .orderId(po.getOrderId())
+                    .userId(po.getUserId())
+                    .outTradeNo(po.getOutTradeNo())
+                    .status(po.getStatus())
+                    .build());
+        }
+        return result;
+    }
+
+    @Override
+    public List<TeamOrderEntity> queryUnpaidOrdersByTeamId(String teamId) {
+        List<TOrderGroup> list = tOrderGroupDao.queryUnpaidOrdersByTeamId(teamId);
+        if (list == null || list.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<TeamOrderEntity> result = new ArrayList<>(list.size());
+        for (TOrderGroup po : list) {
+            result.add(TeamOrderEntity.builder()
+                    .orderId(po.getOrderId())
+                    .userId(po.getUserId())
+                    .outTradeNo(po.getOutTradeNo())
+                    .status(po.getStatus())
+                    .build());
+        }
+        return result;
+    }
+
+    @Override
+    public int closeUnpaidOrdersByTeamId(String teamId) {
+        return tOrderGroupDao.closeUnpaidOrdersByTeamId(teamId);
+    }
+
+    @Override
+    public int updateOrder2Refund(String userId, String orderId) {
+        return tOrderGroupDao.update2Refund(userId, orderId);
     }
 
     private NotifyTaskEntity buildNotifyTaskEntity(NotifyTask task) {

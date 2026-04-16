@@ -12,7 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.concurrent.TimeUnit;
 
@@ -79,9 +79,10 @@ public class SeckillOrderCreateListener implements RocketMQListener<String> {
 
             String orderId = orderDomainService.createOrder(command);
 
-            // 写入 Redis：orderId 结果 + 将 token 状态改为 1
+            // 写入 Redis：orderId 结果 + 将 token 状态改为 1 + 反向索引（orderId → seckillToken，供秒杀服务查 activityId）
             stringRedisTemplate.opsForValue().set(ORDER_RESULT_KEY_PREFIX + seckillToken, orderId, TTL_MINUTES, TimeUnit.MINUTES);
             stringRedisTemplate.opsForValue().set(TOKEN_STATUS_KEY_PREFIX + seckillToken, "1", TTL_MINUTES, TimeUnit.MINUTES);
+            stringRedisTemplate.opsForValue().set("seckill:token:by:order:" + orderId, seckillToken, TTL_MINUTES, TimeUnit.MINUTES);
 
             log.info("秒杀建单成功 seckillToken:{} orderId:{}", seckillToken, orderId);
         } catch (Exception e) {

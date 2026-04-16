@@ -13,7 +13,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
@@ -31,6 +31,10 @@ public class OrderDomainService implements IOrderDomainService {
     /** 下游事件发布（由 infrastructure 层实现，通过 Spring 注入） */
     @Resource
     private IOrderEventPublisher eventPublisher;
+
+    /** 退款事件发布（由 infrastructure 层实现） */
+    @Resource
+    private IOrderRefundPublisher refundPublisher;
 
     @Override
     public String createOrder(CreateOrderCommand command) {
@@ -106,6 +110,14 @@ public class OrderDomainService implements IOrderDomainService {
             log.warn("handlePaySuccess 订单不存在 outTradeNo:{}", outTradeNo);
             return;
         }
+
+        // 如果订单已关闭（例如先收到关单 MQ），但支付宝回调已扣款，需要触发退款
+        if (order.getStatus() == OrderStatusVO.CLOSE) {
+            log.warn("handlePaySuccess 订单已关闭但收到支付成功消息，触发退款 outTradeNo:{} marketType:{}", outTradeNo, marketType);
+            refundPublisher.publishPayRefund(order.getUserId(), outTradeNo, marketType);
+            return;
+        }
+
         if (order.getStatus() != OrderStatusVO.LOCK) {
             log.info("handlePaySuccess 订单状态已更新，跳过 outTradeNo:{} status:{}", outTradeNo, order.getStatus());
             return;
@@ -116,7 +128,7 @@ public class OrderDomainService implements IOrderDomainService {
         log.info("handlePaySuccess 更新订单成功 outTradeNo:{} marketType:{}", outTradeNo, marketType);
 
         // 发布下游事件（order-paid-normal / order-paid-group_buy / order-paid-seckill）
-        eventPublisher.publishOrderPaid(order.getUserId(), outTradeNo, marketType, outTradeTime);
+        eventPublisher.publishOrderPaid(order.getUserId(), order.getOrderId(), outTradeNo, marketType, outTradeTime);
     }
 
     @Override
@@ -144,6 +156,49 @@ public class OrderDomainService implements IOrderDomainService {
     @Override
     public List<OrderEntity> queryUserOrderList(String userId, Long lastId, int count) {
         return orderRepository.queryUserOrderList(userId, lastId, count);
+    }
+
+    @Override
+    public void handleOrderClose(String outTradeNo) {
+        OrderEntity order = orderRepository.queryByOutTradeNo(outTradeNo);
+        if (order == null) {
+            log.warn("handleOrderClose 订单不存在 outTradeNo:{}", outTradeNo);
+            return;
+        }
+
+        // 如果订单已支付但收到关单消息（竞态：pay-success 先于 order-close 到达），触发退款
+        if (order.getStatus() == OrderStatusVO.PAY_SUCCESS) {
+            log.warn("handleOrderClose 订单已支付但收到关单消息，触发退款 outTradeNo:{} marketType:{}",
+                    outTradeNo, order.getMarketType().getCode());
+            refundPublisher.publishPayRefund(order.getUserId(), outTradeNo, order.getMarketType().getCode());
+            return;
+        }
+
+        if (order.getStatus() != OrderStatusVO.LOCK) {
+            log.info("handleOrderClose 订单状态非锁定，跳过 outTradeNo:{} status:{}", outTradeNo, order.getStatus());
+            return;
+        }
+
+        // 释放库存（普通商品通过 mall 服务解锁）
+        orderRepository.unlockStock(order);
+
+        orderRepository.updateCloseByOutTradeNo(outTradeNo);
+        log.info("handleOrderClose 订单关闭成功 outTradeNo:{} marketType:{}", outTradeNo, order.getMarketType().getCode());
+    }
+
+    @Override
+    public void handlePayRefund(String outTradeNo) {
+        OrderEntity order = orderRepository.queryByOutTradeNo(outTradeNo);
+        if (order == null) {
+            log.warn("handlePayRefund 订单不存在 outTradeNo:{}", outTradeNo);
+            return;
+        }
+        if (order.getStatus() == OrderStatusVO.CLOSE) {
+            log.info("handlePayRefund 订单已是关闭状态，跳过 outTradeNo:{}", outTradeNo);
+            return;
+        }
+        orderRepository.updateCloseByOutTradeNo(outTradeNo);
+        log.info("handlePayRefund 订单退款确认成功 outTradeNo:{} marketType:{}", outTradeNo, order.getMarketType().getCode());
     }
 
     private void doRefund(OrderEntity order) {

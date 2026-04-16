@@ -16,7 +16,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -96,6 +96,23 @@ public class OrderRepository implements IOrderRepository {
     @Override
     public void updateRefund(String userId, String orderId) {
         orderDao.updateRefund(userId, orderId);
+    }
+
+    @Override
+    public void updateCloseByOutTradeNo(String outTradeNo) {
+        orderDao.updateCloseByOutTradeNo(outTradeNo);
+    }
+
+    @Override
+    public void unlockStock(OrderEntity order) {
+        if (MarketTypeVO.NORMAL == order.getMarketType()) {
+            GatewayResponse<Boolean> unlockResult = mallService.unlockStock(
+                    new SkuStockRequestDTO(order.getGoodsId(), 1));
+            if (unlockResult == null || !"0000".equals(unlockResult.getCode()) || Boolean.FALSE.equals(unlockResult.getData())) {
+                String info = unlockResult != null ? unlockResult.getInfo() : "mall 服务无响应";
+                log.warn("unlockStock 失败 goodsId:{} reason:{}", order.getGoodsId(), info);
+            }
+        }
     }
 
     @Override

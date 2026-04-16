@@ -3,10 +3,7 @@ package com.yue.groupbuy.domain.trade.adapter.repository;
 import com.yue.groupbuy.domain.trade.model.aggregate.GroupBuyOrderAggregate;
 import com.yue.groupbuy.domain.trade.model.aggregate.GroupBuyRefundAggregate;
 import com.yue.groupbuy.domain.trade.model.aggregate.GroupBuyTeamSettlementAggregate;
-import com.yue.groupbuy.domain.trade.model.entity.GroupBuyActivityEntity;
-import com.yue.groupbuy.domain.trade.model.entity.GroupBuyTeamEntity;
-import com.yue.groupbuy.domain.trade.model.entity.MarketPayOrderEntity;
-import com.yue.groupbuy.domain.trade.model.entity.NotifyTaskEntity;
+import com.yue.groupbuy.domain.trade.model.entity.*;
 import com.yue.groupbuy.domain.trade.model.valobj.GroupBuyProgressVO;
 
 import java.util.List;
@@ -52,5 +49,33 @@ public interface ITradeRepository {
     void refund2AddRecovery(String recoveryTeamStockKey, String orderId);
 
     String queryOutTradeNoByOrderId(String userId, String orderId);
+
+    /**
+     * 乐观锁更新团队状态为失败（status = 2），仅当当前状态为拼单中（0）时生效
+     * @return 影响行数，1 表示更新成功，0 表示已被其他流程修改
+     */
+    int updateTeamStatus2Fail(String teamId);
+
+    /**
+     * 查询团队中所有已支付的个人订单
+     */
+    List<TeamOrderEntity> queryPaidOrdersByTeamId(String teamId);
+
+    /**
+     * 查询团队中所有未支付的个人订单
+     */
+    List<TeamOrderEntity> queryUnpaidOrdersByTeamId(String teamId);
+
+    /**
+     * 批量关闭团队中未支付的个人订单（status = 0 -> 3）
+     * @return 影响行数
+     */
+    int closeUnpaidOrdersByTeamId(String teamId);
+
+    /**
+     * 将个人订单更新为已退单（status = 2）
+     * @return 影响行数
+     */
+    int updateOrder2Refund(String userId, String orderId);
 
 }

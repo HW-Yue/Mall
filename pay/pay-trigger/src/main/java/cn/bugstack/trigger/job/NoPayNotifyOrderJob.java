@@ -1,6 +1,9 @@
 package cn.bugstack.trigger.job;
 
+import cn.bugstack.domain.order.model.entity.OrderEntity;
+import cn.bugstack.domain.order.model.valobj.OrderStatusVO;
 import cn.bugstack.domain.order.service.IOrderService;
+import cn.bugstack.infrastructure.adapter.port.PaySuccessRocketMqPort;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.domain.AlipayTradeQueryModel;
 import com.alipay.api.request.AlipayTradeQueryRequest;
@@ -9,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 /**
@@ -25,6 +28,8 @@ public class NoPayNotifyOrderJob {
     private IOrderService orderService;
     @Resource
     private AlipayClient alipayClient;
+    @Resource
+    private PaySuccessRocketMqPort paySuccessRocketMqPort;
 
     @Scheduled(cron = "0 0/30 * * * ?")
     public void exec() {
@@ -34,6 +39,15 @@ public class NoPayNotifyOrderJob {
             if (null == orderIds || orderIds.isEmpty()) return;
 
             for (String orderId : orderIds) {
+                OrderEntity orderEntity = orderService.queryOrderByOrderId(orderId);
+                if (orderEntity == null) continue;
+
+                // 已关单或已处于关单后付款状态的订单，不重复处理
+                OrderStatusVO status = orderEntity.getOrderStatusVO();
+                if (status == OrderStatusVO.CLOSE || status == OrderStatusVO.PAY_AFTER_CLOSE) {
+                    continue;
+                }
+
                 AlipayTradeQueryRequest request = new AlipayTradeQueryRequest();
                 AlipayTradeQueryModel bizModel = new AlipayTradeQueryModel();
                 bizModel.setOutTradeNo(orderId);
@@ -45,6 +59,12 @@ public class NoPayNotifyOrderJob {
                 // 判断状态码
                 if ("10000".equals(code)) {
                     orderService.changeOrderPaySuccess(orderId, alipayTradeQueryResponse.getSendPayDate());
+                    paySuccessRocketMqPort.sendSettlementMessage(
+                            orderEntity.getUserId(),
+                            orderId,
+                            alipayTradeQueryResponse.getSendPayDate(),
+                            orderEntity.getMarketType()
+                    );
                 }
             }
         } catch (Exception e) {

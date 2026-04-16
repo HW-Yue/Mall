@@ -6,7 +6,7 @@ import com.yue.infrastructure.dao.ISkuDao;
 import com.yue.infrastructure.dao.po.Sku;
 import org.springframework.stereotype.Repository;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * 普通商品详情仓储实现

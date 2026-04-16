@@ -21,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -145,12 +145,30 @@ public class AliPayController implements IPayService {
         log.info("支付回调，支付回调，更新订单 {}", tradeNo);
 
         Date payTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(params.get("gmt_payment"));
-        orderService.changeOrderPaySuccess(tradeNo, payTime);
 
         // 支付宝异步通知为 form 参数，与验签所用 params 一致；发往 RocketMQ 供下游消费（替代原 HTTP/Retrofit 通知）
         OrderEntity orderEntity = orderService.queryOrderByOrderId(tradeNo);
         String userId = orderEntity != null ? orderEntity.getUserId() : null;
         String marketType = orderEntity != null ? orderEntity.getMarketType() : null;
+
+        // 处理关单后收到付款的情况：先改状态，再退款，再通知订单服务
+        if (orderEntity != null && "CLOSE".equals(orderEntity.getOrderStatusVO() != null ? orderEntity.getOrderStatusVO().getCode() : null)) {
+            orderService.changeOrderPayAfterClose(tradeNo);
+            boolean refundStatus = orderService.refundPayOrder(userId, tradeNo);
+            log.info("支付回调，订单已关单，执行退款 orderId:{} refundStatus:{}", tradeNo, refundStatus);
+            if (refundStatus) {
+                paySuccessRocketMqPort.sendPayRefundMessage(userId, tradeNo, marketType);
+            }
+            return "success";
+        }
+
+        // 幂等：如果已经是关单后付款状态，直接返回成功
+        if (orderEntity != null && "PAY_AFTER_CLOSE".equals(orderEntity.getOrderStatusVO() != null ? orderEntity.getOrderStatusVO().getCode() : null)) {
+            log.info("支付回调，订单已是关单后付款状态，跳过处理 orderId:{}", tradeNo);
+            return "success";
+        }
+
+        orderService.changeOrderPaySuccess(tradeNo, payTime);
         paySuccessRocketMqPort.sendSettlementMessage(userId, tradeNo, payTime, marketType);
 
         return "success";

@@ -2,27 +2,18 @@ server:
   port: 8090
 
 spring:
-  redis:
-    host: 127.0.0.1
-    port: 16379
-    database: 0
-    lettuce:
-      pool:
-        max-active: 10
-        max-wait: 1000
-        max-idle: 5
-        min-idle: 3
   application:
     name: xfg-dev-tech-springcloud-gateway
   cloud:
     nacos:
       discovery:
-        ip: 100.67.209.67
+        ip: 127.0.0.1
         server-addr: 127.0.0.1:8848
-        username: nacos
-        password: nacos
         locator:
           enabled: true
+      config:
+        import-check:
+          enabled: false
     gateway:
       discovery:
         locator:
@@ -100,4 +91,6 @@ logging:
 
 # 日志上报 ELK
 logstash:
+  enabled: true
   host: 127.0.0.1
+  port: 4560

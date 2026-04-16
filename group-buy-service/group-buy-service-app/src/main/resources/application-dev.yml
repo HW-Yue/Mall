@@ -10,7 +10,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        ip: 100.67.209.67
+        ip: 127.0.0.1
         server-addr: 127.0.0.1:8848
 
 mybatis:
@@ -41,8 +41,12 @@ app:
     topic:
       orderPaidGroupBuy: order-paid-group_buy
       groupBuySuccessNotify: group-buy-success-notify
+      groupBuyTimeoutRefund: group-buy-timeout-refund
+      orderCloseGroupBuy: order-close-group-buy
+      payRefundGroupBuy: pay-refund-group-buy
     consumerGroup:
       orderPaidGroupBuy: CG_GROUP_BUY_ORDER_PAID
+      groupBuyTimeoutRefund: CG_GROUP_BUY_TIMEOUT_REFUND
 
 logging:
   level:
@@ -51,4 +55,6 @@ logging:
 
 # 日志上报 ELK
 logstash:
+  enabled: true
   host: 127.0.0.1
+  port: 4560

@@ -26,6 +26,8 @@ public interface IOrderRepository {
 
     boolean changeOrderClose(String orderId);
 
+    boolean changeOrderPayAfterClose(String orderId);
+
     void changeOrderMarketSettlement(List<String> outTradeNoList);
 
     OrderEntity queryOrderByOrderId(String orderId);

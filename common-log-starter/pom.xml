@@ -13,11 +13,11 @@
     <description>全链路日志 TraceId 自动配置 Starter</description>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>2.7.5</spring-boot.version>
-        <spring-cloud.version>2021.0.8</spring-cloud.version>
+        <spring-boot.version>3.2.12</spring-boot.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
     </properties>
 
     <dependencyManagement>
@@ -55,8 +55,8 @@
 
         <!-- Servlet 支持 -->
         <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
+            <groupId>jakarta.servlet</groupId>
+            <artifactId>jakarta.servlet-api</artifactId>
             <scope>provided</scope>
         </dependency>
 
@@ -94,12 +94,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- 仅在使用 logstash-appender.xml 时需要；optional 避免未上报 ELK 的服务被迫拉取且解析失败 -->
+        <!-- Logstash 上报；由 LogstashAutoConfiguration 按 logstash.enabled 条件激活 -->
         <dependency>
             <groupId>net.logstash.logback</groupId>
             <artifactId>logstash-logback-encoder</artifactId>
             <version>7.4</version>
-            <optional>true</optional>
         </dependency>
 
         <!-- Reactor Core -->
@@ -126,6 +125,9 @@
                     <include>**/*.yml</include>
                     <include>**/*.yaml</include>
                     <include>**/*.properties</include>
+                    <include>**/*.imports</include>
+                    <include>**/*.factories</include>
+                    <include>**/*.json</include>
                 </includes>
             </resource>
             <resource>
@@ -141,8 +143,8 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>21</source>
+                    <target>21</target>
                 </configuration>
             </plugin>
         </plugins>

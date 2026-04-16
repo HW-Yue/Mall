@@ -37,11 +37,8 @@ spring:
     name: login-pay
   cloud:
     nacos:
-      # 账号密码建议放在最外层， discovery 和 config 都能共享
-      username: nacos
-      password: nacos
       discovery:
-        ip: 100.67.209.67
+        ip: 127.0.0.1
         server-addr: 127.0.0.1:8848
         locator:
           enabled: true
@@ -102,11 +99,20 @@ rocketmq:
     send-message-timeout: 3000
   consumer:
     group: alipay-consumer
-  # 业务 Topic — 按营销类型路由（需在 Broker 预先创建以下三个 Topic）
+  # 业务 Topic — 按营销类型路由（需在 Broker 预先创建以下 Topic）
   topic:
     pay_success_normal: pay-success-normal
     pay_success_group_buy: pay-success-group-buy
     pay_success_seckill: pay-success-seckill
+    order_close_normal: order-close-normal
+    order_close_group_buy: order-close-group-buy
+    order_close_seckill: order-close-seckill
+    pay_refund_normal: pay-refund-normal
+    pay_refund_group_buy: pay-refund-group-buy
+    pay_refund_seckill: pay-refund-seckill
+  consumerGroup:
+    orderCloseGroupBuy: CG_PAY_ORDER_CLOSE_GROUP_BUY
+    payRefundGroupBuy: CG_PAY_PAY_REFUND_GROUP_BUY
 
 # 日志
 logging:
@@ -116,4 +122,6 @@ logging:
 
 # 日志上报 ELK
 logstash:
+  enabled: true
   host: 127.0.0.1
+  port: 4560
