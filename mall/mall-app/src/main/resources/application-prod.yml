@@ -21,7 +21,7 @@ spring:
     url: jdbc:mysql://127.0.0.1:13306/group_buy_market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
     driver-class-name: com.mysql.cj.jdbc.Driver
   hikari:
-    pool-name: Retail_HikariCP
+    pool-name: Mall_HikariCP
     minimum-idle: 15 #最小空闲连接数量
     idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
     maximum-pool-size: 25 #连接池最大连接数，默认是10
@@ -30,26 +30,35 @@ spring:
     connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
     connection-test-query: SELECT 1
   type: com.zaxxer.hikari.HikariDataSource
+  # Redis：统一用官方 redisson-spring-boot-starter（prod）
+  data:
+    redis:
+      host: localhost
+      port: 16379
+      database: 0
+      timeout: 3000ms
+      client-name: mall-redisson
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://localhost:16379"
+          database: 0
+          clientName: mall-redisson
+          connectionPoolSize: 10
+          connectionMinimumIdleSize: 5
+          idleConnectionTimeout: 30000
+          pingConnectionInterval: 60000
+          retryAttempts: 3
+          retryInterval: 1000
+          connectTimeout: 5000
+          timeout: 3000
+          keepAlive: true
 
 # MyBatis 配置【如需使用记得打开】
 mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
   config-location:  classpath:/mybatis/config/mybatis-config.xml
-
-# Redis
-redis:
-  sdk:
-    config:
-      host: localhost
-      port: 16379
-      pool-size: 10
-      min-idle-size: 5
-      idle-timeout: 30000
-      connect-timeout: 5000
-      retry-attempts: 3
-      retry-interval: 1000
-      ping-interval: 60000
-      keep-alive: true
 
 # 日志
 logging:

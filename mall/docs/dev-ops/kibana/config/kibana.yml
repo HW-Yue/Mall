@@ -1,10 +1,20 @@
 #
-# ** THIS IS AN AUTO-GENERATED FILE **
+# Kibana 9.x 配置（Nexus dev 环境）
+#
+# 与 ES 9.x 同步升级；当 xpack.security 关闭时仍需填充三条加密密钥，
+# 否则 Kibana 启动日志会反复刷 warning 并随机生成 key（导致重启后会话失效）。
+# 生产环境请改成 keystore 或 secret 注入，dev 写死即可。
 #
 
-# Default Kibana configuration for docker target
-server.host: "0"
+server.host: "0.0.0.0"
 server.shutdownTimeout: "5s"
-elasticsearch.hosts: [ "http://elasticsearch:9200" ] # 记得修改ip
+
+elasticsearch.hosts: [ "http://elasticsearch:9200" ]
+
 monitoring.ui.container.elasticsearch.enabled: true
 i18n.locale: "zh-CN"
+
+# 9.x 要求的三条 32+ 字节加密密钥；纯 dev 场景可共用同一份固定值
+xpack.encryptedSavedObjects.encryptionKey: "nexus-devops-kibana-encsavedobj-32chr"
+xpack.reporting.encryptionKey:              "nexus-devops-kibana-reporting-32chars"
+xpack.security.encryptionKey:               "nexus-devops-kibana-security-32charsxx"

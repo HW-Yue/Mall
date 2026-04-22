@@ -1,6 +1,6 @@
 spring:
   application:
-    name: xfg-dev-tech-springcloud-gateway
+    name: springcloud-gateway
   main:
     web-application-type: reactive
   profiles:

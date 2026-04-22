@@ -73,9 +73,15 @@ public interface ITradeRepository {
     int closeUnpaidOrdersByTeamId(String teamId);
 
     /**
-     * 将个人订单更新为已退单（status = 2）
+     * 将个人订单更新为退款处理中（status = 2）
      * @return 影响行数
      */
     int updateOrder2Refund(String userId, String orderId);
+
+    /**
+     * 将个人订单更新为已退款（status = 4）
+     * @return 影响行数
+     */
+    int updateOrder2Refunded(String outTradeNo);
 
 }

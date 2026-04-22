@@ -1,0 +1,7 @@
+# 可选：Hikari 热更新（order-service）
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5

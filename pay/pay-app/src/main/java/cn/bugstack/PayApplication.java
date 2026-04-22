@@ -1,0 +1,19 @@
+package cn.bugstack;
+
+import org.springframework.beans.factory.annotation.Configurable;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.scheduling.annotation.EnableScheduling;
+
+@SpringBootApplication
+@Configurable
+@EnableScheduling
+@EnableDiscoveryClient
+public class PayApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(PayApplication.class, args);
+    }
+
+}

@@ -80,20 +80,25 @@ public class OrderService extends AbstractOrderService {
 
     @Override
     public void changeOrderPaySuccess(String orderId, Date payTime) {
-//        OrderEntity orderEntity = repository.queryOrderByOrderId(orderId);
-//        if (null == orderEntity) return;
-//
-//        if (MarketTypeVO.GroupBuyMarket.getCode().equals(orderEntity.getMarketType())) {
-//
-//            repository.changeMarketOrderPaySuccess(orderId);
-//
-//        } else if (MarketTypeVO.Normal.getCode().equals(orderEntity.getMarketType())) {
-//            repository.changeOrderPaySuccess(orderId, payTime);
-//
-//        } else {
-//            repository.changeOrderPaySuccess(orderId, payTime);
-//        }
+        OrderEntity orderEntity = repository.queryOrderByOrderId(orderId);
+        if (orderEntity == null) {
+            log.warn("支付成功落库失败，支付订单不存在 orderId:{}", orderId);
+            return;
+        }
 
+        OrderStatusVO status = orderEntity.getOrderStatusVO();
+        if (status == OrderStatusVO.PAY_SUCCESS
+                || status == OrderStatusVO.MARKET
+                || status == OrderStatusVO.DEAL_DONE
+                || status == OrderStatusVO.WAIT_REFUND
+                || status == OrderStatusVO.REFUNDED) {
+            log.info("支付成功落库跳过，支付订单状态无需更新 orderId:{} status:{}",
+                    orderId, status != null ? status.getCode() : null);
+            return;
+        }
+
+        repository.changeOrderPaySuccess(orderId, payTime);
+        log.info("支付成功落库完成 orderId:{} payTime:{}", orderId, payTime);
     }
 
     @Override
@@ -102,8 +107,9 @@ public class OrderService extends AbstractOrderService {
     }
 
     @Override
-    public List<String> queryTimeoutCloseOrderList() {
-        return repository.queryTimeoutCloseOrderList();
+    public List<String> queryPayReconcileCloseOrderList() {
+        // pay 侧这里只做本地台账对账兜底，不承担业务超时驱动。
+        return repository.queryPayReconcileCloseOrderList();
     }
 
     @Override

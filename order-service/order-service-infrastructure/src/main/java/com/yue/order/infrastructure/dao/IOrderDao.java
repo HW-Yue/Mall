@@ -19,6 +19,8 @@ public interface IOrderDao {
 
     OrderPO queryByOutTradeNo(@Param("outTradeNo") String outTradeNo);
 
+    List<String> queryTimeoutCloseOrderList();
+
     int updatePayUrl(@Param("userId") String userId,
                      @Param("outTradeNo") String outTradeNo,
                      @Param("payUrl") String payUrl);
@@ -26,10 +28,11 @@ public interface IOrderDao {
     int updatePaySuccess(@Param("outTradeNo") String outTradeNo,
                          @Param("outTradeTime") Date outTradeTime);
 
-    int updateRefund(@Param("userId") String userId,
-                     @Param("orderId") String orderId);
+    int updateWaitRefundByOutTradeNo(@Param("outTradeNo") String outTradeNo);
 
     int updateCloseByOutTradeNo(@Param("outTradeNo") String outTradeNo);
+
+    int updateRefundedByOutTradeNo(@Param("outTradeNo") String outTradeNo);
 
     List<OrderPO> queryUserOrderList(@Param("userId") String userId,
                                      @Param("lastId") Long lastId,

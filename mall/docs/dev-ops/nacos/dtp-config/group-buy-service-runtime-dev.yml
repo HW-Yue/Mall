@@ -1,0 +1,53 @@
+# 源文件：group-buy-service/group-buy-service-app/src/main/resources/nacos/group-buy-service-runtime-dev.yml
+# DynamicTp + Agent 运行时（Hikari / 日志 / app.agent / Feign）
+# app.agent.feign.order-service.*：Feign 超时在启动时绑定；仅改 Nacos 不重启不会更新 Feign Request.Options（见 group-buy-service/docs/AGENT_NACOS_RUNTIME.md §6）。
+
+spring:
+  datasource:
+    hikari:
+      pool-name: GroupBuy_HikariCP
+      minimum-idle: 5
+      maximum-pool-size: 10
+      connection-timeout: 30000
+  dynamic:
+    tp:
+      enabled: true
+      enabled-collect: true
+      collector-types:
+        - micrometer
+        - internal_logging
+      monitor-interval: 30
+      executors:
+        - thread-pool-name: threadPoolExecutor
+          thread-pool-alias-name: group-buy-business
+          executor-type: common
+          core-pool-size: 5
+          maximum-pool-size: 10
+          queue-capacity: 100
+          queue-type: LinkedBlockingQueue
+          rejected-handler-type: CallerRunsPolicy
+          keep-alive-time: 60
+          thread-name-prefix: group-buy
+          wait-for-tasks-to-complete-on-shutdown: true
+          await-termination-seconds: 3
+          task-wrapper-names:
+            - mdc
+          notify-enabled: false
+
+logging:
+  level:
+    com.yue.groupbuy: info
+
+app:
+  agent:
+    cache:
+      redis-default-ttl-seconds: 3600
+      caffeine-expire-after-write-seconds: 300
+      cache-fallback-strategy: CACHE_FIRST
+    features:
+      marketing-push-enabled: true
+      statistics-report-enabled: true
+    feign:
+      order-service:
+        connect-timeout-ms: 5000
+        read-timeout-ms: 10000

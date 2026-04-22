@@ -1,0 +1,7 @@
+# 可选：Hikari 热更新（seckill-service）
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5

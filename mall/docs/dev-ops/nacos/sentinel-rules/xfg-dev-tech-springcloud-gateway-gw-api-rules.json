@@ -1,0 +1,24 @@
+[
+  {
+    "apiName": "seckill_trade_api",
+    "predicateItems": [
+      {
+        "pattern": "/gw/api/v1/seckill/trade/**",
+        "matchStrategy": 1
+      }
+    ]
+  },
+  {
+    "apiName": "order_create_api",
+    "predicateItems": [
+      {
+        "pattern": "/gw/api/v1/order/create_order",
+        "matchStrategy": 0
+      },
+      {
+        "pattern": "/gw/api/v1/order/get_pay_url",
+        "matchStrategy": 0
+      }
+    ]
+  }
+]

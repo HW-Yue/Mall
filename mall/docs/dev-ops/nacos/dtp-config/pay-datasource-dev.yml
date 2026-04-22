@@ -1,0 +1,9 @@
+# pay 服务 Hikari 连接池可调项（dev）
+# DataId: pay-datasource-dev.yml  Group: DEFAULT_GROUP
+# pool-name = Pay_HikariCP（见 ops-agent.mapping.pool-name-to-app）
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 25
+      minimum-idle: 15

@@ -1,18 +1,35 @@
 # Grafana MCP server https://github.com/grafana/mcp-grafana
 version: '3.9'
-# 执行脚本；docker-compose -f docker-compose-grafana-aliyun.yml up -d
+# 先启动 docker-compose-environment.yml 创建网络 nexus-devops，再执行本文件：
+#   docker-compose -f docker-compose-grafana.yml up -d
+# 这样 prometheus 可通过 http://nacos:8848 使用 Nacos 官方 Prometheus HTTP SD
 services:
   # 数据采集
   prometheus:
-    image: prom/prometheus:latest # 换成官方原版，功能最全
+    image: prom/prometheus:latest
     container_name: prometheus
     restart: always
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
     extra_hosts:
-      - "host.docker.internal:host-gateway" # 允许容器通过这个域名访问宿主机
+      - "host.docker.internal:host-gateway"
+    networks:
+      - my-network
+
+  # 告警管理：接收 Prometheus 告警，路由到 AI Agent Webhook
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    restart: always
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./prometheus/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - my-network
 
@@ -53,7 +70,31 @@ services:
       - my-network
 
 
+  # Prometheus MCP Server — 让 AI 助手通过 MCP 协议查询 PromQL 指标
+  # 文档：https://github.com/pab1it0/prometheus-mcp-server
+  # 使用方式：
+  #   1. 启动：docker-compose -f docker-compose-grafana.yml up -d prometheus-mcp
+  #   2. 测试：curl http://localhost:8001/sse
+  #   3. 接入 Claude Desktop / Cursor 等客户端，添加 SSE 服务端点：http://localhost:8001/sse
+  # 可用工具：execute_query（执行 PromQL）、list_metrics（列指标）、execute_range_query（范围查询）
+  prometheus-mcp:
+    image: ghcr.io/pab1it0/prometheus-mcp-server:latest
+    container_name: prometheus-mcp
+    ports:
+      - "8001:8080"
+    environment:
+      - PROMETHEUS_URL=http://prometheus:9090
+      - PROMETHEUS_MCP_SERVER_TRANSPORT=sse
+      - PROMETHEUS_MCP_BIND_HOST=0.0.0.0
+      - PROMETHEUS_MCP_BIND_PORT=8080
+      - PROMETHEUS_REQUEST_TIMEOUT=30
+    restart: unless-stopped
+    networks:
+      - my-network
+    depends_on:
+      - prometheus
 
 networks:
   my-network:
-    driver: bridge
+    name: nexus-devops
+    external: true

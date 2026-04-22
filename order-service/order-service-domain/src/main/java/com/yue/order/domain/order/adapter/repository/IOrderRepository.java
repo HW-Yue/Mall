@@ -22,17 +22,23 @@ public interface IOrderRepository {
     /** 按外部交易单号查询 */
     OrderEntity queryByOutTradeNo(String outTradeNo);
 
+    /** 查询超时未支付订单的外部交易单号列表 */
+    List<String> queryTimeoutCloseOrderList();
+
     /** 更新 pay_url */
     void updatePayUrl(String userId, String outTradeNo, String payUrl);
 
     /** 支付成功：更新 status=1, out_trade_time */
     void updatePaySuccess(String outTradeNo, Date outTradeTime);
 
-    /** 标记退款：更新 status=2 */
-    void updateRefund(String userId, String orderId);
+    /** 标记待退款：更新 status=3 */
+    void updateWaitRefundByOutTradeNo(String outTradeNo);
 
     /** 按外部交易单号关单 */
     void updateCloseByOutTradeNo(String outTradeNo);
+
+    /** 退款完成：更新 status=4 */
+    void updateRefundedByOutTradeNo(String outTradeNo);
 
     /** 释放普通商品库存（仅在 normal 类型时实际调用 mall 服务） */
     void unlockStock(OrderEntity orderEntity);

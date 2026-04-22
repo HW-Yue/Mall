@@ -6,6 +6,11 @@
 --   秒杀活动（seckill_activity）
 --   渠道-商品-活动映射（sc_sku_activity，仅秒杀条目）
 --
+-- 运行期说明：
+--   1. 秒杀下单先扣 Redis 可售库存，支付成功后再扣 Redis 真实库存并异步落 MySQL remain_count
+--   2. 超时关单 / 取消订单只恢复可售库存，不回滚真实库存
+--   3. seckillToken、orderId -> token / orderMeta 属于 Redis 运行态元数据，不落库
+--
 -- 注意：discount 每个营销服务各自维护，数据独立，不共享
 -- ============================================================
 

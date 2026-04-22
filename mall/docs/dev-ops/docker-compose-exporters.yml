@@ -1,0 +1,63 @@
+# 三个中间件 Exporter：mysqld / redis / rocketmq
+# 启动：
+#   docker compose -f docker-compose-exporters.yml up -d
+# 前置：docker-compose-environment.yml（mysql、redis）和 docker-compose-rocketmq.yml（rmq-namesrv）
+#        已经启动，并创建好外部网络 nexus-devops。
+#
+# Prometheus scrape 约定（见 prometheus/prometheus.yml）：
+#   - application: shared（统一打标，和业务服务的 {application}=mall/order/... 区分开）
+#   - category: mysql / redis / rocketmq（ops-agent 通过此标签路由到对应 domain 策略）
+#
+# 端口（宿主机）：
+#   9104 - mysqld-exporter
+#   9121 - redis-exporter
+#   5557 - rocketmq-exporter
+
+version: "3.9"
+
+services:
+  # MySQL 指标导出
+  # v0.14.0 仍支持 DATA_SOURCE_NAME 环境变量，省得额外挂载 .my.cnf
+  mysqld-exporter:
+    image: prom/mysqld-exporter:v0.14.0
+    container_name: mysqld-exporter
+    restart: always
+    ports:
+      - "9104:9104"
+    environment:
+      # 容器间访问 MySQL 用 3306 + 服务名 mysql；账号沿用 environment compose 里的 root/123456
+      # 生产环境请单独创建只读 exporter 账号，按 Prometheus 官方 mysqld_exporter README 授权
+      DATA_SOURCE_NAME: "root:123456@(mysql:3306)/"
+    networks:
+      - my-network
+
+  # Redis 指标导出
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.62.0
+    container_name: redis-exporter
+    restart: always
+    ports:
+      - "9121:9121"
+    environment:
+      REDIS_ADDR: "redis://redis:6379"
+      # 如 redis.conf 设置了 requirepass，这里加 REDIS_PASSWORD
+    networks:
+      - my-network
+
+  # RocketMQ 指标导出
+  # 官方镜像 apacherocketmq/rocketmq-exporter:0.0.2，端口 5557
+  rocketmq-exporter:
+    image: apacherocketmq/rocketmq-exporter:0.0.2
+    container_name: rocketmq-exporter
+    restart: always
+    ports:
+      - "5557:5557"
+    environment:
+      JAVA_OPTS: "-Drocketmq.config.namesrvAddr=rmq-namesrv:9876"
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    name: nexus-devops
+    external: true

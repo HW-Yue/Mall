@@ -1,15 +1,11 @@
 package cn.bugstack.infrastructure.adapter.repository;
 
-import cn.bugstack.domain.order.adapter.event.PaySuccessMessageEvent;
 import cn.bugstack.domain.order.adapter.repository.IOrderRepository;
 import cn.bugstack.domain.order.model.entity.*;
 import cn.bugstack.domain.order.model.valobj.MarketTypeVO;
 import cn.bugstack.domain.order.model.valobj.OrderStatusVO;
 import cn.bugstack.infrastructure.dao.IOrderDao;
 import cn.bugstack.infrastructure.dao.po.PayOrder;
-import cn.bugstack.types.event.BaseEvent;
-import com.alibaba.fastjson.JSON;
-import com.google.common.eventbus.EventBus;
 import org.springframework.stereotype.Repository;
 
 import jakarta.annotation.Resource;
@@ -87,23 +83,11 @@ public class OrderRepository implements IOrderRepository {
 
     @Override
     public void changeOrderPaySuccess(String orderId, Date payTime) {
-//        PayOrder payOrderReq = new PayOrder();
-//        payOrderReq.setOrderId(orderId);
-//        payOrderReq.setStatus(OrderStatusVO.PAY_SUCCESS.getCode());
-//        payOrderReq.setPayTime(payTime);
-//        orderDao.changeOrderPaySuccess(payOrderReq);
-//
-//        // 不走拼团营销的直接结算发货
-//        BaseEvent.EventMessage<PaySuccessMessageEvent.PaySuccessMessage> paySuccessMessageEventMessage = paySuccessMessageEvent.buildEventMessage(
-//                PaySuccessMessageEvent.PaySuccessMessage.builder()
-//                        .tradeNo(orderId)
-//                        .build());
-//        PaySuccessMessageEvent.PaySuccessMessage paySuccessMessage = paySuccessMessageEventMessage.getData();
-//
-//        // 旧版发送消息方式
-//        // eventBus.post(JSON.toJSONString(paySuccessMessage));
-//
-//        eventPublisher.publish(paySuccessMessageEvent.topic(), JSON.toJSONString(paySuccessMessage));
+        PayOrder payOrderReq = new PayOrder();
+        payOrderReq.setOrderId(orderId);
+        payOrderReq.setStatus(OrderStatusVO.PAY_SUCCESS.getCode());
+        payOrderReq.setPayTime(payTime);
+        orderDao.changeOrderPaySuccess(payOrderReq);
     }
 
     @Override
@@ -120,8 +104,8 @@ public class OrderRepository implements IOrderRepository {
     }
 
     @Override
-    public List<String> queryTimeoutCloseOrderList() {
-        return orderDao.queryTimeoutCloseOrderList();
+    public List<String> queryPayReconcileCloseOrderList() {
+        return orderDao.queryPayReconcileCloseOrderList();
     }
 
     @Override

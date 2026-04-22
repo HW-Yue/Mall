@@ -34,6 +34,7 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
 
     private static final String TOKEN_BY_ORDER_KEY_PREFIX = "seckill:token:by:order:";
     private static final String TOKEN_KEY_PREFIX = "seckill:token:";
+    private static final String ORDER_META_KEY_PREFIX = "seckill:order:meta:";
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -62,44 +63,21 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
                 return;
             }
 
-            // 1. orderId → seckillToken（建单时由 order-service 写入）
-            String seckillToken = stringRedisTemplate.opsForValue().get(TOKEN_BY_ORDER_KEY_PREFIX + orderId);
-            if (StringUtils.isBlank(seckillToken)) {
-                log.warn("[秒杀支付成功] Redis 未找到 seckillToken orderId:{}", orderId);
-                return;
-            }
-
-            // 2. seckillToken → userId:productId:activityId
-            String tokenValue = stringRedisTemplate.opsForValue().get(TOKEN_KEY_PREFIX + seckillToken);
-            if (StringUtils.isBlank(tokenValue)) {
-                log.warn("[秒杀支付成功] Redis token 已过期 seckillToken:{}", seckillToken);
-                return;
-            }
-
-            String[] parts = tokenValue.split(":");
-            if (parts.length < 3) {
-                log.error("[秒杀支付成功] token 格式异常 tokenValue:{}", tokenValue);
-                return;
-            }
-            String productId = parts[1];
-            Long activityId;
-            try {
-                activityId = Long.parseLong(parts[2]);
-            } catch (NumberFormatException e) {
-                log.error("[秒杀支付成功] activityId 解析失败 tokenValue:{}", tokenValue);
-                return;
-            }
+            StockContext stockContext = loadStockContext(orderId);
 
             // 3. Lua 原子扣减 Redis 真实库存
-            int realResult = seckillStockPort.deductRealStockByLua(activityId, productId);
+            int realResult = seckillStockPort.deductRealStockByLua(stockContext.getActivityId(), stockContext.getProductId());
             if (realResult == 1) {
                 // 4. 扣减成功 → 发 MQ 异步更新 MySQL remain_count
-                seckillStockDeductPort.sendDeductStockTask(activityId, productId);
-                log.info("[真实库存] 扣减成功，已发 MySQL 更新 MQ outTradeNo:{} activityId:{} productId:{}", outTradeNo, activityId, productId);
+                seckillStockDeductPort.sendDeductStockTask(stockContext.getActivityId(), stockContext.getProductId());
+                log.info("[真实库存] 扣减成功，已发 MySQL 更新 MQ outTradeNo:{} activityId:{} productId:{}",
+                        outTradeNo, stockContext.getActivityId(), stockContext.getProductId());
             } else if (realResult == 0) {
-                log.warn("[真实库存] 库存不足（Redis real=0） outTradeNo:{} activityId:{} productId:{}", outTradeNo, activityId, productId);
+                log.warn("[真实库存] 库存不足（Redis real=0） outTradeNo:{} activityId:{} productId:{}",
+                        outTradeNo, stockContext.getActivityId(), stockContext.getProductId());
             } else {
-                log.warn("[真实库存] 扣减异常 result:{} outTradeNo:{} activityId:{} productId:{}", realResult, outTradeNo, activityId, productId);
+                log.warn("[真实库存] 扣减异常 result:{} outTradeNo:{} activityId:{} productId:{}",
+                        realResult, outTradeNo, stockContext.getActivityId(), stockContext.getProductId());
             }
 
         } catch (Exception e) {
@@ -108,4 +86,67 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
         }
     }
 
+    private StockContext loadStockContext(String orderId) {
+        String orderMeta = stringRedisTemplate.opsForValue().get(ORDER_META_KEY_PREFIX + orderId);
+        if (StringUtils.isNotBlank(orderMeta)) {
+            return parseStockContext(orderMeta, orderId, "orderMeta");
+        }
+
+        String seckillToken = stringRedisTemplate.opsForValue().get(TOKEN_BY_ORDER_KEY_PREFIX + orderId);
+        if (StringUtils.isBlank(seckillToken)) {
+            throw new IllegalStateException("[秒杀支付成功] Redis 未找到 orderMeta 和 seckillToken orderId:" + orderId);
+        }
+
+        String tokenValue = stringRedisTemplate.opsForValue().get(TOKEN_KEY_PREFIX + seckillToken);
+        if (StringUtils.isBlank(tokenValue)) {
+            throw new IllegalStateException("[秒杀支付成功] Redis token 已过期且无 orderMeta seckillToken:" + seckillToken + " orderId:" + orderId);
+        }
+
+        return parseStockContext(tokenValue, orderId, "token");
+    }
+
+    private StockContext parseStockContext(String rawValue, String orderId, String source) {
+        String[] parts = rawValue.split(":");
+        if (parts.length < 2) {
+            throw new IllegalStateException("[秒杀支付成功] 上下文格式异常 source:" + source + " rawValue:" + rawValue + " orderId:" + orderId);
+        }
+
+        String productId;
+        String activityIdValue;
+        if (parts.length >= 3) {
+            productId = parts[1];
+            activityIdValue = parts[2];
+        } else {
+            productId = parts[0];
+            activityIdValue = parts[1];
+        }
+
+        if (StringUtils.isAnyBlank(productId, activityIdValue)) {
+            throw new IllegalStateException("[秒杀支付成功] 上下文字段缺失 source:" + source + " rawValue:" + rawValue + " orderId:" + orderId);
+        }
+
+        try {
+            return new StockContext(Long.parseLong(activityIdValue), productId);
+        } catch (NumberFormatException e) {
+            throw new IllegalStateException("[秒杀支付成功] activityId 解析失败 source:" + source + " rawValue:" + rawValue + " orderId:" + orderId, e);
+        }
+    }
+
+    private static final class StockContext {
+        private final Long activityId;
+        private final String productId;
+
+        private StockContext(Long activityId, String productId) {
+            this.activityId = activityId;
+            this.productId = productId;
+        }
+
+        public Long getActivityId() {
+            return activityId;
+        }
+
+        public String getProductId() {
+            return productId;
+        }
+    }
 }

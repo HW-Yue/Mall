@@ -16,7 +16,10 @@ public interface IOrderService {
 
     List<String> queryNoPayNotifyOrder();
 
-    List<String> queryTimeoutCloseOrderList();
+    /**
+     * 查询长时间残留的待支付台账，用于 pay 侧本地对账兜底。
+     */
+    List<String> queryPayReconcileCloseOrderList();
 
     boolean changeOrderClose(String orderId);
 

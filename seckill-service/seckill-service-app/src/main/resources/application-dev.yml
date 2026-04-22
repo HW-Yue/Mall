@@ -1,30 +1,117 @@
 server:
   port: 8094
+  # 工作线程由 DynamicTp tomcat-tp 管理；此处为连接层参数
   tomcat:
-    # 最大的工作线程数，建议设为 1000~2000
-    threads:
-      max: 1000
-      min-spare: 100
-    # 允许排队的连接数
     accept-count: 2000
-    # 最大连接数
     max-connections: 10000
 
+# Actuator：供 Prometheus 抓取 /actuator/prometheus（与 Docker 内 Prometheus + Nacos SD 对接）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 spring:
+  config:
+    import:
+      - classpath:nacos/seckill-service-dtp-dev.yml
+      - optional:nacos:seckill-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - optional:nacos:seckill-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://127.0.0.1:13306/seckill_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
     username: root
     password: 123456
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: Seckill_HikariCP
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 180000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+  # Redis：统一用官方 redisson-spring-boot-starter；秒杀场景连接池放大以扛热点 Key 压力。
+  # Redisson 会接管 Spring Data Redis 的 connection factory，StringRedisTemplate / Lua 脚本自动共享一套连接池。
   data:
     redis:
       host: localhost
       port: 16379
+      database: 0
+      timeout: 3000ms
+      client-name: seckill-redisson
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://localhost:16379"
+          database: 0
+          clientName: seckill-redisson
+          connectionPoolSize: 1000
+          connectionMinimumIdleSize: 100
+          idleConnectionTimeout: 30000
+          pingConnectionInterval: 60000
+          retryAttempts: 3
+          retryInterval: 1000
+          connectTimeout: 5000
+          timeout: 3000
+          keepAlive: true
   cloud:
     nacos:
       discovery:
         ip: 127.0.0.1
         server-addr: 127.0.0.1:8848
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        import-check:
+          enabled: false
+    # Sentinel：流控/熔断/降级/热点参数；规则以 Nacos 为源，动态生效
+    # 秒杀场景主要依赖：param-flow（热点 SKU 限流）+ flow（接口 QPS）+ system（全局负载保护）
+    sentinel:
+      eager: true
+      transport:
+        dashboard: 127.0.0.1:8858
+        port: 8722
+      datasource:
+        flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: flow
+            data-type: json
+        degrade:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-degrade-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: degrade
+            data-type: json
+        param-flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-param-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: param-flow
+            data-type: json
+        system:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-system-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: system
+            data-type: json
+        authority:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-authority-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: authority
+            data-type: json
 
 mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
@@ -34,30 +121,17 @@ rocketmq:
   producer:
     group: seckill-service-producer
 
-# Redis
-redis:
-  sdk:
-    config:
-      host: localhost
-      port: 16379
-      pool-size: 1000
-      min-idle-size: 100
-      idle-timeout: 30000
-      connect-timeout: 5000
-      retry-attempts: 3
-      retry-interval: 1000
-      ping-interval: 60000
-      keep-alive: true
-
 app:
   rocketmq:
     topic:
       seckillOrderCreate: seckill-order-create
       orderPaidSeckill: order-paid-seckill
+      orderCloseSeckill: order-close-seckill
       seckillStockDeduct: seckill-stock-deduct
     consumerGroup:
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE
       orderPaidSeckill: CG_ORDER_PAID_SECKILL
+      orderCloseSeckill: CG_ORDER_CLOSE_SECKILL_MARKET
       seckillStockDeduct: CG_SECKILL_STOCK_DEDUCT
 
 logging:

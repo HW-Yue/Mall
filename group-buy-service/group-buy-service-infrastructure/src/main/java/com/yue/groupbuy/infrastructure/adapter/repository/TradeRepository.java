@@ -413,6 +413,11 @@ public class TradeRepository implements ITradeRepository {
         return tOrderGroupDao.update2Refund(userId, orderId);
     }
 
+    @Override
+    public int updateOrder2Refunded(String outTradeNo) {
+        return tOrderGroupDao.update2Refunded(outTradeNo);
+    }
+
     private NotifyTaskEntity buildNotifyTaskEntity(NotifyTask task) {
         return NotifyTaskEntity.builder()
                 .teamId(task.getTeamId())

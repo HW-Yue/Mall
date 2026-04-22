@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: xfg-dev-tech-springcloud-gateway
+    name: springcloud-gateway
   cloud:
     nacos:
       discovery:
@@ -14,6 +14,32 @@ spring:
       config:
         import-check:
           enabled: false
+    # Sentinel Gateway：针对网关路由做接口分组限流
+    # Dashboard 上会自动出现「xfg-dev-tech-springcloud-gateway」，并识别所有 Route
+    # 动态规则：Nacos 中编辑
+    #   - xfg-dev-tech-springcloud-gateway-gw-flow-rules.json   （GatewayFlowRule 集合）
+    #   - xfg-dev-tech-springcloud-gateway-gw-api-rules.json    （ApiDefinition 接口分组，可选）
+    sentinel:
+      eager: true
+      filter:
+        # Spring Cloud Gateway 使用专用过滤器，关掉默认的 Servlet CommonFilter 以避免冲突
+        enabled: false
+      transport:
+        dashboard: 127.0.0.1:8858
+        port: 8718
+      scg:
+        fallback:
+          mode: response
+          response-status: 429
+          response-body: '{"code":"429","info":"Blocked by Sentinel(gateway)"}'
+      datasource:
+        gw-flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-gw-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: gw-flow
+            data-type: json
     gateway:
       discovery:
         locator:
@@ -94,3 +120,13 @@ logstash:
   enabled: true
   host: 127.0.0.1
   port: 4560
+
+# 监控配置：暴露 /actuator/prometheus 供 Prometheus 抓取
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}

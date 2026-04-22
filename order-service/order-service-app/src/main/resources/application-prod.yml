@@ -1,0 +1,33 @@
+rocketmq:
+  name-server: ${ROCKETMQ_NAME_SERVER:127.0.0.1:9876}
+  producer:
+    group: order-service-producer
+    send-message-timeout: 3000
+
+app:
+  rocketmq:
+    topic:
+      paySuccessNormal: pay-success-normal
+      paySuccessGroupBuy: pay-success-group-buy
+      paySuccessSeckill: pay-success-seckill
+      orderCloseNormal: order-close-normal
+      orderCloseGroupBuy: order-close-group-buy
+      orderCloseSeckill: order-close-seckill
+      payRefundNormal: pay-refund-normal
+      payRefundGroupBuy: pay-refund-group-buy
+      payRefundSeckill: pay-refund-seckill
+      orderPaidNormal: order-paid-normal
+      orderPaidGroupBuy: order-paid-group_buy
+      orderPaidSeckill: order-paid-seckill
+      seckillOrderCreate: seckill-order-create
+    consumerGroup:
+      paySuccessNormal: CG_PAY_SUCCESS_NORMAL
+      paySuccessGroupBuy: CG_PAY_SUCCESS_GROUP_BUY
+      paySuccessSeckill: CG_PAY_SUCCESS_SECKILL
+      orderCloseNormal: CG_ORDER_CLOSE_NORMAL
+      orderCloseGroupBuy: CG_ORDER_CLOSE_GROUP_BUY
+      orderCloseSeckill: CG_ORDER_CLOSE_SECKILL
+      payRefundNormal: CG_PAY_REFUND_NORMAL
+      payRefundGroupBuy: CG_PAY_REFUND_GROUP_BUY
+      payRefundSeckill: CG_PAY_REFUND_SECKILL
+      seckillOrderCreate: CG_SECKILL_ORDER_CREATE_ORDER

@@ -35,6 +35,7 @@ public class SeckillStockPort implements ISeckillStockPort {
     private static final String USER_BOUGHT_KEY_PREFIX     = "seckill:user:";
     private static final String TOKEN_KEY_PREFIX           = "seckill:token:";
     private static final String TOKEN_STATUS_KEY_PREFIX    = "seckill:token:status:";
+    private static final long TOKEN_TTL_HOURS              = 24L;
     private static final String STOCK_INIT_LOCK_PREFIX     = "seckill:init:lock:";
 
     private static final long INIT_LOCK_WAIT_SECONDS = 3L;
@@ -150,8 +151,9 @@ public class SeckillStockPort implements ISeckillStockPort {
     @Override
     public void saveSeckillToken(String seckillToken, String userId, String goodsId, Long activityId) {
         String tokenValue = userId + ":" + goodsId + ":" + activityId;
-        stringRedisTemplate.opsForValue().set(TOKEN_KEY_PREFIX + seckillToken, tokenValue, 30, TimeUnit.MINUTES);
-        stringRedisTemplate.opsForValue().set(TOKEN_STATUS_KEY_PREFIX + seckillToken, "0", 30, TimeUnit.MINUTES);
+        // 保留 24 小时，覆盖下单后轮询、支付回调补偿、超时关单返库与 MQ 重试窗口。
+        stringRedisTemplate.opsForValue().set(TOKEN_KEY_PREFIX + seckillToken, tokenValue, TOKEN_TTL_HOURS, TimeUnit.HOURS);
+        stringRedisTemplate.opsForValue().set(TOKEN_STATUS_KEY_PREFIX + seckillToken, "0", TOKEN_TTL_HOURS, TimeUnit.HOURS);
     }
 
     // ── 懒加载初始化（两个 key 均初始化）────────────────────────────────

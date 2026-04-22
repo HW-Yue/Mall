@@ -8,12 +8,12 @@ This is a multi-module Java enterprise microservices mono-repo. All major backen
 
 **Services:**
 - `springcloud-gateway` — API Gateway，所有请求入口
-- `agent/ai-agent-station` — 核心 AI Agent 平台（Spring Boot 3.4.3, Java 17）
-- `agent/ai-agent-station-front` — Agent 前端（React 18）
-- `agent/ai-mcp-*/mcp-server-*` — 自定义 MCP server 实现
 - `mall` — 商城（Spring Boot 2.7.12, Java 8），含拼团/秒杀/普通三种营销类型
+- `order-service` — 统一订单服务
+- `group-buy-service` — 拼团服务
+- `seckill-service` — 秒杀服务
 - `pay` — 支付服务（Spring Boot 2.7.12, Java 8），对接支付宝
-- `permissionSystem` — 权限管理（Spring Boot 3.5.5, Java 21），JWT + RBAC + RAG
+- `ops-agent` — 运维 Agent，动态调整商城参数配置（Sentinel 流控规则、DynamicTP 线程池配置等）。审批任务持久化在 mall 的 MySQL 实例（独立库 `ops_agent_db`，建表脚本 `mall/docs/dev-ops/mysql/sql/ops_agent.sql`）。详见 `ops-agent/CLAUDE.md`
 
 ## 完整接口清单
 
@@ -325,8 +325,8 @@ Feign 调用 → login-pay/create_pay_order
 
 | 调用方 | 被调用方 | Feign 客户端文件 | 调用地址 |
 |--------|----------|------------------|----------|
-| group-buy-service | order-service | `group-buy-service-infrastructure/.../gateway/IOrderService.java` | `@FeignClient(name = "order-service")` |
-| seckill-service | order-service | `seckill-service-infrastructure/.../gateway/IOrderService.java` | `@FeignClient(name = "order-service")` |
+| group-buy-service | order-service | `IOrderService.java` + `OrderServiceFeignAgentConfig.java`（超时来自 `app.agent.feign.order-service.*`，启动时绑定） | `@FeignClient(name = "order-service", configuration = OrderServiceFeignAgentConfig.class)` |
+| seckill-service | order-service | `seckill-service-infrastructure/.../gateway/IOrderService.java` | `@FeignClient(name = "order-service")`（无独立 Feign configuration） |
 | order-service | login-pay | `order-service-infrastructure/.../gateway/IPayService.java` | `@FeignClient(name = "login-pay")` |
 
 ---
@@ -450,7 +450,7 @@ seckill: {
 | `seckill-service` | **独立维护秒杀商品数据**，秒杀页面商品加载、秒杀下单，内部调用 order-service 创建/退款订单 |
 | `order-service` | 统一订单创建、支付 URL 获取、退款执行、订单查询；消费 pay 通知后发布下游事件 |
 | `pay` | 对接支付宝，接收支付宝回调后按 marketType 发布 `pay-success-*` 三个 Topic |
-| `agent` | 消费拼团成功消息，给用户下发 AI Token |
+| `ops-agent` | 动态调整商城参数配置（Sentinel 流控规则、DynamicTP 线程池配置等），详见 `ops-agent/CLAUDE.md` |
 
 ### 商品数据冗余策略
 
@@ -490,8 +490,7 @@ seckill: {
 2. 前端调 **order-service** `get_pay_url` → order-service 调 pay 拿支付宝链接
 3. 用户付款 → 支付宝回调 pay → pay 发布 `pay-success-normal`
 4. **order-service** 消费 `pay-success-normal`
-   - 发**半消息** → 更新订单状态（落库）→ **提交半消息**通知 **agent**（`order-paid-normal`）
-5. **agent** 消费消息，下发 AI Token
+   - 发**半消息** → 更新订单状态（落库）→ **提交半消息**
 
 ### 拼团下单（marketType = group_buy）
 1. **前端调 group-buy-service** `/api/v1/group-buy/market/query_goods_list` 加载拼团商品列表
@@ -504,9 +503,8 @@ seckill: {
 7. **group-buy-service** 消费 `order-paid-group_buy`，更新组队状态
 8. **成团后**：group-buy-service 调用 **order-service** 结算接口
 9. **order-service** 结算完成
-   - 发**半消息** → 更新结算状态（落库）→ **提交半消息**通知 **agent**（`group-buy-success-notify`）
-10. **agent** 消费消息，下发 AI Token
-11. 退款：前端调 **group-buy-service** → HTTP 调 order-service `refund`
+   - 发**半消息** → 更新结算状态（落库）→ **提交半消息**
+10. 退款：前端调 **group-buy-service** → HTTP 调 order-service `refund`
 
 ### 秒杀下单（marketType = seckill）
 1. **前端调 seckill-service** `/api/v1/seckill/market/query_goods_list` 加载秒杀商品列表
@@ -516,10 +514,8 @@ seckill: {
 5. **order-service** 消费 `pay-success-seckill`
    - 发**半消息** → 更新订单状态（落库）→ **同时提交两条半消息**：
      - 通知 **seckill-service**（`order-paid-seckill`）
-     - 通知 **agent**（`order-paid-normal` 或其他专用 topic）
 6. **seckill-service** 消费消息，更新秒杀订单状态
-7. **agent** 消费消息，下发 AI Token
-8. 退款：前端调 **seckill-service** → HTTP 调 order-service `refund`
+7. 退款：前端调 **seckill-service** → HTTP 调 order-service `refund`
 
 ### 退款流程
 - Domain 层逻辑已写完，trigger 层接口（HTTP 入口）尚未实现
@@ -601,9 +597,6 @@ seckill: {
 - 支付宝回调入口：`pay/pay-trigger/src/main/java/cn/bugstack/trigger/http/AliPayController.java`
 - RocketMQ 按类型路由发送：`pay/pay-infrastructure/src/main/java/cn/bugstack/infrastructure/adapter/port/PaySuccessRocketMqPort.java`
 
-### Agent 服务
-- 拼团成功消费者（RocketMQ）：`agent/ai-agent-station/ai-agent-station-study-trigger/src/main/java/cn/bugstack/ai/trigger/listener/groupBuyListener.java`
-
 ## MQ 规划（RocketMQ）
 
 ### pay → order-service（支付宝回调后触发）
@@ -617,11 +610,8 @@ seckill: {
 
 | 场景 | Topic | 生产者 | 消费者 | 说明 |
 |------|-------|--------|--------|------|
-| normal 支付成功 | `order-paid-normal` | order-service | **agent** | 订单支付完成，直接通知 agent 发 token |
-| seckill 支付成功 | `order-paid-seckill` | order-service | **seckill-service** | 通知 seckill 更新订单状态 |
-| seckill 支付成功 | `order-paid-normal` | order-service | **agent** | **同时**通知 agent 发 token |
 | group_buy 支付成功 | `order-paid-group_buy` | order-service | **group-buy-service** | 通知 group-buy 更新组队状态 |
-| group_buy 成团结算 | `group-buy-success-notify` | order-service | **agent** | 成团结算完成，通知 agent 发 token |
+| seckill 支付成功 | `order-paid-seckill` | order-service | **seckill-service** | 通知 seckill 更新订单状态 |
 
 > **事务消息保证**：order-service 发送以上消息必须使用 `RocketMQTemplate.sendMessageInTransaction()`（半消息），本地事务为更新订单状态，确保消息和数据库状态一致。
 
@@ -637,13 +627,6 @@ mvn test
 mvn clean package -pl <module-name> -am
 ```
 
-### Frontend (`agent/ai-agent-station-front`)
-```bash
-npm install && npm run dev
-npm run build
-npm run lint:fix
-```
-
 ### Docker
 ```bash
 docker-compose -f docs/dev-ops/docker-compose-environment.yml up -d
@@ -654,13 +637,14 @@ docker-compose -f docs/dev-ops/docker-compose-app.yml up -d
 
 | Subsystem | Java | Spring Boot |
 |-----------|------|-------------|
-| ai-agent-station | 17 | 3.4.3 |
-| permissionSystem | 21 | 3.5.5 |
 | mall | 8 | 2.7.12 |
 | pay | 8 | 2.7.12 |
 
-AI/LLM libs: `langchain4j 1.0.1`, `spring-ai 1.0.0-M6.1`
 ORM: MyBatis，Cache: Redisson，MQ: RocketMQ（主），RabbitMQ（mall 内部退款）
+
+**Redis 客户端统一约定（2026 版）**：所有服务都用官方 `redisson-spring-boot-starter:3.26.0`，配置键统一在 `spring.data.redis.*`（host/port/password/client-name）+ `spring.redis.redisson.config`（YAML 片段），不再使用 Lettuce / 自研 `redis.sdk.config` / 自定义 `RedissonConfig`。每个服务的 `client-name` 必须唯一（`mall-redisson` / `order-redisson` / `seckill-redisson` / `groupbuy-redisson` / `pay-redisson`），`RedissonClient` 与 `StringRedisTemplate` 共享同一条连接。client-name → application 的反查表写在 `ops-agent/src/main/resources/application.yml` 的 `ops-agent.mapping.client-name-to-app`。
+
+**Hikari 连接池命名**：每个服务的 `spring.datasource.hikari.pool-name` 也全局唯一（`Mall_HikariCP` / `Order_HikariCP` / `Seckill_HikariCP` / `GroupBuy_HikariCP` / `Pay_HikariCP`）。Prometheus 采集时 pool 名透传到 `hikaricp_connections_*{pool="..."}`，`HikariTuningStrategy` 据此反查 `ops-agent.mapping.pool-name-to-app` 定位 Nacos dataId。
 
 ## Spring Profiles
 
@@ -670,11 +654,254 @@ ORM: MyBatis，Cache: Redisson，MQ: RocketMQ（主），RabbitMQ（mall 内部�
 
 | Project | Main Class | 模块 |
 |---------|-----------|------|
-| ai-agent-station | `cn.bugstack.ai.Application` | `ai-agent-station-study-app` |
-| mall | `com.yue.Application` | `mall-app` |
-| order-service | `com.yue.order.Application` | `order-service-app` |
-| group-buy-service | `com.yue.groupbuy.Application` | `group-buy-service-app` |
-| seckill-service | `com.yue.seckill.Application` | `seckill-service-app` |
-| pay | `cn.bugstack.Application` | `pay-app` |
-| permissionSystem | `com.permissionsystem.PermissionSystemApplication` | — |
-| gateway | `cn.bugstack.xfg.dev.tech.GatewayApplication` | `app` |
+| mall | `com.yue.MallApplication` | `mall-app` |
+| order-service | `com.yue.order.OrderServiceApplication` | `order-service-app` |
+| group-buy-service | `com.yue.groupbuy.GroupBuyServiceApplication` | `group-buy-service-app` |
+| seckill-service | `com.yue.seckill.SeckillServiceApplication` | `seckill-service-app` |
+| pay | `cn.bugstack.PayApplication` | `pay-app` |
+| springcloud-gateway | `cn.bugstack.xfg.dev.tech.SpringcloudGatewayApplication` | `app` |
+
+---
+
+## Prometheus & Sentinel & DynamicTP 技术配置
+
+> 目标：各商城服务暴露 Sentinel / DynamicTP / JVM 指标到 Prometheus，ops-agent 根据告警动态调整配置。ops-agent 详见 `ops-agent/CLAUDE.md`。
+
+### 指标暴露现状
+
+| 指标来源 | 实现位置 | 暴露指标 | 状态 |
+|---------|---------|---------|------|
+| **Sentinel** | `Dependencies/common-log-starter/.../sentinel/SentinelMetricsBinder.java` | `sentinel_pass_qps`, `sentinel_block_qps`, `sentinel_success_qps`, `sentinel_exception_qps`, `sentinel_rt`, `sentinel_current_thread`, `sentinel_total_qps` | ✅ 自动扫描 `ClusterBuilderSlot.getClusterNodeMap()` 注册 Gauge |
+| **DynamicTP** | `org.dromara.dynamictp` 内置 `MicrometerCollector` | `thread_pool_active_count`, `thread_pool_pool_size`, `thread_pool_core_pool_size`, `thread_pool_maximum_pool_size`, `thread_pool_queue_size`, `thread_pool_queue_remaining` | ✅ 各服务 `dtp-dev.yml` 中配置 `collector-types: [micrometer, internal_logging]` |
+| **JVM/业务** | Spring Boot Actuator + Micrometer | `jvm_*`, `tomcat_*`, `http_server_requests_*`, `system_*` | ✅ 依赖 `spring-boot-starter-actuator` + `micrometer-registry-prometheus` |
+
+**各服务 Actuator 端点已开启：**
+- `management.endpoints.web.exposure.include: health,prometheus`
+- 访问：`http://{host}:{port}/actuator/prometheus`
+
+### Prometheus 配置
+
+**主配置文件：** `mall/docs/dev-ops/prometheus/prometheus.yml`
+
+```yaml
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "/etc/prometheus/alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ['alertmanager:9093']
+
+scrape_configs:
+  - job_name: 'nacos-sd-spring-boot'
+    metrics_path: '/actuator/prometheus'
+    honor_labels: true
+    http_sd_configs:
+      - url: 'http://nacos:8848/nacos/prometheus'
+        refresh_interval: 30s
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '127\.0\.0\.1:(.*)'
+        replacement: 'host.docker.internal:${1}'
+        target_label: __address__
+```
+
+> 前提：Nacos 需开启 `NACOS_PROMETHEUS_METRICS_ENABLED=true`，`curl http://nacos:8848/nacos/prometheus` 返回服务列表。
+
+**告警规则文件：** `mall/docs/dev-ops/prometheus/alert_rules.yml`
+
+按服务 + 按指标类型分组，详见下方「告警规则」小节。
+
+### Alertmanager 配置
+
+**配置文件：** `mall/docs/dev-ops/prometheus/alertmanager.yml`
+
+```yaml
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'category', 'application']
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 12h
+  receiver: 'ops-agent'
+
+receivers:
+  - name: 'ops-agent'
+    webhook_configs:
+      - url: 'http://host.docker.internal:8098/api/v1/alert/receive'
+        send_resolved: true
+```
+
+> `host.docker.internal:8098` 指向宿主机的 ops-agent 服务（端口见 `ops-agent/src/main/resources/application.yml`）。生产环境替换为实际地址。
+
+ops-agent 接收端：`ops-agent/src/main/java/com/yue/opsagent/controller/AlertReceiveController.java`。告警进入后依次交给：
+
+1. `LoggingAlertHandler`（@Order 10）打印结构化日志。
+2. `AgentTriggeringAlertHandler`（@Order 20）按 `alertname|application|resource` 做节流，再按策略路由（`@Component` 自动扫描，同时由 `AlertStrategy.order()` 排序）：
+   - **Nacos Write 域**（继承 `AbstractNacosWriteStrategy`）→ 专属 Agent → `publishConfig` 工具 → 审批队列 → 人工同意后落 Nacos：
+     - `SentinelFlowRuleStrategy`（`category=sentinel`，order=10）→ `sentinel-ops` Agent → `${app}-flow-rules.json` @ `SENTINEL_GROUP`
+     - `DynamicTpStrategy`（`category=dynamictp`，order=20）→ `dtp-ops` Agent → `${app}-dtp-${profile}.yml` @ `DEFAULT_GROUP`
+     - `MySqlTuningStrategy`（`category=mysql`，order=30）→ `mysql-ops` Agent → `shared-mysql-tuning.yml` @ `DEFAULT_GROUP`（application=shared，不分服务）
+     - `HikariTuningStrategy`（`category=hikari`，order=35）→ `hikari-ops` Agent → 由 `labels.pool` 反查 `ops-agent.mapping.pool-name-to-app` 拿到 `${app}-datasource-dev.yml`
+   - **NotifyOnly 域**（继承 `AbstractNotifyOnlyStrategy`）→ 不改 Nacos，直接投 `ApprovalTask` 进 inbox，`ApprovalService.approve` 对 `domain=notify/redis/rocketmq` 短路为 `APPLIED`：
+     - `RedisNotifyStrategy`（`category=redis`，order=40）→ **继承 `AbstractDiagnoseAgentStrategy`**：先用占位 reasoning 落 PENDING 任务，再异步调 `DiagnoseAgent`（ES MCP 子 Agent）产出四段式诊断文本回填 reasoning
+     - `RocketMqNotifyStrategy`（`category=rocketmq`，order=50）→ Broker / 消费堆积 / DLQ 类告警
+     - `NotifyOnlyStrategy`（`domain=notify`，order=100）→ 兜底：`Http5xxErrorRateHigh` / `Jvm*` / `ServiceDown`
+
+所有策略实现都在 `ops-agent/src/main/java/com/yue/opsagent/adapter/strategy/`。新接一个 exporter 领域只需：① 在 `application.yml` 加 `ops-agent.prompts.<domain>` + `ops-agent.approval.strategies.<domain>`；② 新建一个 `@Component` 继承 `AbstractNacosWriteStrategy`（写 Nacos）/ `AbstractNotifyOnlyStrategy`（仅通知）/ `AbstractDiagnoseAgentStrategy`（通知 + ES MCP 异步诊断）三选一；③ 在 `devops/css/app.css` 加一行徽章 CSS（`.badge.domain.<name>`）。详见 `ops-agent/CLAUDE.md` 中的 "Adding a new alert domain" 三步指南。
+
+> 审批任务持久化：默认走 MySQL（`ops-agent.approval.storage.type=mysql`），落在独立库 `ops_agent_db.approval_task`，建表脚本 `mall/docs/dev-ops/mysql/sql/ops_agent.sql`；设置为 `memory` 可降级回内存 `InMemoryApprovalInbox`（仅调试）。
+
+当前接入的 **36** 条告警按域划分：
+
+| 域 | 告警 alertname |
+|----|---------------|
+| **sentinel**（15） | `SentinelBlockRateHigh`, `SentinelExceptionRateHigh`, `SentinelRtHigh`, `SentinelPeakRtHigh`, `SentinelThreadCountHigh`, `OrderServiceCreateOrderBlockHigh`, `OrderServiceCreateOrderRtHigh`, `OrderServiceGetPayUrlRtHigh`, `SeckillServiceRtHigh`, `SeckillServiceBlockHigh`, `GroupBuyServiceCreatePayOrderBlockHigh`, `PayServiceExceptionHigh`, `PayServiceCreatePayOrderRtHigh`, `MallServiceQueryGoodsPageBlockHigh`, `GatewayBlockRateHigh` |
+| **dtp**（5） | `ThreadPoolActiveRatioHigh`, `ThreadPoolQueueUsageHigh`, `ThreadPoolAtMaxCapacity`, `ThreadPoolRejectedTasks`, `OrderServiceThreadPoolBusy` |
+| **hikari**（3） | `HikariConnectionsSaturated`, `HikariConnectionsPending`, `HikariConnectionAcquireSlow` |
+| **mysql**（4） | `MySqlDown`, `MySqlTooManyConnections`, `MySqlSlowQueriesHigh`, `MySqlInnodbRowLockWaitHigh` |
+| **redis**（5） | `RedisDown`, `RedisMemoryHigh`, `RedisConnectedClientsHigh`, `RedisKeyspaceHitRateLow`, `RedisBlockedClients` |
+| **rocketmq**（3） | `RocketMqBrokerDown`, `RocketMqConsumerLagHigh`, `RocketMqDlqMessageAppeared` |
+| **notify**（4） | `Http5xxErrorRateHigh`, `JvmHeapUsageHigh`, `JvmGcPauseHigh`, `ServiceDown` |
+
+> **三个 exporter（mysqld / redis / rocketmq）** 不在主 `docker-compose-grafana.yml` 里，单独放在 `mall/docs/dev-ops/docker-compose-exporters.yml`，统一落在 `nexus-devops` 网络。启动前请先确认主 compose 已启动（`nexus-devops` 网络由它创建），再 `docker compose -f docker-compose-exporters.yml up -d`。三者 Prometheus scrape 均带 `application=shared` + `category=mysql/redis/rocketmq` 标签，用于 ops-agent 路由。
+
+### ELK 9.x 与 ES MCP 诊断子 Agent
+
+**全链路日志**：五个微服务通过 `common-log-starter` 把结构化 JSON（含 `trace-id` / `service` / `level`）TCP 推到 Logstash（`:4560`），落到 Elasticsearch 的 `nexus-<service>-YYYY.MM.dd` 索引，Kibana 走 `:5601` 查询。
+
+**2026 升级**：`docker-compose-elk.yml` 已从 7.17.28 整体升到 **9.2.0**（ES / Logstash / Kibana 同版本，显式 `xpack.security.enabled=false` 与 dev 的无鉴权链路对齐）。升级后数据卷从 `./data` bind-mount 换成命名卷 `nexus-esdata`；7 → 9 索引格式不兼容，首次升级需 `docker compose -f docker-compose-elk.yml down -v` 清旧数据。业务服务代码零改。
+
+**ES MCP Server**：新增 `docker-compose-mcp.yml`，跑官方 `docker.elastic.co/mcp/elasticsearch:latest`；容器内同时提供 streamable-HTTP `:8080/mcp` 与旧版 HTTP+SSE `:8080/mcp/sse`（宿主机映射 `:8085`）。ops-agent 默认配置走 **SSE**（`/mcp/sse`），避免部分环境下 streamable-HTTP 在 GET 阶段因会话 ID 与 Java `mcp-core` 握手不一致出现 `401 Session ID is required`。工具集仍为 `list_indices / get_mappings / search / esql / get_shards`。Redis 域告警触发时 `DiagnoseAgent` 异步查 ES 日志，四段式诊断回填 inbox `reasoning`。MCP 不可用则 `AbstractDiagnoseAgentStrategy` 降级写 `[诊断失败] ...`。
+
+启动顺序：`docker-compose-environment.yml`（建 nexus-devops 网络）→ `docker-compose-elk.yml` → `docker-compose-mcp.yml`。关闭时反向执行。
+
+### Sentinel Nacos 规则格式
+
+**Nacos dataId：** `{spring.application.name}-flow-rules.json`
+**Nacos groupId：** `SENTINEL_GROUP`
+**格式：** JSON 数组
+
+```json
+[
+  {
+    "resource": "/api/v1/order/create_order",
+    "limitApp": "default",
+    "grade": 1,
+    "count": 500,
+    "strategy": 0,
+    "controlBehavior": 0,
+    "clusterMode": false
+  }
+]
+```
+
+| 字段 | 含义 |
+|------|------|
+| `resource` | 资源名，`sentinel-spring-webmvc-v6x-adapter` 生成的实际格式为**纯 URI**（如 `/api/v1/order/create_order`），不带 HTTP Method 前缀。以 `/actuator/prometheus` 的 `sentinel_*{resource="..."}` 为准。 |
+| `grade` | 阈值类型：`0`=并发线程数，`1`=QPS |
+| `count` | 阈值数值 |
+| `strategy` | 流控模式：`0`=直接，`1`=关联，`2`=链路 |
+| `controlBehavior` | 控制效果：`0`=快速失败，`1`=Warm Up，`2`=匀速排队 |
+| `maxQueueingTimeMs` | `controlBehavior=2` 时排队等待时间 |
+
+> 各服务规则文件位于 `mall/docs/dev-ops/nacos/sentinel-rules/`，新增/修改规则后需同步推送到 Nacos。
+
+### DynamicTP 配置格式
+
+**Nacos dataId：** `{spring.application.name}-dtp-dev.yml`
+**Nacos groupId：** `DEFAULT_GROUP`
+
+```yaml
+spring:
+  dynamic:
+    tp:
+      enabled: true
+      enabled-collect: true
+      collector-types:
+        - micrometer       # 关键：开启 Micrometer 指标导出
+        - internal_logging
+      monitor-interval: 30
+      executors:
+        - thread-pool-name: threadPoolExecutor
+          core-pool-size: 5
+          maximum-pool-size: 20
+          queue-capacity: 2000
+          queue-type: LinkedBlockingQueue
+          rejected-handler-type: CallerRunsPolicy
+      tomcat-tp:
+        core-pool-size: 20
+        maximum-pool-size: 200
+```
+
+> ops-agent 修改 DynamicTP 配置时，通过 Redis Topic `DYNAMIC_THREAD_POOL_REDIS_TOPIC_{appName}` 推送 `ThreadPoolConfigEntity`，DTP 客户端自动热加载。
+
+### 运维配置关键文件路径
+
+| 用途 | 文件路径 |
+|------|---------|
+| Prometheus 主配置 | `mall/docs/dev-ops/prometheus/prometheus.yml` |
+| Prometheus 告警规则 | `mall/docs/dev-ops/prometheus/alert_rules.yml` |
+| Alertmanager 配置 | `mall/docs/dev-ops/prometheus/alertmanager.yml` |
+| docker-compose（含 Prometheus + Alertmanager + Grafana） | `mall/docs/dev-ops/docker-compose-grafana.yml` |
+| Sentinel 规则源文件 | `mall/docs/dev-ops/nacos/sentinel-rules/*-flow-rules.json` |
+| DTP 配置源文件 | `mall/docs/dev-ops/nacos/dtp-config/*-dtp-dev.yml` |
+| Sentinel 指标绑定（common-log-starter） | `Dependencies/common-log-starter/src/main/java/com/yue/common/log/sentinel/SentinelMetricsBinder.java` |
+| Sentinel 增强自动配置 | `Dependencies/common-log-starter/src/main/java/com/yue/common/log/sentinel/SentinelEnhanceAutoConfiguration.java` |
+
+### 监控接入检查清单
+
+- [ ] Prometheus `alert_rules.yml` 已创建，docker-compose 中已挂载
+- [ ] Alertmanager `alertmanager.yml` 已创建，docker-compose 中已添加 alertmanager 服务
+- [ ] 先打一次业务请求（如 `curl http://localhost:8093/api/v1/group-buy/market/query_goods_list?...`），再 `curl http://localhost:8093/actuator/prometheus | grep sentinel_pass_qps` 确认有数据（`SentinelMetricsBinder` 只为已触发过的 resource 注册 Gauge）
+- [ ] 目标服务 `/actuator/prometheus` 能访问到 Sentinel 指标（`sentinel_pass_qps`）和 DTP 指标（`thread_pool_active_count`）
+- [ ] Prometheus UI `http://localhost:9090/targets` 中目标服务为 UP
+- [ ] Prometheus UI `http://localhost:9090/rules` 所有 group 已加载；`http://localhost:9090/alerts` 告警规则状态为 Inactive
+- [ ] Alertmanager UI `http://localhost:9093` 可访问；ops-agent 日志 grep `[Alert]` 能看到 webhook payload
+
+---
+
+## 告警规则（Prometheus alert_rules.yml）
+
+文件：`mall/docs/dev-ops/prometheus/alert_rules.yml`
+
+标签规范：
+- **Sentinel 告警** 使用 `{app="xxx"}`（由 `SentinelMetricsBinder` 手动打的标签；指标上同时有 Micrometer 注入的 `application` 标签，但为保持仓库历史一致继续使用 `app`）。
+- **DTP / JVM / Hikari / HTTP / system** 类告警使用 `{application="xxx"}`（Micrometer common tag，见各服务 `application-dev.yml` 的 `management.metrics.tags.application`）。
+- **Sentinel resource 为纯 URI**，不含 HTTP Method 前缀。例如 `resource="/api/v1/order/create_order"`。
+
+DTP 指标字段名速查（按实测 `/actuator/prometheus` 输出校对）：
+
+| 用途 | 指标名 |
+|------|--------|
+| 活跃线程 | `thread_pool_active_count` |
+| 当前线程 | `thread_pool_current_size` |
+| 最大线程 | `thread_pool_maximum_size` |
+| 核心线程 | `thread_pool_core_size` |
+| 队列堆积 | `thread_pool_queue_size` |
+| 队列剩余 | `thread_pool_queue_remaining_capacity` |
+| 拒绝次数 | `thread_pool_reject_count` |
+
+告警分组：
+
+| group | 粒度 | 触发示例 |
+|-------|------|---------|
+| `sentinel-global` | 所有 Sentinel 资源 | block / 异常率 / RT / 峰值 RT / 并发线程数 |
+| `dynamictp-global` | 所有 DTP 线程池 | 活跃率 / 队列使用率 / 达到 max / 出现拒绝 |
+| `order-service-specific` | create_order、get_pay_url、threadPoolExecutor | 核心下单/支付链路阈值更严 |
+| `seckill-service-specific` | 所有 Sentinel 资源 | RT > 200ms / block > 100 |
+| `group-buy-service-specific` | `/api/v1/group-buy/trade/.*` | 拼团交易 block 频繁 |
+| `pay-service-specific` | `login-pay` 所有资源 | 异常率 > 1%、`create_pay_order` RT > 500ms |
+| `mall-service-specific` | `query_goods_page` | 商品查询 block 频繁 |
+| `gateway-specific` | `springcloud-gateway` 所有资源 | 网关层限流 |
+| `http-layer-global` | 所有服务 | HTTP 5xx 错误率 > 5% |
+| `hikari-global` | 所有服务 | 连接池使用率 > 85%、存在 pending |
+| `jvm-system-global` | 所有服务 | JVM 堆 / GC / `up == 0` |
+
+> **不再使用**：基于 histogram bucket 的 P99 RT（Binder 未暴露 `sentinel_rt_bucket`，改用 `max_over_time(sentinel_rt[5m])`）；`tomcat_threads_busy_*`（Spring Boot 默认 MeterRegistry 不暴露）。

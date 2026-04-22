@@ -1,0 +1,48 @@
+[
+  {
+    "resource": "seckill-service",
+    "resourceMode": 0,
+    "grade": 1,
+    "count": 5000,
+    "intervalSec": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeoutMs": 500
+  },
+  {
+    "resource": "group-buy-service",
+    "resourceMode": 0,
+    "grade": 1,
+    "count": 2000,
+    "intervalSec": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeoutMs": 500
+  },
+  {
+    "resource": "order-service",
+    "resourceMode": 0,
+    "grade": 1,
+    "count": 3000,
+    "intervalSec": 1,
+    "controlBehavior": 0,
+    "burst": 0,
+    "maxQueueingTimeoutMs": 500
+  },
+  {
+    "resource": "1",
+    "resourceMode": 0,
+    "grade": 1,
+    "count": 1500,
+    "intervalSec": 1,
+    "controlBehavior": 0
+  },
+  {
+    "resource": "2",
+    "resourceMode": 0,
+    "grade": 1,
+    "count": 1000,
+    "intervalSec": 1,
+    "controlBehavior": 0
+  }
+]

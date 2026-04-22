@@ -1,0 +1,35 @@
+# 源文件：seckill-service/seckill-service-app/src/main/resources/nacos/seckill-service-dtp-dev.yml
+
+spring:
+  dynamic:
+    tp:
+      enabled: true
+      enabled-collect: true
+      collector-types:
+        - micrometer
+        - internal_logging
+      monitor-interval: 30
+      executors:
+        - thread-pool-name: threadPoolExecutor
+          thread-pool-alias-name: seckill-business
+          executor-type: common
+          core-pool-size: 20
+          maximum-pool-size: 100
+          queue-capacity: 5000
+          queue-type: LinkedBlockingQueue
+          rejected-handler-type: CallerRunsPolicy
+          keep-alive-time: 60
+          thread-name-prefix: seckill
+          wait-for-tasks-to-complete-on-shutdown: true
+          await-termination-seconds: 3
+          task-wrapper-names:
+            - mdc
+          notify-enabled: false
+      tomcat-tp:
+        thread-pool-alias-name: seckill-tomcat
+        core-pool-size: 100
+        maximum-pool-size: 1000
+        keep-alive-time: 60
+        task-wrapper-names:
+          - mdc
+        notify-enabled: false

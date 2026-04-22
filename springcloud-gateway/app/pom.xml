@@ -28,9 +28,18 @@
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
+        <!-- Sentinel + Gateway Adapter：网关侧统一路由限流；规则以 Nacos 为动态数据源 -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-spring-cloud-gateway-adapter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-datasource-nacos</artifactId>
         </dependency>
         <dependency>
             <groupId>commons-beanutils</groupId>
@@ -41,6 +50,15 @@
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
             <version>4.1.97.Final</version>
+        </dependency>
+        <!-- Actuator + Prometheus：暴露 /actuator/prometheus 供 Prometheus 采集 JVM / Sentinel 等指标 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
         <!-- 全链路日志 Starter -->
         <dependency>
@@ -71,7 +89,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <mainClass>cn.bugstack.xfg.dev.tech.GatewayApplication</mainClass>
+                    <mainClass>cn.bugstack.xfg.dev.tech.SpringcloudGatewayApplication</mainClass>
                     <layout>JAR</layout>
                 </configuration>
             </plugin>

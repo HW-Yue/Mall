@@ -1,0 +1,33 @@
+# 执行：docker compose -f docker-compose-mcp.yml up -d
+# 前置：先跑 docker-compose-elk.yml（9.x），确保 nexus-devops 网络里有
+#      container_name=elasticsearch（alias=es），且 ES 运行在 :9200 无鉴权。
+#
+# Elasticsearch MCP Server 官方镜像（docker.elastic.co/mcp/elasticsearch）使用说明：
+#   - 参数第一位是传输协议：stdio / http（SSE 已在 0.4.0 弃用）
+#   - http 模式监听容器内 :8080：streamable-HTTP 在 /mcp，旧版 HTTP+SSE 在 /mcp/sse（ops-agent 默认走 sse）
+#   - 认证：ES_API_KEY 或 ES_USERNAME/ES_PASSWORD；dev 环境 ES 无鉴权则都省略
+#   - 仅暴露只读工具：list_indices / get_mappings / search / esql / get_shards
+services:
+  elasticsearch-mcp:
+    image: docker.elastic.co/mcp/elasticsearch:latest
+    container_name: elasticsearch-mcp
+    restart: always
+    command: [ "http" ]
+    environment:
+      # 容器内通过 compose 服务名访问 ES；network alias 为 "es"，这里用完整名更稳
+      ES_URL: http://elasticsearch:9200
+    ports:
+      - '8085:8080'
+    networks:
+      - my-network
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8080/ping || exit 1" ]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
+
+networks:
+  my-network:
+    name: nexus-devops
+    external: true

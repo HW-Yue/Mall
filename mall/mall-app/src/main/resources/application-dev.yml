@@ -21,31 +21,22 @@ app:
 
 server:
   port: 8077
-  # 1核2G内存，可默认配置 200；4核8G内存【accept-count=1000、max-threads=800、max-connections=10000】，线程数经验值800。线程池过大，cpu调度会消耗大量时间
+  # Tomcat 工作线程由 DynamicTp spring.dynamic.tp.tomcat-tp 管理；此处保留连接层参数
   tomcat:
     mbeanregistry:
       enabled: true
-    max-connections: 20 # 最大连接数
-    threads:
-      max: 20         # 设定处理客户请求的线程的最大数目，决定了服务器可以同时响应客户请求的数,默认200
-      min-spare: 10   # 初始化线程数,最小空闲线程数,默认是10
-    accept-count: 10  # 等待队列长度
-
-# 线程池配置
-thread:
-  pool:
-    executor:
-      config:
-        core-pool-size: 2
-        max-pool-size: 50
-        keep-alive-time: 5000
-        block-queue-size: 5000
-        policy: CallerRunsPolicy
+    max-connections: 20
+    accept-count: 10
 
 # 数据库配置；启动时配置数据库资源信息
 spring:
   main:
     allow-bean-definition-overriding: true
+  config:
+    import:
+      - classpath:nacos/mall-dtp-dev.yml
+      - optional:nacos:mall-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - optional:nacos:mall-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   application:
     name: mall
   cloud:
@@ -56,22 +47,99 @@ spring:
         # 注意：locator 必须和 server-addr 对齐！！
         locator:
           enabled: true
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        import-check:
+          enabled: false
+    # Sentinel：流控/熔断/降级。规则以 Nacos 为源，动态生效。
+    # Dashboard 仅用于实时观测；规则改动请在 Nacos 中编辑对应 DataId 的 JSON。
+    sentinel:
+      eager: true  # 启动即建立 Dashboard 心跳，不必等首次请求
+      transport:
+        dashboard: 127.0.0.1:8858
+        port: 8724           # 同机与 Dashboard(宿主机 8719)及其它服务 transport 错开
+      datasource:
+        # 流控规则（FlowRule）
+        flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: flow
+            data-type: json
+        # 熔断降级规则（DegradeRule）
+        degrade:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-degrade-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: degrade
+            data-type: json
+        # 热点参数规则（ParamFlowRule）
+        param-flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-param-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: param-flow
+            data-type: json
+        # 系统规则（SystemRule）
+        system:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-system-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: system
+            data-type: json
+        # 授权规则（AuthorityRule）
+        authority:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-authority-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: authority
+            data-type: json
   datasource:
     username: root
     password: 123456
     url: jdbc:mysql://localhost:13306/mall_db?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
-  hikari:
-    pool-name: Retail_HikariCP
-    minimum-idle: 15 #最小空闲连接数量
-    idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
-    maximum-pool-size: 25 #连接池最大连接数，默认是10
-    auto-commit: true  #此属性控制从池返回的连接的默认自动提交行为,默认值：true
-    max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
-    connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
-    connection-test-query: SELECT 1
-  type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: Mall_HikariCP
+      minimum-idle: 15
+      idle-timeout: 180000
+      maximum-pool-size: 25
+      auto-commit: true
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+  # Redis：统一用官方 redisson-spring-boot-starter
+  # - spring.data.redis.*        ：标准 Spring Data Redis 配置（RedisTemplate 分支 + starter 共用）
+  # - spring.redis.redisson.config：Redisson 专属 YAML inline，clientName 便于 redis_exporter 反查
+  data:
+    redis:
+      host: localhost
+      port: 16379
+      database: 0
+      timeout: 3000ms
+      client-name: mall-redisson
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://localhost:16379"
+          database: 0
+          clientName: mall-redisson
+          connectionPoolSize: 10
+          connectionMinimumIdleSize: 5
+          idleConnectionTimeout: 30000
+          pingConnectionInterval: 60000
+          retryAttempts: 3
+          retryInterval: 1000
+          connectTimeout: 5000
+          timeout: 3000
+          keepAlive: true
 # Apache RocketMQ（docker-compose-rocketmq.yml 启动后可用；前缀必须为 rocketmq，勿放在 spring 下）
 rocketmq:
   name-server: localhost:9876
@@ -85,20 +153,6 @@ rocketmq:
 mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
   config-location:  classpath:/mybatis/config/mybatis-config.xml
-# Redis
-redis:
-  sdk:
-    config:
-      host: localhost
-      port: 16379
-      pool-size: 10
-      min-idle-size: 5
-      idle-timeout: 30000
-      connect-timeout: 5000
-      retry-attempts: 3
-      retry-interval: 1000
-      ping-interval: 60000
-      keep-alive: true
 
 # 扳手工程；通用配置组件「配置中心、设计模式框架、限流服务」
 xfg:
@@ -116,21 +170,16 @@ logstash:
   host: 127.0.0.1
   port: 4560
 
-# 监控配置 Prometheus + Grafana
+# 监控配置 Prometheus + Grafana（/actuator/prometheus 供 Prometheus 抓取）
+# Actuator：供 Prometheus 抓取 /actuator/prometheus（与 Docker 内 Prometheus + Nacos SD 对接）
 management:
   endpoints:
     web:
       exposure:
-        include: "*" # 暴露所有端点，包括自定义端点
-  endpoint:
-    health:
-      show-details: always # 显示详细的健康检查信息
+        include: health,prometheus
   metrics:
-    export:
-      prometheus:
-        enabled: true # 启用Prometheus
-  prometheus:
-    enabled: true # 启用Prometheus端点
+    tags:
+      application: ${spring.application.name}
 
 # 日志
 logging:

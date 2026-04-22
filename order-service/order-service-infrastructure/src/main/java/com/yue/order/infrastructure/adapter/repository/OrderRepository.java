@@ -84,6 +84,11 @@ public class OrderRepository implements IOrderRepository {
     }
 
     @Override
+    public List<String> queryTimeoutCloseOrderList() {
+        return orderDao.queryTimeoutCloseOrderList();
+    }
+
+    @Override
     public void updatePayUrl(String userId, String outTradeNo, String payUrl) {
         orderDao.updatePayUrl(userId, outTradeNo, payUrl);
     }
@@ -94,13 +99,18 @@ public class OrderRepository implements IOrderRepository {
     }
 
     @Override
-    public void updateRefund(String userId, String orderId) {
-        orderDao.updateRefund(userId, orderId);
+    public void updateWaitRefundByOutTradeNo(String outTradeNo) {
+        orderDao.updateWaitRefundByOutTradeNo(outTradeNo);
     }
 
     @Override
     public void updateCloseByOutTradeNo(String outTradeNo) {
         orderDao.updateCloseByOutTradeNo(outTradeNo);
+    }
+
+    @Override
+    public void updateRefundedByOutTradeNo(String outTradeNo) {
+        orderDao.updateRefundedByOutTradeNo(outTradeNo);
     }
 
     @Override

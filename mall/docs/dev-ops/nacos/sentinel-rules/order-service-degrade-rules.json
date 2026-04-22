@@ -1,0 +1,19 @@
+[
+  {
+    "resource": "POST:/api/v1/order/get_pay_url",
+    "grade": 2,
+    "count": 0.2,
+    "timeWindow": 15,
+    "minRequestAmount": 20,
+    "statIntervalMs": 10000
+  },
+  {
+    "resource": "POST:/api/v1/order/create_order",
+    "grade": 0,
+    "count": 800,
+    "timeWindow": 10,
+    "minRequestAmount": 50,
+    "statIntervalMs": 1000,
+    "slowRatioThreshold": 0.5
+  }
+]

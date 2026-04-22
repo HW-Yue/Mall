@@ -34,7 +34,7 @@ spring:
     url: jdbc:mysql://127.0.0.1:3306/s-pay-mall-ddd-market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
     driver-class-name: com.mysql.cj.jdbc.Driver
   hikari:
-    pool-name: Retail_HikariCP
+    pool-name: Pay_HikariCP
     minimum-idle: 15 #最小空闲连接数量
     idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
     maximum-pool-size: 25 #连接池最大连接数，默认是10
@@ -94,6 +94,13 @@ rocketmq:
     pay_refund_normal: pay-refund-normal
     pay_refund_group_buy: pay-refund-group-buy
     pay_refund_seckill: pay-refund-seckill
+  consumerGroup:
+    payRefundNormal: CG_PAY_PAY_REFUND_NORMAL
+    orderCloseNormal: CG_PAY_ORDER_CLOSE_NORMAL
+    orderCloseGroupBuy: CG_PAY_ORDER_CLOSE_GROUP_BUY
+    payRefundGroupBuy: CG_PAY_PAY_REFUND_GROUP_BUY
+    orderCloseSeckill: CG_PAY_ORDER_CLOSE_SECKILL
+    payRefundSeckill: CG_PAY_PAY_REFUND_SECKILL
 
 # 日志
 logging:

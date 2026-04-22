@@ -1,0 +1,21 @@
+[
+  {
+    "resource": "GET:/api/v1/seckill/market/query_goods_list",
+    "limitApp": "default",
+    "grade": 1,
+    "count": 2000,
+    "strategy": 0,
+    "controlBehavior": 0,
+    "clusterMode": false
+  },
+  {
+    "resource": "POST:/api/v1/seckill/trade/create_pay_order",
+    "limitApp": "default",
+    "grade": 1,
+    "count": 1000,
+    "strategy": 0,
+    "controlBehavior": 2,
+    "maxQueueingTimeMs": 200,
+    "clusterMode": false
+  }
+]

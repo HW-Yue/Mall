@@ -57,4 +57,9 @@ public interface IOrderDomainService {
      * @param outTradeNo 外部交易单号
      */
     void handlePayRefund(String outTradeNo);
+
+    /**
+     * 触发超时未支付订单关单
+     */
+    void triggerTimeoutClose();
 }

@@ -27,7 +27,7 @@ public interface ITOrderGroupDao {
     /** 查询队伍已完成订单（status=1） */
     List<Map<String, Object>> queryCompletedOrdersForTeam(@Param("teamId") String teamId);
 
-    /** 查询用户在某商品的参团次数（未退单） */
+    /** 查询用户在某商品的参团次数（未退款完成） */
     int queryUserOrderCount(@Param("goodsId") String goodsId, @Param("userId") String userId);
 
     /** 查询队伍已完成订单的 outTradeNo 列表（status=1） */
@@ -45,8 +45,11 @@ public interface ITOrderGroupDao {
     /** 支付成功：status = 1，记录支付时间 */
     int updateStatus2Complete(@Param("outTradeNo") String outTradeNo, @Param("outTradeTime") java.util.Date outTradeTime);
 
-    /** 退单：status = 2 */
+    /** 标记退款处理中：status = 2 */
     int update2Refund(@Param("userId") String userId, @Param("orderId") String orderId);
+
+    /** 标记退款完成：status = 4 */
+    int update2Refunded(@Param("outTradeNo") String outTradeNo);
 
     /** 查询团队中已支付的个人订单（status = 1） */
     List<TOrderGroup> queryPaidOrdersByTeamId(@Param("teamId") String teamId);

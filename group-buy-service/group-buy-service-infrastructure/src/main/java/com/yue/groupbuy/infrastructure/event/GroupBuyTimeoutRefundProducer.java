@@ -1,6 +1,7 @@
 package com.yue.groupbuy.infrastructure.event;
 
 import com.alibaba.fastjson.JSON;
+import com.yue.groupbuy.domain.trade.adapter.port.IGroupBuyTimeoutMqProducer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,7 +19,7 @@ import java.util.Map;
 @Slf4j
 @Component
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
-public class GroupBuyTimeoutRefundProducer {
+public class GroupBuyTimeoutRefundProducer implements IGroupBuyTimeoutMqProducer {
 
     @Resource
     private RocketMQTemplate rocketMQTemplate;
@@ -32,6 +33,7 @@ public class GroupBuyTimeoutRefundProducer {
      * @param teamId          拼团队伍ID
      * @param deliverTimeMs   消息投递时间戳（毫秒），一般设为 validEndTime.getTime()
      */
+    @Override
     public void sendTimeoutRefundMessage(String teamId, long deliverTimeMs) {
         Map<String, Object> body = new HashMap<>();
         body.put("teamId", teamId);

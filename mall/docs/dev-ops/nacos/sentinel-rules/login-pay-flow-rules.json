@@ -1,0 +1,21 @@
+[
+  {
+    "resource": "POST:/api/v1/alipay/create_pay_order",
+    "limitApp": "default",
+    "grade": 1,
+    "count": 300,
+    "strategy": 0,
+    "controlBehavior": 2,
+    "maxQueueingTimeMs": 500,
+    "clusterMode": false
+  },
+  {
+    "resource": "POST:/api/v1/alipay/alipay_notify_url",
+    "limitApp": "default",
+    "grade": 1,
+    "count": 500,
+    "strategy": 0,
+    "controlBehavior": 0,
+    "clusterMode": false
+  }
+]

@@ -1,0 +1,27 @@
+# MySQL 实例级调优共享档案（application=shared）
+# DataId: shared-mysql-tuning.yml  Group: DEFAULT_GROUP
+#
+# 用途：给 ops-agent 的 MySqlTuningStrategy 提供一份"可被 Agent 重写"的 YAML 骨架。
+# 真正生效仍需运维把下列关键参数映射到 my.cnf / RDS 参数组；ops-agent 只负责把意图
+# 以版本化配置的形式推给 Nacos，审批后再由人决定是否手动同步到实例。
+#
+# 与业务服务的 Hikari 连接池配置完全解耦：
+#   - 这里写"实例级"：max_connections、buffer pool、flush 策略、慢查询阈值；
+#   - 业务服务的 Hikari 最大/最小连接、timeout 请写在 <app>-datasource-*.yml，
+#     由 HikariTuningStrategy 按 pool 反查修改。
+
+tuning:
+  # 最大同时连接数；超过后新连接会被拒绝
+  max_connections: 300
+
+  # InnoDB 缓冲池大小（常用 50%~75% 物理内存；dev 环境给个小的）
+  innodb_buffer_pool_size: "1G"
+
+  # 0/1/2；1 最安全最慢，2 次之，0 最快但可能掉 1s 事务
+  innodb_flush_log_at_trx_commit: 1
+
+  # 慢查询阈值（毫秒）
+  slow_query_threshold_ms: 500
+
+  # 行锁等待超时（秒）；锁等待堆积告警可考虑缩短以 fail-fast
+  innodb_lock_wait_timeout: 30

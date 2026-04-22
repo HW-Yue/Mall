@@ -1,6 +1,7 @@
 package com.yue.groupbuy.domain.trade.service;
 
 import com.yue.groupbuy.domain.trade.adapter.port.IGroupBuyRefundMqProducer;
+import com.yue.groupbuy.domain.trade.adapter.port.IGroupBuyTimeoutMqProducer;
 import com.yue.groupbuy.domain.trade.adapter.port.IOrderServicePort;
 import com.yue.groupbuy.domain.trade.adapter.repository.IGroupBuyRepository;
 import com.yue.groupbuy.domain.trade.adapter.repository.ITradeRepository;
@@ -35,12 +36,15 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
     private ITradeRefundOrderService tradeRefundOrderService;
     @Resource
     private IGroupBuyRefundMqProducer groupBuyRefundMqProducer;
+    @Resource
+    private IGroupBuyTimeoutMqProducer groupBuyTimeoutMqProducer;
 
     @Override
     public MarketPayOrderEntity createGroupBuyOrder(LockOrderCommand command) {
         String userId = command.getUserId();
         String goodsId = command.getProductId();
         Long activityId = command.getActivityId();
+        boolean newTeam = StringUtils.isBlank(command.getTeamId());
 
         log.info("拼团锁单开始 userId:{} activityId:{}", userId, activityId);
 
@@ -104,6 +108,10 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
         } catch (Exception e) {
             log.error("调 order-service 创建订单失败 userId:{}", userId, e);
             throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
+        }
+
+        if (newTeam) {
+            scheduleTeamTimeoutIfNecessary(marketPayOrderEntity.getTeamId());
         }
 
         log.info("拼团锁单完成 userId:{} orderId:{} teamId:{}", userId, orderId, marketPayOrderEntity.getTeamId());
@@ -186,12 +194,12 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
             }
         }
 
-        // 3. 处理已支付订单：本地退单 + 发送 pay-refund-group-buy MQ
+        // 3. 处理已支付订单：本地标记退款处理中 + 发送 pay-refund-group-buy MQ
         List<TeamOrderEntity> paidOrders = tradeRepository.queryPaidOrdersByTeamId(teamId);
         if (paidOrders != null && !paidOrders.isEmpty()) {
             for (TeamOrderEntity order : paidOrders) {
                 try {
-                    // 本地更新为已退单
+                    // 本地先更新为退款处理中，最终完成以后再由 pay/order 链路确认
                     tradeRepository.updateOrder2Refund(order.getUserId(), order.getOrderId());
                     // 发送 MQ 给 order-service 和 pay-service
                     groupBuyRefundMqProducer.sendPayRefundMessage(order.getOutTradeNo(), order.getUserId());
@@ -205,6 +213,28 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
                 teamId,
                 unpaidOrders == null ? 0 : unpaidOrders.size(),
                 paidOrders == null ? 0 : paidOrders.size());
+    }
+
+    @Override
+    public void handlePayRefund(String outTradeNo) {
+        int updated = tradeRepository.updateOrder2Refunded(outTradeNo);
+        if (updated == 0) {
+            log.info("拼团退款完成回执跳过，订单状态未命中退款处理中 outTradeNo:{}", outTradeNo);
+            return;
+        }
+        log.info("拼团退款完成回执处理成功 outTradeNo:{}", outTradeNo);
+    }
+
+    private void scheduleTeamTimeoutIfNecessary(String teamId) {
+        GroupBuyTeamEntity team = tradeRepository.queryGroupBuyTeamByTeamId(teamId);
+        if (team == null || team.getValidEndTime() == null) {
+            log.warn("拼团队级超时消息发送跳过，团队信息缺失 teamId:{}", teamId);
+            return;
+        }
+
+        long deliverTimeMs = team.getValidEndTime().getTime();
+        groupBuyTimeoutMqProducer.sendTimeoutRefundMessage(teamId, deliverTimeMs);
+        log.info("拼团队级超时消息已发送 teamId:{} deliverTimeMs:{}", teamId, deliverTimeMs);
     }
 
 }

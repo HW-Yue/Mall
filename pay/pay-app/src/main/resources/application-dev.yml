@@ -1,5 +1,15 @@
 server:
-  port: 8080
+  port: 8079
+
+# Actuator：供 Prometheus 抓取 /actuator/prometheus（与 Docker 内 Prometheus + Nacos SD 对接）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
 
 # 应用配置
 app:
@@ -42,13 +52,55 @@ spring:
         server-addr: 127.0.0.1:8848
         locator:
           enabled: true
+    # Sentinel：支付宝回调 + 创建支付 URL 是外部网关类强依赖接口，必须有熔断保护
+    sentinel:
+      eager: true
+      transport:
+        dashboard: 127.0.0.1:8858
+        port: 8723
+      datasource:
+        flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: flow
+            data-type: json
+        degrade:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-degrade-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: degrade
+            data-type: json
+        param-flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-param-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: param-flow
+            data-type: json
+        system:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-system-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: system
+            data-type: json
+        authority:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-authority-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: authority
+            data-type: json
   datasource:
     username: root
     password: 123456
     url: jdbc:mysql://127.0.0.1:13306/s-pay-mall-ddd-market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
     driver-class-name: com.mysql.cj.jdbc.Driver
   hikari:
-    pool-name: Retail_HikariCP
+    pool-name: Pay_HikariCP
     minimum-idle: 15 #最小空闲连接数量
     idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
     maximum-pool-size: 25 #连接池最大连接数，默认是10
@@ -111,8 +163,12 @@ rocketmq:
     pay_refund_group_buy: pay-refund-group-buy
     pay_refund_seckill: pay-refund-seckill
   consumerGroup:
+    payRefundNormal: CG_PAY_PAY_REFUND_NORMAL
+    orderCloseNormal: CG_PAY_ORDER_CLOSE_NORMAL
     orderCloseGroupBuy: CG_PAY_ORDER_CLOSE_GROUP_BUY
     payRefundGroupBuy: CG_PAY_PAY_REFUND_GROUP_BUY
+    orderCloseSeckill: CG_PAY_ORDER_CLOSE_SECKILL
+    payRefundSeckill: CG_PAY_PAY_REFUND_SECKILL
 
 # 日志
 logging:

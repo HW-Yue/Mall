@@ -10,6 +10,7 @@ import com.yue.groupbuy.domain.activity.model.entity.UserGroupBuyOrderDetailEnti
 import com.yue.groupbuy.domain.activity.model.valobj.GroupBuyActivityDiscountVO;
 import com.yue.groupbuy.domain.activity.model.valobj.TeamStatisticVO;
 import com.yue.groupbuy.domain.activity.service.IIndexGroupBuyMarketService;
+import com.yue.groupbuy.infrastructure.config.AgentRuntimeProperties;
 import com.yue.groupbuy.types.enums.ResponseCode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +30,8 @@ public class GroupBuyMarketController implements IGroupBuyMarketController {
     @Resource
     private IIndexGroupBuyMarketService indexGroupBuyMarketService;
 
+    @Resource
+    private AgentRuntimeProperties agentRuntimeProperties;
 
     @Override
     @RequestMapping(value = "query_goods_list", method = RequestMethod.GET)
@@ -99,8 +102,17 @@ public class GroupBuyMarketController implements IGroupBuyMarketController {
             List<UserGroupBuyOrderDetailEntity> teamList = indexGroupBuyMarketService
                     .queryInProgressUserGroupBuyOrderDetailList(requestDTO.getGoodsId(), requestDTO.getUserId(), 1, 2);
 
-            // 3. 查询统计
-            TeamStatisticVO statistic = indexGroupBuyMarketService.queryTeamStatisticByGoodsId(requestDTO.getGoodsId());
+            // 3. 查询统计（过载时可通过 Nacos 关闭 app.agent.features.statistics-report-enabled 降级）
+            TeamStatisticVO statistic;
+            if (agentRuntimeProperties.getFeatures().isStatisticsReportEnabled()) {
+                statistic = indexGroupBuyMarketService.queryTeamStatisticByGoodsId(requestDTO.getGoodsId());
+            } else {
+                statistic = TeamStatisticVO.builder()
+                        .allTeamCount(0)
+                        .allTeamCompleteCount(0)
+                        .allTeamUserCount(0)
+                        .build();
+            }
 
             // 组装响应
             GoodsMarketResponseDTO.Goods goods = GoodsMarketResponseDTO.Goods.builder()

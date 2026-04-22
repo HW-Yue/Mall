@@ -22,7 +22,7 @@ public interface IOrderRepository {
 
     List<String> queryNoPayNotifyOrder();
 
-    List<String> queryTimeoutCloseOrderList();
+    List<String> queryPayReconcileCloseOrderList();
 
     boolean changeOrderClose(String orderId);
 

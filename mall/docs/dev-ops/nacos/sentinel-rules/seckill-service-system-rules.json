@@ -1,0 +1,9 @@
+[
+  {
+    "highestSystemLoad": 15.0,
+    "qps": 10000.0,
+    "avgRt": 100,
+    "maxThread": 1500,
+    "highestCpuUsage": 0.9
+  }
+]

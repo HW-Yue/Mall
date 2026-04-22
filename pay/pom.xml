@@ -35,6 +35,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
+        <!-- rocketmq-spring-boot-starter 2.3.x 依赖 ClientConfig#setNamespaceV2，需 rocketmq-client ≥ 5.2；与 2.3.1 发行说明对齐 5.3.0 -->
+        <rocketmq.version>5.3.0</rocketmq.version>
     </properties>
     
     <developers>
@@ -142,11 +144,31 @@
                 <version>5.8.20</version>
             </dependency>
 
-            <!-- rabbitmq -->
+            <!-- Apache RocketMQ：与 rocketmq-spring-boot-starter 2.3.1 对齐的客户端版本（避免 5.1.x 缺少 setNamespaceV2） -->
             <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-amqp</artifactId>
-                <version>3.2.12</version>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-client</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-remoting</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-common</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-acl</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-srvutil</artifactId>
+                <version>${rocketmq.version}</version>
             </dependency>
 
             <!-- 工程模块 -->

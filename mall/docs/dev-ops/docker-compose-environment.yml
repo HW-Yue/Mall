@@ -1,4 +1,6 @@
 # 命令执行 docker-compose -f docker-compose-environment.yml up -d
+# 再启动监控栈：docker-compose -f docker-compose-grafana.yml up -d（依赖下方固定网络名 nexus-devops）
+# 从 Nacos 2.x 换 3.x 时，请按官方说明升级 MySQL 库 nacos_config 表结构，见 Nacos 发行包 distribution/conf/mysql-schema.sql
 # docker 代理和使用文档；https://bugstack.cn/md/road-map/docker.html
 version: '3.9'
 services:
@@ -18,6 +20,7 @@ services:
     volumes:
       - ./mysql/sql:/docker-entrypoint-initdb.d
       - ./mysql/conf/my.cnf:/etc/mysql/my.cnf
+      - ./mysql/data:/var/lib/mysql
     healthcheck:
       test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
       interval: 5s
@@ -99,34 +102,62 @@ services:
       - "9000:9000"
 
   nacos:
-    image: nacos/nacos-server:v2.2.3-slim
+    image: nacos/nacos-server:v3.2.0
     container_name: nacos
     restart: always
     ports:
+      # Nacos 3.x：控制台在 8080；8848 主要为 HTTP API，旧版 /nacos 控制台地址不再适用
+      - "8080:8080"
       - "8848:8848"
       - "9848:9848"
     environment:
-      - JVM_MS=256M  # 初始堆内存
-      - JVM_MX=256M  # 最大堆内存
+      # 与 nacos-docker 启动脚本一致（JVM_MS/JVM_MX 旧写法在官方脚本中不生效）
+      - JVM_XMS=256M
+      - JVM_XMX=512M
       - PREFER_HOST_MODE=hostname
       - MODE=standalone
       - SPRING_DATASOURCE_PLATFORM=mysql
       - MYSQL_SERVICE_HOST=mysql
       - MYSQL_SERVICE_DB_NAME=nacos_config
+      # 容器间访问 MySQL 用 3306；13306 仅宿主机映射 ports，不要用错
       - MYSQL_SERVICE_PORT=3306
       - MYSQL_SERVICE_USER=root
       - MYSQL_SERVICE_PASSWORD=123456
       - MYSQL_SERVICE_DB_PARAM=characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
       - NACOS_AUTH_ENABLE=false
+      # 与 NACOS_AUTH_ENABLE 独立：Nacos 3 默认开启 Admin API 鉴权，脚本 POST /v3/admin/cs/config 会 403
+      - NACOS_AUTH_ADMIN_ENABLE=false
       - NACOS_AUTH_IDENTITY_KEY=2222
       - NACOS_AUTH_IDENTITY_VALUE=2xxx
       - NACOS_AUTH_TOKEN=SecretKey012345678901234567890123456789012345678901234567890123456789
+      # Prometheus HTTP SD（不要用 JAVA_OPT_EXT 写 -D：官方脚本把 JAVA_OPT_EXT 接在 -jar 之后，-D 不会进 JVM）
+      # https://nacos.io/docs/latest/ecology/use-nacos-prometheus-sd/
+      - NACOS_PROMETHEUS_METRICS_ENABLED=true
     networks:
       - my-network
     depends_on:
       mysql:
         condition: service_healthy
 
+  # DynamicTp / Sentinel 规则发布：不在 compose 内跑一次性 bash 容器；Nacos 就绪后在宿主机执行
+  # nacos/init-nacos-runtime.sh：一键发布 YAML（DEFAULT_GROUP）+ Sentinel（SENTINEL_GROUP）；或分别见 dtp-config / sentinel-rules
+
+  # Sentinel Dashboard（仅用于实时观测：QPS/RT/请求链路、簇点监控、机器列表）
+  # 规则以 Nacos 为准，Dashboard 上的临时改动不回写 Nacos（生产最佳实践）
+  # 访问：http://127.0.0.1:8858   默认账号密码：sentinel / sentinel
+  sentinel-dashboard:
+    image: bladex/sentinel-dashboard:1.8.6
+    container_name: sentinel-dashboard
+    restart: always
+    ports:
+      - "8858:8858"
+      - "8719:8719" # Dashboard 拉取客户端 /metric 指标的 transport 端口
+    environment:
+      - JAVA_OPTS=-Dserver.port=8858 -Dcsp.sentinel.dashboard.server=localhost:8858 -Dproject.name=sentinel-dashboard -Dsentinel.dashboard.auth.username=sentinel -Dsentinel.dashboard.auth.password=sentinel
+    networks:
+      - my-network
+
 networks:
   my-network:
+    name: nexus-devops
     driver: bridge

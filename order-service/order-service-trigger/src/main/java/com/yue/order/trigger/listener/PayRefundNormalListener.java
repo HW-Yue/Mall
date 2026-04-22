@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.Resource;
 
 /**
- * 普通订单关单后退款 MQ 消费者（pay-refund-normal）
+ * 普通订单退款完成回执 MQ 消费者（pay-refund-normal）。
+ * 消费 pay-service 的退款完成消息，将 order-service 订单推进到已退款。
  */
 @Slf4j
 @Component

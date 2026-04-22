@@ -1,0 +1,11 @@
+[
+  {
+    "resource": "POST:/api/v1/mall/index/query_sku_detail",
+    "grade": 0,
+    "count": 500,
+    "timeWindow": 10,
+    "minRequestAmount": 20,
+    "statIntervalMs": 1000,
+    "slowRatioThreshold": 0.5
+  }
+]

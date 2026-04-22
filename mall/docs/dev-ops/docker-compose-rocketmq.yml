@@ -1,5 +1,7 @@
 # 本地启动 RocketMQ：在 docs/dev-ops 目录执行
 #   docker compose -f docker-compose-rocketmq.yml up -d
+# 需已存在网络 nexus-devops：先 docker compose -f docker-compose-environment.yml up -d
+#   或 docker network create nexus-devops
 #
 # 端口：9876 NameServer | 10909/10911 Broker | 3003 Dashboard（宿主机直连，与控制台默认 CORS 一致）
 # 详细说明见 rocketmq/README.md
@@ -22,7 +24,7 @@ services:
       - ./rocketmq/data/namesrv/logs:/home/rocketmq/logs
       - ./rocketmq/data/namesrv/store:/home/rocketmq/store
     networks:
-      - rocketmq-net
+      - my-network
 
   rmq-broker:
     image: apache/rocketmq:5.2.0
@@ -44,12 +46,9 @@ services:
       - rmq-namesrv
     command: sh mqbroker -c /home/rocketmq/broker.conf
     networks:
-      rocketmq-net:
-        ipv4_address: 172.23.0.10
+      my-network:
         aliases:
-          - my-rocketmq-broker # 给容器起个好记的名字
-
-
+          - my-rocketmq-broker # 与 broker.conf 中 brokerIP1 一致，供同网段内客户端解析
 
   rmq-dashboard:
     image: apacherocketmq/rocketmq-dashboard:2.1.0
@@ -66,11 +65,9 @@ services:
     depends_on:
       - rmq-namesrv
     networks:
-      - rocketmq-net
+      - my-network
 
 networks:
-  rocketmq-net:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.23.0.0/24
+  my-network:
+    name: nexus-devops
+    external: true

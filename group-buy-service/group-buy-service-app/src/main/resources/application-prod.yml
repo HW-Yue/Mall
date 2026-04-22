@@ -1,0 +1,17 @@
+rocketmq:
+  name-server: ${ROCKETMQ_NAME_SERVER:127.0.0.1:9876}
+  producer:
+    group: group-buy-service-producer
+
+app:
+  rocketmq:
+    topic:
+      orderPaidGroupBuy: order-paid-group_buy
+      groupBuySuccessNotify: group-buy-success-notify
+      groupBuyTimeoutRefund: group-buy-timeout-refund
+      orderCloseGroupBuy: order-close-group-buy
+      payRefundGroupBuy: pay-refund-group-buy
+    consumerGroup:
+      orderPaidGroupBuy: CG_GROUP_BUY_ORDER_PAID
+      groupBuyTimeoutRefund: CG_GROUP_BUY_TIMEOUT_REFUND
+      payRefundGroupBuy: CG_GROUP_BUY_PAY_REFUND

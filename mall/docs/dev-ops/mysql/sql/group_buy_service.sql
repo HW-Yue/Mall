@@ -210,7 +210,7 @@ CREATE TABLE `t_order` (
   `activity_id`     bigint        NOT NULL COMMENT '活动ID',
   `goods_id`        varchar(16)   NOT NULL COMMENT '商品ID',
   `out_trade_no`    varchar(32)   NOT NULL COMMENT '外部交易单号',
-  `status`          tinyint(1)    NOT NULL DEFAULT 0 COMMENT '状态：0锁定、1已支付、2已退单、3已关团（超时未支付）',
+  `status`          tinyint(1)    NOT NULL DEFAULT 0 COMMENT '状态：0锁定、1已支付、2退款处理中、3已关团（超时未支付）、4已退款',
   `original_price`  decimal(8,2)  NOT NULL COMMENT '原始价格',
   `deduction_price` decimal(8,2)  NOT NULL COMMENT '折扣金额',
   `pay_price`       decimal(8,2)  NOT NULL COMMENT '支付价格',

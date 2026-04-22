@@ -1,0 +1,15 @@
+[
+  {
+    "resource": "POST:/api/v1/seckill/trade/create_pay_order",
+    "limitApp": "default",
+    "grade": 1,
+    "count": 50,
+    "durationInSec": 1,
+    "paramIdx": 0,
+    "controlBehavior": 0,
+    "maxQueueingTimeMs": 0,
+    "burstCount": 0,
+    "paramFlowItemList": [],
+    "clusterMode": false
+  }
+]

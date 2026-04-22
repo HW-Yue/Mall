@@ -1,0 +1,35 @@
+# 源文件：order-service/order-service-app/src/main/resources/nacos/order-service-dtp-dev.yml
+
+spring:
+  dynamic:
+    tp:
+      enabled: true
+      enabled-collect: true
+      collector-types:
+        - micrometer
+        - internal_logging
+      monitor-interval: 30
+      executors:
+        - thread-pool-name: threadPoolExecutor
+          thread-pool-alias-name: order-business
+          executor-type: common
+          core-pool-size: 5
+          maximum-pool-size: 20
+          queue-capacity: 2000
+          queue-type: LinkedBlockingQueue
+          rejected-handler-type: CallerRunsPolicy
+          keep-alive-time: 60
+          thread-name-prefix: order
+          wait-for-tasks-to-complete-on-shutdown: true
+          await-termination-seconds: 3
+          task-wrapper-names:
+            - mdc
+          notify-enabled: false
+      tomcat-tp:
+        thread-pool-alias-name: order-tomcat
+        core-pool-size: 20
+        maximum-pool-size: 200
+        keep-alive-time: 60
+        task-wrapper-names:
+          - mdc
+        notify-enabled: false

@@ -114,6 +114,7 @@ public class OrderDomainService implements IOrderDomainService {
         // 如果订单已关闭（例如先收到关单 MQ），但支付宝回调已扣款，需要触发退款
         if (order.getStatus() == OrderStatusVO.CLOSE) {
             log.warn("handlePaySuccess 订单已关闭但收到支付成功消息，触发退款 outTradeNo:{} marketType:{}", outTradeNo, marketType);
+            orderRepository.updateWaitRefundByOutTradeNo(outTradeNo);
             refundPublisher.publishPayRefund(order.getUserId(), outTradeNo, marketType);
             return;
         }
@@ -137,9 +138,14 @@ public class OrderDomainService implements IOrderDomainService {
         if (order == null) {
             throw new AppException(ResponseCode.ORDER_NOT_FOUND.getCode(), "订单不存在: " + orderId);
         }
-        // 只有 LOCK 或 PAY_SUCCESS 状态可以退款
         if (order.getStatus() == OrderStatusVO.CLOSE) {
             throw new AppException(ResponseCode.ORDER_STATUS_ERROR.getCode(), "订单已关闭，无法退款");
+        }
+        if (order.getStatus() == OrderStatusVO.WAIT_REFUND) {
+            throw new AppException(ResponseCode.ORDER_STATUS_ERROR.getCode(), "订单退款处理中，请勿重复提交");
+        }
+        if (order.getStatus() == OrderStatusVO.REFUNDED) {
+            throw new AppException(ResponseCode.ORDER_STATUS_ERROR.getCode(), "订单已退款，无需重复提交");
         }
         doRefund(order);
     }
@@ -170,6 +176,7 @@ public class OrderDomainService implements IOrderDomainService {
         if (order.getStatus() == OrderStatusVO.PAY_SUCCESS) {
             log.warn("handleOrderClose 订单已支付但收到关单消息，触发退款 outTradeNo:{} marketType:{}",
                     outTradeNo, order.getMarketType().getCode());
+            orderRepository.updateWaitRefundByOutTradeNo(outTradeNo);
             refundPublisher.publishPayRefund(order.getUserId(), outTradeNo, order.getMarketType().getCode());
             return;
         }
@@ -193,19 +200,48 @@ public class OrderDomainService implements IOrderDomainService {
             log.warn("handlePayRefund 订单不存在 outTradeNo:{}", outTradeNo);
             return;
         }
-        if (order.getStatus() == OrderStatusVO.CLOSE) {
-            log.info("handlePayRefund 订单已是关闭状态，跳过 outTradeNo:{}", outTradeNo);
+        if (order.getStatus() == OrderStatusVO.REFUNDED) {
+            log.info("handlePayRefund 订单已是退款完成状态，跳过 outTradeNo:{}", outTradeNo);
             return;
         }
-        orderRepository.updateCloseByOutTradeNo(outTradeNo);
+        orderRepository.updateRefundedByOutTradeNo(outTradeNo);
         log.info("handlePayRefund 订单退款确认成功 outTradeNo:{} marketType:{}", outTradeNo, order.getMarketType().getCode());
     }
 
+    @Override
+    public void triggerTimeoutClose() {
+        List<String> outTradeNos = orderRepository.queryTimeoutCloseOrderList();
+        if (outTradeNos == null || outTradeNos.isEmpty()) {
+            log.info("businessTimeoutClose 暂无超时未支付订单");
+            return;
+        }
+
+        for (String outTradeNo : outTradeNos) {
+            OrderEntity order = orderRepository.queryByOutTradeNo(outTradeNo);
+            if (order == null) {
+                log.warn("businessTimeoutClose 订单不存在 outTradeNo:{}", outTradeNo);
+                continue;
+            }
+
+            handleOrderClose(outTradeNo);
+            eventPublisher.publishOrderClose(order.getUserId(), order.getOrderId(), outTradeNo, order.getMarketType().getCode());
+            log.info("businessTimeoutClose 已触发关单 outTradeNo:{} marketType:{}",
+                    outTradeNo, order.getMarketType().getCode());
+        }
+    }
+
     private void doRefund(OrderEntity order) {
-        // 调支付服务发起退款
-        payPort.refund(order.getOutTradeNo(), order.getPayPrice(), "用户申请退款");
-        // 更新订单状态
-        orderRepository.updateRefund(order.getUserId(), order.getOrderId());
-        log.info("退款成功 userId:{} orderId:{} outTradeNo:{}", order.getUserId(), order.getOrderId(), order.getOutTradeNo());
+        if (order.getStatus() == OrderStatusVO.LOCK) {
+            orderRepository.unlockStock(order);
+            orderRepository.updateCloseByOutTradeNo(order.getOutTradeNo());
+            log.info("未支付订单退款请求按关单处理 userId:{} orderId:{} outTradeNo:{}",
+                    order.getUserId(), order.getOrderId(), order.getOutTradeNo());
+            return;
+        }
+
+        orderRepository.updateWaitRefundByOutTradeNo(order.getOutTradeNo());
+        refundPublisher.publishPayRefund(order.getUserId(), order.getOutTradeNo(), order.getMarketType().getCode());
+        log.info("退款请求已入MQ userId:{} orderId:{} outTradeNo:{} marketType:{}",
+                order.getUserId(), order.getOrderId(), order.getOutTradeNo(), order.getMarketType().getCode());
     }
 }

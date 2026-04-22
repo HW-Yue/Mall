@@ -29,7 +29,7 @@ CREATE TABLE `t_order` (
   `original_price`  decimal(10,2)   NOT NULL COMMENT '原始价格',
   `deduction_price` decimal(10,2)   NOT NULL DEFAULT 0 COMMENT '折扣金额',
   `pay_price`       decimal(10,2)   NOT NULL COMMENT '实付金额',
-  `status`          tinyint(1)      NOT NULL DEFAULT 0 COMMENT '状态：0锁定、1支付完成、2退单',
+  `status`          tinyint(1)      NOT NULL DEFAULT 0 COMMENT '状态：0锁定待支付、1支付成功、2超时关闭、3待退款、4已退款',
   `out_trade_no`    varchar(64)     NOT NULL COMMENT '外部交易单号（幂等键）',
   `out_trade_time`  datetime                 DEFAULT NULL COMMENT '外部交易时间',
   `biz_id`          varchar(128)    NOT NULL COMMENT '业务唯一ID',

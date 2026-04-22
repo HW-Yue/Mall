@@ -1,0 +1,30 @@
+# Alertmanager 配置：接收 Prometheus 告警，转发到 ops-agent webhook
+# 挂载位置：/etc/alertmanager/alertmanager.yml（见 docker-compose-grafana.yml）
+# ops-agent 宿主机端口为 8098（见 ops-agent/src/main/resources/application.yml）
+# 生产环境可将 host.docker.internal 换成实际可达地址。
+
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by: ['alertname', 'category', 'application']
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 12h
+  receiver: 'ops-agent'
+
+receivers:
+  - name: 'ops-agent'
+    webhook_configs:
+      - url: 'http://host.docker.internal:8098/api/v1/alert/receive'
+        send_resolved: true
+        http_config:
+          follow_redirects: true
+
+inhibit_rules:
+  # 相同服务下，critical 抑制同名 warning，避免 ops-agent 重复处理
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity = "warning"
+    equal: ['alertname', 'application']

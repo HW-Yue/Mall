@@ -1,0 +1,19 @@
+[
+  {
+    "resource": "POST:/api/v1/seckill/trade/create_pay_order",
+    "grade": 0,
+    "count": 500,
+    "timeWindow": 5,
+    "minRequestAmount": 50,
+    "statIntervalMs": 1000,
+    "slowRatioThreshold": 0.5
+  },
+  {
+    "resource": "POST:/api/v1/seckill/trade/create_pay_order",
+    "grade": 2,
+    "count": 0.1,
+    "timeWindow": 10,
+    "minRequestAmount": 50,
+    "statIntervalMs": 10000
+  }
+]

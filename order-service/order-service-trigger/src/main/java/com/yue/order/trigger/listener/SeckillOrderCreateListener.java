@@ -31,7 +31,10 @@ public class SeckillOrderCreateListener implements RocketMQListener<String> {
 
     private static final String TOKEN_STATUS_KEY_PREFIX = "seckill:token:status:";
     private static final String ORDER_RESULT_KEY_PREFIX = "seckill:order:";
-    private static final long TTL_MINUTES = 30;
+    private static final String TOKEN_BY_ORDER_KEY_PREFIX = "seckill:token:by:order:";
+    private static final String ORDER_META_KEY_PREFIX = "seckill:order:meta:";
+    private static final long TTL_MINUTES = 120;
+    private static final long META_TTL_HOURS = 24;
 
     @Resource
     private IOrderDomainService orderDomainService;
@@ -47,6 +50,7 @@ public class SeckillOrderCreateListener implements RocketMQListener<String> {
             String seckillToken = dto.getString("seckillToken");
             String userId = dto.getString("userId");
             String productId = dto.getString("productId");
+            Long activityId = dto.getLong("activityId");
             String source = dto.getString("source");
             String channel = dto.getString("channel");
             String goodsName = dto.getString("goodsName");
@@ -55,7 +59,7 @@ public class SeckillOrderCreateListener implements RocketMQListener<String> {
             BigDecimal deductionPrice = parseBigDecimal(dto.getString("deductionPrice"));
             BigDecimal payPrice = parseBigDecimal(dto.getString("payPrice"));
 
-            if (StringUtils.isAnyBlank(seckillToken, userId, productId)) {
+            if (StringUtils.isAnyBlank(seckillToken, userId, productId) || activityId == null) {
                 log.error("seckill-order-create 消息字段缺失: {}", message);
                 return;
             }
@@ -79,10 +83,11 @@ public class SeckillOrderCreateListener implements RocketMQListener<String> {
 
             String orderId = orderDomainService.createOrder(command);
 
-            // 写入 Redis：orderId 结果 + 将 token 状态改为 1 + 反向索引（orderId → seckillToken，供秒杀服务查 activityId）
+            // 前端查询结果仍保留 2 小时；秒杀链路元数据单独保留 24 小时，覆盖超时关单/支付补偿/MQ 重试窗口。
             stringRedisTemplate.opsForValue().set(ORDER_RESULT_KEY_PREFIX + seckillToken, orderId, TTL_MINUTES, TimeUnit.MINUTES);
             stringRedisTemplate.opsForValue().set(TOKEN_STATUS_KEY_PREFIX + seckillToken, "1", TTL_MINUTES, TimeUnit.MINUTES);
-            stringRedisTemplate.opsForValue().set("seckill:token:by:order:" + orderId, seckillToken, TTL_MINUTES, TimeUnit.MINUTES);
+            stringRedisTemplate.opsForValue().set(TOKEN_BY_ORDER_KEY_PREFIX + orderId, seckillToken, META_TTL_HOURS, TimeUnit.HOURS);
+            stringRedisTemplate.opsForValue().set(ORDER_META_KEY_PREFIX + orderId, productId + ":" + activityId, META_TTL_HOURS, TimeUnit.HOURS);
 
             log.info("秒杀建单成功 seckillToken:{} orderId:{}", seckillToken, orderId);
         } catch (Exception e) {

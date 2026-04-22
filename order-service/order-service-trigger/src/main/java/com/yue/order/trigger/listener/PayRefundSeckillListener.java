@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.Resource;
 
 /**
- * 秒杀订单关单后退款 MQ 消费者（pay-refund-seckill）
+ * 秒杀订单退款完成回执 MQ 消费者（pay-refund-seckill）。
  */
 @Slf4j
 @Component

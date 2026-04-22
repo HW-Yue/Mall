@@ -20,7 +20,7 @@ public class TOrderGroup {
     private Long activityId;
     private String goodsId;
     private String outTradeNo;
-    /** 0=锁定 1=已支付 2=已退单 3=已关团（超时未支付） */
+    /** 0=锁定 1=已支付 2=退款处理中 3=已关团（超时未支付） 4=已退款 */
     private Integer status;
     private BigDecimal originalPrice;
     private BigDecimal deductionPrice;

@@ -1,0 +1,10 @@
+[
+  {
+    "resource": "POST:/api/v1/group-buy/trade/create_pay_order",
+    "grade": 2,
+    "count": 0.3,
+    "timeWindow": 15,
+    "minRequestAmount": 20,
+    "statIntervalMs": 10000
+  }
+]

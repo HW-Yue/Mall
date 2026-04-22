@@ -1,0 +1,540 @@
+groups:
+  # ============================================================================
+  # Sentinel 流控/熔断/异常告警（所有业务服务通用）
+  # 说明：
+  # - Sentinel 指标由 common-log-starter 中的 SentinelMetricsBinder 暴露，
+  #   tag 同时包含 app 与 application（前者 Binder 手动打，后者 Micrometer common tag）。
+  #   本规则统一使用 {app="xxx"}。
+  # - Sentinel 资源名由 sentinel-spring-webmvc-v6x-adapter 生成，为纯 URI，
+  #   例如 "/api/v1/order/create_order"，不带 HTTP Method 前缀。
+  # - 各 *_qps 指标为瞬时 Gauge，不适合用 rate() 聚合，直接比较即可。
+  # ============================================================================
+  - name: sentinel-global
+    rules:
+      # 限流触发频繁：block QPS > 50 持续 1 分钟
+      - alert: SentinelBlockRateHigh
+        expr: sentinel_block_qps > 50
+        for: 1m
+        labels:
+          severity: warning
+          category: sentinel
+        annotations:
+          summary: "Sentinel 限流触发频繁"
+          description: "服务 {{ $labels.app }} 资源 {{ $labels.resource }} block QPS = {{ $value | humanize }}/s"
+
+      # 异常率过高：exception_qps / pass_qps > 5% 持续 2 分钟
+      - alert: SentinelExceptionRateHigh
+        expr: sentinel_exception_qps / clamp_min(sentinel_pass_qps, 1) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          category: sentinel
+        annotations:
+          summary: "Sentinel 异常率过高"
+          description: "服务 {{ $labels.app }} 资源 {{ $labels.resource }} 异常率 = {{ $value | humanizePercentage }}"
+
+      # 平均 RT 过高：> 1000ms 持续 2 分钟
+      - alert: SentinelRtHigh
+        expr: sentinel_rt > 1000
+        for: 2m
+        labels:
+          severity: warning
+          category: sentinel
+        annotations:
+          summary: "Sentinel 平均 RT 过高"
+          description: "服务 {{ $labels.app }} 资源 {{ $labels.resource }} 平均 RT = {{ $value | humanize }}ms"
+
+      # 近 5 分钟峰值 RT 过高（替代原 P99 histogram 告警，Binder 未暴露 bucket）
+      - alert: SentinelPeakRtHigh
+        expr: max_over_time(sentinel_rt[5m]) > 2000
+        for: 2m
+        labels:
+          severity: critical
+          category: sentinel
+        annotations:
+          summary: "Sentinel 近 5 分钟峰值 RT 过高"
+          description: "服务 {{ $labels.app }} 资源 {{ $labels.resource }} 峰值 RT = {{ $value | humanize }}ms"
+
+      # 并发线程数接近阈值
+      - alert: SentinelThreadCountHigh
+        expr: sentinel_current_thread > 50
+        for: 2m
+        labels:
+          severity: warning
+          category: sentinel
+        annotations:
+          summary: "Sentinel 并发线程数过高"
+          description: "服务 {{ $labels.app }} 资源 {{ $labels.resource }} 当前并发线程 = {{ $value }}"
+
+  # ============================================================================
+  # DynamicTP 线程池告警（所有业务服务通用）
+  # 说明：
+  # - DTP micrometer collector 实际指标名与字段映射已核对：
+  #     thread_pool_active_count / thread_pool_current_size / thread_pool_maximum_size
+  #     thread_pool_core_size / thread_pool_queue_size / thread_pool_queue_remaining_capacity
+  #     thread_pool_reject_count / thread_pool_completed_task_count ...
+  # - 标签：application（Micrometer common tag）+ thread_pool_name + thread_pool_alias
+  # ============================================================================
+  - name: dynamictp-global
+    rules:
+      # 线程池活跃率过高：active / max > 80% 持续 2 分钟
+      - alert: ThreadPoolActiveRatioHigh
+        expr: |
+          thread_pool_active_count / clamp_min(thread_pool_maximum_size, 1) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+          category: dynamictp
+        annotations:
+          summary: "线程池活跃率过高"
+          description: "服务 {{ $labels.application }} 线程池 {{ $labels.thread_pool_name }} 活跃率 = {{ $value | humanizePercentage }}"
+
+      # 线程池队列使用率过高：queue_size / (queue_size + queue_remaining_capacity) > 80% 持续 2 分钟
+      - alert: ThreadPoolQueueUsageHigh
+        expr: |
+          thread_pool_queue_size / clamp_min(
+            thread_pool_queue_size + thread_pool_queue_remaining_capacity, 1
+          ) > 0.8
+        for: 2m
+        labels:
+          severity: critical
+          category: dynamictp
+        annotations:
+          summary: "线程池队列堆积严重"
+          description: "服务 {{ $labels.application }} 线程池 {{ $labels.thread_pool_name }} 队列使用率 = {{ $value | humanizePercentage }}"
+
+      # 线程池当前大小达到最大值（可能即将拒绝任务）
+      - alert: ThreadPoolAtMaxCapacity
+        expr: thread_pool_current_size >= thread_pool_maximum_size
+        for: 1m
+        labels:
+          severity: warning
+          category: dynamictp
+        annotations:
+          summary: "线程池已达到最大容量"
+          description: "服务 {{ $labels.application }} 线程池 {{ $labels.thread_pool_name }} current={{ $value }} 已达到 max"
+
+      # 任务拒绝次数增加
+      - alert: ThreadPoolRejectedTasks
+        expr: increase(thread_pool_reject_count[1m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: dynamictp
+        annotations:
+          summary: "线程池出现任务被拒绝"
+          description: "服务 {{ $labels.application }} 线程池 {{ $labels.thread_pool_name }} 过去 1 分钟拒绝任务 {{ $value }} 次"
+
+  # ============================================================================
+  # order-service 专项告警（核心业务，告警阈值更严格）
+  # ============================================================================
+  - name: order-service-specific
+    rules:
+      - alert: OrderServiceCreateOrderBlockHigh
+        expr: sentinel_block_qps{app="order-service", resource="/api/v1/order/create_order"} > 20
+        for: 1m
+        labels:
+          severity: critical
+          category: sentinel
+          application: order-service
+        annotations:
+          summary: "order-service 创建订单限流频繁"
+          description: "create_order 限流 QPS = {{ $value | humanize }}/s，可能影响交易"
+
+      - alert: OrderServiceCreateOrderRtHigh
+        expr: sentinel_rt{app="order-service", resource="/api/v1/order/create_order"} > 500
+        for: 2m
+        labels:
+          severity: warning
+          category: sentinel
+          application: order-service
+        annotations:
+          summary: "order-service 创建订单 RT 过高"
+          description: "create_order 平均 RT = {{ $value }}ms"
+
+      - alert: OrderServiceGetPayUrlRtHigh
+        expr: sentinel_rt{app="order-service", resource="/api/v1/order/get_pay_url"} > 300
+        for: 2m
+        labels:
+          severity: warning
+          category: sentinel
+          application: order-service
+        annotations:
+          summary: "order-service 获取支付 URL RT 过高"
+          description: "get_pay_url 平均 RT = {{ $value }}ms，影响支付转化率"
+
+      - alert: OrderServiceThreadPoolBusy
+        expr: |
+          thread_pool_active_count{application="order-service", thread_pool_name="threadPoolExecutor"}
+          /
+          clamp_min(thread_pool_maximum_size{application="order-service", thread_pool_name="threadPoolExecutor"}, 1) > 0.7
+        for: 2m
+        labels:
+          severity: warning
+          category: dynamictp
+          application: order-service
+        annotations:
+          summary: "order-service 业务线程池忙碌"
+          description: "threadPoolExecutor 活跃率 = {{ $value | humanizePercentage }}"
+
+  # ============================================================================
+  # seckill-service 专项告警（秒杀场景，对 RT 极度敏感）
+  # ============================================================================
+  - name: seckill-service-specific
+    rules:
+      - alert: SeckillServiceRtHigh
+        expr: sentinel_rt{app="seckill-service"} > 200
+        for: 1m
+        labels:
+          severity: critical
+          category: sentinel
+          application: seckill-service
+        annotations:
+          summary: "seckill-service RT 过高"
+          description: "资源 {{ $labels.resource }} 平均 RT = {{ $value }}ms，秒杀场景需 < 200ms"
+
+      - alert: SeckillServiceBlockHigh
+        expr: sentinel_block_qps{app="seckill-service"} > 100
+        for: 1m
+        labels:
+          severity: warning
+          category: sentinel
+          application: seckill-service
+        annotations:
+          summary: "seckill-service 限流频繁"
+          description: "资源 {{ $labels.resource }} block QPS = {{ $value | humanize }}/s"
+
+  # ============================================================================
+  # group-buy-service 专项告警
+  # ============================================================================
+  - name: group-buy-service-specific
+    rules:
+      - alert: GroupBuyServiceCreatePayOrderBlockHigh
+        expr: sentinel_block_qps{app="group-buy-service", resource=~"/api/v1/group-buy/trade/.*"} > 30
+        for: 1m
+        labels:
+          severity: warning
+          category: sentinel
+          application: group-buy-service
+        annotations:
+          summary: "group-buy-service 交易接口限流频繁"
+          description: "资源 {{ $labels.resource }} block QPS = {{ $value | humanize }}/s"
+
+  # ============================================================================
+  # pay 服务专项告警（支付链路，异常零容忍）
+  # 注意：pay 服务的 spring.application.name 为 login-pay
+  # ============================================================================
+  - name: pay-service-specific
+    rules:
+      - alert: PayServiceExceptionHigh
+        expr: sentinel_exception_qps{app="login-pay"} / clamp_min(sentinel_pass_qps{app="login-pay"}, 1) > 0.01
+        for: 1m
+        labels:
+          severity: critical
+          category: sentinel
+          application: login-pay
+        annotations:
+          summary: "pay 服务异常率过高"
+          description: "资源 {{ $labels.resource }} 异常率 = {{ $value | humanizePercentage }}"
+
+      - alert: PayServiceCreatePayOrderRtHigh
+        expr: sentinel_rt{app="login-pay", resource="/api/v1/alipay/create_pay_order"} > 500
+        for: 2m
+        labels:
+          severity: warning
+          category: sentinel
+          application: login-pay
+        annotations:
+          summary: "pay 服务创建支付订单 RT 过高"
+          description: "create_pay_order RT = {{ $value }}ms"
+
+  # ============================================================================
+  # mall 服务专项告警
+  # ============================================================================
+  - name: mall-service-specific
+    rules:
+      - alert: MallServiceQueryGoodsPageBlockHigh
+        expr: sentinel_block_qps{app="mall", resource="/api/v1/mall/index/query_goods_page"} > 50
+        for: 1m
+        labels:
+          severity: warning
+          category: sentinel
+          application: mall
+        annotations:
+          summary: "mall 商品查询限流频繁"
+          description: "query_goods_page block QPS = {{ $value | humanize }}/s"
+
+  # ============================================================================
+  # 网关专项告警
+  # ============================================================================
+  - name: gateway-specific
+    rules:
+      - alert: GatewayBlockRateHigh
+        expr: sentinel_block_qps{app="springcloud-gateway"} > 200
+        for: 1m
+        labels:
+          severity: critical
+          category: sentinel
+          application: gateway
+        annotations:
+          summary: "网关限流触发频繁"
+          description: "网关资源 {{ $labels.resource }} block QPS = {{ $value | humanize }}/s，可能影响全链路"
+
+  # ============================================================================
+  # HTTP 层错误率告警（Micrometer 自动暴露的 http_server_requests）
+  # 替代 Spring Boot 当前未暴露的 tomcat_threads_busy 类告警
+  # ============================================================================
+  - name: http-layer-global
+    rules:
+      - alert: Http5xxErrorRateHigh
+        expr: |
+          sum(rate(http_server_requests_seconds_count{status=~"5.."}[1m])) by (application)
+          /
+          clamp_min(sum(rate(http_server_requests_seconds_count[1m])) by (application), 0.001) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          category: http
+        annotations:
+          summary: "HTTP 5xx 错误率过高"
+          description: "服务 {{ $labels.application }} 5xx 错误率 = {{ $value | humanizePercentage }}"
+
+  # ============================================================================
+  # Hikari 连接池告警（category=hikari，ops-agent 的 HikariTuningStrategy 按 pool 标签反查 app）
+  # ============================================================================
+  - name: hikari-global
+    rules:
+      - alert: HikariConnectionsSaturated
+        expr: hikaricp_connections_active / clamp_min(hikaricp_connections_max, 1) > 0.85
+        for: 2m
+        labels:
+          severity: warning
+          category: hikari
+        annotations:
+          summary: "Hikari 连接池使用率过高"
+          description: "服务 {{ $labels.application }} 连接池 {{ $labels.pool }} 使用率 = {{ $value | humanizePercentage }}"
+
+      - alert: HikariConnectionsPending
+        expr: hikaricp_connections_pending > 0
+        for: 1m
+        labels:
+          severity: warning
+          category: hikari
+        annotations:
+          summary: "Hikari 存在等待获取连接的线程"
+          description: "服务 {{ $labels.application }} 连接池 {{ $labels.pool }} pending = {{ $value }}"
+
+      - alert: HikariConnectionAcquireSlow
+        expr: rate(hikaricp_connections_acquire_seconds_sum[1m]) / clamp_min(rate(hikaricp_connections_acquire_seconds_count[1m]), 1) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+          category: hikari
+        annotations:
+          summary: "Hikari 获取连接耗时过长"
+          description: "服务 {{ $labels.application }} 连接池 {{ $labels.pool }} 获取连接均值 = {{ $value | humanizeDuration }}"
+
+  # ============================================================================
+  # JVM / 系统通用告警
+  # ============================================================================
+  - name: jvm-system-global
+    rules:
+      # JVM 堆内存使用率
+      - alert: JvmHeapUsageHigh
+        expr: jvm_memory_used_bytes{area="heap"} / jvm_memory_max_bytes{area="heap"} > 0.85
+        for: 2m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "JVM 堆内存使用率过高"
+          description: "服务 {{ $labels.application }} JVM 堆内存使用率 = {{ $value | humanizePercentage }}"
+
+      # JVM GC 平均耗时过高
+      - alert: JvmGcPauseHigh
+        expr: rate(jvm_gc_pause_seconds_sum[5m]) / clamp_min(rate(jvm_gc_pause_seconds_count[5m]), 1) > 0.5
+        for: 2m
+        labels:
+          severity: warning
+          category: system
+        annotations:
+          summary: "JVM GC 平均耗时过高"
+          description: "服务 {{ $labels.application }} GC 平均耗时 = {{ $value | humanizeDuration }}"
+
+      # 服务 UP 状态检测（通过 Prometheus scrape 失败间接判断）
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: system
+        annotations:
+          summary: "服务实例下线"
+          description: "实例 {{ $labels.instance }} (job={{ $labels.job }}) 无法抓取指标"
+
+  # ============================================================================
+  # MySQL 实例告警（mysqld_exporter，category=mysql，application=shared）
+  # ops-agent 的 MySqlTuningStrategy 会把调优建议写入 Nacos shared-mysql-tuning.yml
+  # ============================================================================
+  - name: mysql-exporter-global
+    rules:
+      # MySQL 实例下线
+      - alert: MySqlDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: mysql
+          application: shared
+        annotations:
+          summary: "MySQL 实例不可用"
+          description: "mysqld-exporter 抓不到 {{ $labels.instance }}"
+
+      # 连接数快到 max_connections：Threads_connected / max_connections > 80%
+      - alert: MySqlTooManyConnections
+        expr: mysql_global_status_threads_connected / clamp_min(mysql_global_variables_max_connections, 1) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+          category: mysql
+          application: shared
+        annotations:
+          summary: "MySQL 连接数接近上限"
+          description: "threads_connected = {{ $value | humanizePercentage }} × max_connections"
+
+      # 慢查询率（新增慢查询 / 新增总查询）> 1% 持续 5 分钟
+      - alert: MySqlSlowQueriesHigh
+        expr: |
+          rate(mysql_global_status_slow_queries[5m])
+          /
+          clamp_min(rate(mysql_global_status_questions[5m]), 0.001) > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          category: mysql
+          application: shared
+        annotations:
+          summary: "MySQL 慢查询占比过高"
+          description: "慢查询占比 = {{ $value | humanizePercentage }}"
+
+      # InnoDB 行锁等待：最近 5 分钟新增行锁等待次数 > 10
+      - alert: MySqlInnodbRowLockWaitHigh
+        expr: increase(mysql_global_status_innodb_row_lock_waits[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          category: mysql
+          application: shared
+        annotations:
+          summary: "MySQL InnoDB 行锁等待频繁"
+          description: "近 5 分钟新增行锁等待 {{ $value }} 次，可能存在热点行"
+
+  # ============================================================================
+  # Redis 实例告警（redis_exporter，category=redis，application=shared）
+  # ops-agent 的 RedisNotifyStrategy 只通知 + 调 ES 反查 traceId，不直接改 Nacos
+  # ============================================================================
+  - name: redis-exporter-global
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: redis
+          application: shared
+        annotations:
+          summary: "Redis 实例不可用"
+          description: "redis-exporter 抓不到 {{ $labels.instance }}"
+
+      # 内存使用率 > 80%
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / clamp_min(redis_memory_max_bytes, 1) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          category: redis
+          application: shared
+        annotations:
+          summary: "Redis 内存占用过高"
+          description: "使用率 = {{ $value | humanizePercentage }}"
+
+      # 连接数超过 500（根据实际 maxclients 调整）
+      - alert: RedisConnectedClientsHigh
+        expr: redis_connected_clients > 500
+        for: 5m
+        labels:
+          severity: warning
+          category: redis
+          application: shared
+        annotations:
+          summary: "Redis 连接数过多"
+          description: "connected_clients = {{ $value }}"
+
+      # 命中率低：hit / (hit + miss) < 80%，可能缓存击穿或不合理
+      - alert: RedisKeyspaceHitRateLow
+        expr: |
+          rate(redis_keyspace_hits_total[5m])
+          /
+          clamp_min(rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]), 0.001) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          category: redis
+          application: shared
+        annotations:
+          summary: "Redis 命中率偏低"
+          description: "近 5 分钟命中率 = {{ $value | humanizePercentage }}"
+
+      # 阻塞客户端出现（BLPOP/BRPOP/WAIT 等）
+      - alert: RedisBlockedClients
+        expr: redis_blocked_clients > 0
+        for: 2m
+        labels:
+          severity: warning
+          category: redis
+          application: shared
+        annotations:
+          summary: "Redis 存在阻塞客户端"
+          description: "blocked_clients = {{ $value }}"
+
+  # ============================================================================
+  # RocketMQ 实例告警（rocketmq-exporter，category=rocketmq，application=shared）
+  # ops-agent 的 RocketMqNotifyStrategy 只通知，不直接改 Nacos
+  # ============================================================================
+  - name: rocketmq-exporter-global
+    rules:
+      # Broker 下线
+      - alert: RocketMqBrokerDown
+        expr: rocketmq_broker_tps == 0 and on(cluster,brokerName) (rocketmq_broker_tps offset 5m) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: rocketmq
+          application: shared
+        annotations:
+          summary: "RocketMQ Broker 可能下线"
+          description: "broker {{ $labels.brokerName }} 近 5 分钟 TPS 持续为 0"
+
+      # 消费组堆积：消费端最大堆积 > 5000 持续 5 分钟
+      - alert: RocketMqConsumerLagHigh
+        expr: rocketmq_consumer_message_accumulation > 5000
+        for: 5m
+        labels:
+          severity: warning
+          category: rocketmq
+          application: shared
+        annotations:
+          summary: "RocketMQ 消费堆积"
+          description: "group={{ $labels.group }} topic={{ $labels.topic }} 堆积 = {{ $value }}"
+
+      # 死信队列出现消息（%DLQ% topic）
+      - alert: RocketMqDlqMessageAppeared
+        expr: increase(rocketmq_producer_offset{topic=~"%DLQ%.*"}[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          category: rocketmq
+          application: shared
+        annotations:
+          summary: "RocketMQ 死信队列出现消息"
+          description: "topic={{ $labels.topic }} 近 5 分钟新增死信消息"

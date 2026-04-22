@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.Resource;
 
 /**
- * 拼团订单关单后退款 MQ 消费者（pay-refund-group-buy）
+ * 拼团订单退款完成回执 MQ 消费者（pay-refund-group-buy）。
  */
 @Slf4j
 @Component

@@ -15,6 +15,7 @@ public enum OrderStatusVO {
     PAY_AFTER_CLOSE("PAY_AFTER_CLOSE", "关单后收到付款 - 需退款"),
     MARKET("MARKET", "营销结算 - 拼团组队完成"),
     WAIT_REFUND("WAIT_REFUND", "营销退单待退款"),
+    REFUNDED("REFUNDED", "退款完成"),
     ;
 
     private final String code;

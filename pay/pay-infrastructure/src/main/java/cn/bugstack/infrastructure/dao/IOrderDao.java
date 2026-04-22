@@ -19,7 +19,7 @@ public interface IOrderDao {
 
     List<String> queryNoPayNotifyOrder();
 
-    List<String> queryTimeoutCloseOrderList();
+    List<String> queryPayReconcileCloseOrderList();
 
     boolean changeOrderClose(String orderId);
 

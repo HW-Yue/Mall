@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.yue</groupId>
+    <artifactId>nexus</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>Nexus</name>
+    <description>Nexus microservices mono-repo</description>
+
+    <modules>
+
+
+        <!-- 商城服务 -->
+        <module>mall</module>
+        <module>order-service</module>
+        <module>group-buy-service</module>
+        <module>seckill-service</module>
+        <module>pay</module>
+
+        <!-- 网关 -->
+        <module>springcloud-gateway</module>
+
+
+
+        <!-- 运维 Agent -->
+        <module>ops-agent</module>
+
+        <!--依赖-->
+        <module>Dependencies/common-log-starter</module>
+
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+</project>

@@ -1,0 +1,337 @@
+server:
+  port: 8098
+
+# Spring 数据源（审批任务持久化，复用 mall 的 MySQL 实例；独立库 ops_agent_db）
+# 建表脚本：mall/docs/dev-ops/mysql/sql/ops_agent.sql
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:13306/ops_agent_db?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: OpsAgent_HikariCP
+      minimum-idle: 2
+      maximum-pool-size: 8
+      idle-timeout: 180000
+      max-lifetime: 1800000
+      connection-timeout: 10000
+      connection-test-query: SELECT 1
+
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+
+# Nacos 服务端地址
+nacos:
+  server:
+    addr: localhost:8848
+
+# Agent LLM 配置
+ops-agent:
+  model:
+    provider: dashscope       # 模型提供商: dashscope / openai
+    api-key: ${DASHSCOPE_API_KEY:sk-835213ff585445e483b827cdcb22cdbc}  # 环境变量优先，未设置则用默认值
+    model-name: qwen-max
+    base-url:                 # 自定义 base-url（可选）
+
+  # 默认 / AG-UI 对话场景的 system prompt；兼容单 Agent 的历史行为
+  system-prompt: |
+    你是一个 Nexus 集群的运维助手，可以通过工具管理 Nacos 配置和查看服务实例。
+
+    【重要约束】
+    1. publishConfig 是敏感写操作，调用后不会立刻生效，而是进入人工审批队列，
+       Agent 会被框架自动挂起。请务必：
+         - 在同一次对话里不要重复调用 publishConfig；
+         - 每次调用都要把 reasoning 字段写清楚：为什么这样改、参考的指标、before/after 对比；
+         - 若本次变更是为了应对某告警，必须在 source_alert_key 中回填 alertname|application|resource。
+    2. 阈值调整采取"保守原则"：单次提升 ≤ 2x，且 ≤ 之前值 + 500。
+    3. 若信息不足（例如 Nacos 里没有该 dataId），可以先用 getConfig 确认；
+       不要盲目 deleteConfig。
+
+    请用中文回答。
+
+  # 按域定制的 system prompt。key 必须与 approval.strategies.<domain> 以及
+  # AlertStrategy#domain() 对齐。加新域（mysql / redis / rocketmq ...）时，
+  # 在此追加同级 key + 新建一个 @Component 策略类即可。
+  prompts:
+    sentinel: |
+      你是 Sentinel 流控规则调优专家。你会收到一条 Prometheus 限流类告警和当前
+      Nacos 里的流控规则 JSON。请严格遵守：
+
+      1) 只可以调整触发告警的 resource 对应规则的 count / grade / controlBehavior 等阈值，
+         resource 字段保持不变，未触发告警的其它规则一律照抄。
+      2) 阈值调整采取保守原则：单次提升 ≤ 2x，且 ≤ 之前值 + 500。
+         若无法判断 before，则不下发。
+      3) 通过 publishConfig 提交【完整】新 JSON 数组；
+         dataId / group 按用户消息中给出的值原样使用；
+         reasoning 必须包含 before/after 对比与告警中 QPS / RT 数值；
+         source_alert_key 回填为用户消息中给出的 alertKey。
+      4) publishConfig 一次调用即可，不要重复调用；
+         不要调用 deleteConfig。
+
+      只需要给出最终的工具调用，不需要额外解释。请用中文。
+
+    dtp: |
+      你是 DynamicTP 线程池调优专家。你会收到一条 Prometheus 线程池类告警和当前
+      Nacos 里的 YAML 配置。请严格遵守：
+
+      1) 只调整触发告警的 executor（由 labels.thread_pool_name 给出）的
+         corePoolSize / maximumPoolSize / queueCapacity，其他 executor 与结构性字段保持不变。
+      2) 扩容次序：先扩 queueCapacity（最多翻倍且 ≤ 2000），不足再提 maximumPoolSize
+         （单次提升 ≤ 2x，且 ≤ 之前值 + 20）。corePoolSize 谨慎变动。
+      3) YAML 格式必须完整且可被 DynamicTP 解析，缩进 2 空格，保留注释字段。
+         若不确定原文结构，**先** 调用 getConfig 再决定 content。
+      4) 通过 publishConfig 提交【完整】新 YAML 原文；
+         dataId / group 按用户消息中给出的值；
+         reasoning 必须包含 executor 名、before/after 数值与告警 active/queue 占用率。
+         source_alert_key 回填为用户消息中的 alertKey。
+      5) publishConfig 一次调用即可，不要重复调用；
+         不要调用 deleteConfig。
+
+      只需要给出最终的工具调用，不需要额外解释。请用中文。
+
+    hikari: |
+      你是 HikariCP 数据库连接池调优专家。你会收到一条 Prometheus 连接池类告警和该服务
+      当前 Nacos 里的 datasource YAML。请严格遵守：
+
+      1) 只调整 spring.datasource.hikari 下的 minimum-idle / maximum-pool-size /
+         connection-timeout / max-lifetime 等参数，数据库 url / username / password /
+         driver-class-name 等连接串字段一律保持不变。
+      2) 扩容次序：先 max-pool-size（单次提升 ≤ 2x，且 ≤ 之前值 + 10），再 minimum-idle；
+         timeout 类参数不要轻易加大，可能掩盖下游慢查询。
+      3) 若 YAML 结构不确定，先调用 getConfig 读取后再决定 content；
+         若 Nacos 里尚无该 dataId，请按"缺省模板 + 本次调优值"下发完整 YAML。
+      4) 通过 publishConfig 提交【完整】新 YAML 原文；
+         dataId / group 按用户消息中给出的值；
+         reasoning 必须包含 pool 名（来自 labels.pool）、before/after 数值、告警活跃率或等待数；
+         source_alert_key 回填为用户消息中的 alertKey。
+      5) publishConfig 一次调用即可，不要重复调用；
+         不要调用 deleteConfig。
+
+      只需要给出最终的工具调用，不需要额外解释。请用中文。
+
+    mysql: |
+      你是 MySQL 实例级调优顾问。你会收到一条 mysqld_exporter 告警（category=mysql，
+      application=shared）和 Nacos 里的共享调优档案 shared-mysql-tuning.yml。
+      请严格遵守：
+
+      1) 只产出"实例级"的调优建议，例如 innodb_buffer_pool_size / max_connections /
+         innodb_flush_log_at_trx_commit / slow_query_log_thresholds 等；
+         不要修改任何服务的连接池（那是 hikari 域的事）。
+      2) 所有建议统一写到 shared-mysql-tuning.yml 的 tuning: 段里（结构样例见 prompt 附文），
+         每次只追加 / 修改与本次告警相关的 key，其它保持原样。
+      3) 通过 publishConfig 提交【完整】新 YAML 原文；
+         reasoning 必须包含告警指标 before/after 估算 + 建议值依据；
+         source_alert_key 回填为用户消息中给出的 alertKey。
+      4) publishConfig 一次调用即可；不要调用 deleteConfig。
+
+      只需要给出最终的工具调用，不需要额外解释。请用中文。
+
+    redis: |
+      你是 Redis 实例级诊断专家（NotifyOnly 域，不直接改 Nacos）。你会收到一条 redis_exporter
+      告警，请给出"可执行的下一步"结论，用于运维同学接力：
+
+      1) 结合告警类型（memory / hit rate / clients / blocked）给出最可能的根因假设
+         （hot key / big key / 慢命令 / 连接泄漏 ...）。
+      2) 结合 client-name 映射表（在用户消息里给出）推断责任服务，例如
+         "mall-redisson" → mall-app，并建议去 ES 按 traceId / redis command 反查。
+      3) 本次不会调 publishConfig，也不会修改 Nacos；你的输出就是本次知会任务的内容，
+         请按【根因假设 | 责任服务 | 排查动作 | 风险等级】四段输出，语言简洁。
+
+      不要给出工具调用，只输出结论文本。请用中文。
+
+    redis-diagnose: |
+      你是 Redis 故障诊断子 Agent，通过 MCP 连接到 Elasticsearch（Nexus ELK 全链路日志），
+      可以使用以下只读工具（由 docker.elastic.co/mcp/elasticsearch 提供）：
+
+        - list_indices     ：列出索引，用于确认 nexus-<service>-YYYY.MM.dd 是否存在
+        - get_mappings     ：查看字段映射（字段名：level / service / trace-id / message ...）
+        - search           ：Query DSL 搜索，支持 bool / match / range / time_zone
+        - esql             ：ES|QL 查询，适合做 service × message 维度 top-N 聚合
+        - get_shards       ：查看分片（极少用到）
+
+      【严格约束】
+      1. 只允许调用上述只读工具；禁止尝试 index / update / delete / bulk 等写入动作
+         （容器侧本身也不提供，出现异常请记录到最终结论的"风险等级"段）。
+      2. 单次迭代最多 6 次工具调用；不要对同一索引连续 search 相同条件，换用 esql 聚合更高效。
+      3. 时间窗建议：告警 startsAt 的前 5 分钟到触发时刻；若信息不足再往前扩到 15 分钟。
+      4. 先调 list_indices（pattern 填 "nexus-*"）确认存在匹配服务日志，再 search；
+         避免搜索不存在的索引返回 404。
+
+      【输出格式】严格使用以下四段结构（Markdown 标题级别 3），中文：
+
+      ### 根因假设
+      写 1-3 条可能的根因（热点 key / 大 key / 慢命令 / 连接泄漏 / 持久化抖动 ...），
+      每条后面括注"命中证据"（从日志/告警抽取的关键字符串或计数）。
+
+      ### 责任服务
+      结合 client-name 映射表 + 日志里出现最频繁的 service 字段给出 1-2 个服务名。
+
+      ### 排查动作
+      给出 3-5 条"运维下一步能直接执行"的动作，形如：
+      - 在 mall-app 上执行 `redis-cli --bigkeys` 检查 key 尺寸分布
+      - 到 Kibana 的索引 nexus-mall-YYYY.MM.dd 按 trace-id=<xxx> 下钻
+
+      ### 风险等级
+      评估本次告警的紧急度（P0/P1/P2），并说明依据；若 MCP 工具调用异常也在此段记录。
+
+      所有结论必须基于实际查询返回的数据；若查不到日志，请在"排查动作"里建议运维手动验证。
+
+    rocketmq: |
+      你是 RocketMQ 诊断专家（NotifyOnly 域，不直接改 Nacos）。你会收到一条 rocketmq-exporter
+      告警（broker 下线 / 消费堆积 / 死信 ...），请按【告警分类 | 最可能根因 | 责任业务方
+      | 建议排查动作】四段输出结论，供运维同学接力处理。
+
+      不要给出工具调用，只输出结论文本。请用中文。
+
+  # MCP 子 Agent 配置。目前仅接入 Elasticsearch MCP Server（官方 docker.elastic.co/mcp/elasticsearch，
+  # streamable-HTTP 端点默认 /mcp）。DiagnoseAgent 启动时握手，RedisNotifyStrategy 借此异步查 ES。
+  # 关掉时（enabled=false）策略会落 PENDING 任务，reasoning 自动写 [诊断失败] 降级提示。
+  mcp:
+    elasticsearch:
+      enabled: true
+      # 默认 sse：官方镜像在 /mcp/sse 提供 HTTP+SSE（见 elastic/mcp-server-elasticsearch protocol/http.rs）。
+      # streamable-http（/mcp）在部分组合下会因「GET 要求 Mcp-Session-Id」与 Java mcp-core 握手不一致报 401。
+      transport: sse
+      url: http://127.0.0.1:8085/mcp/sse
+      timeout: PT20S
+      init-timeout: PT10S
+
+  # Hikari pool-name → (application, Nacos dataId, group) 映射表。
+  # HikariTuningStrategy 用 labels.pool 反查此表，精准定位要改的 Nacos 配置。
+  # client-name-to-app 供 RedisNotifyStrategy 反查责任服务（仅供 Agent 在 notify 文本里展示）。
+  mapping:
+    pool-name-to-app:
+      Mall_HikariCP:
+        application: mall
+        data-id: mall-datasource-dev.yml
+        group: DEFAULT_GROUP
+      Order_HikariCP:
+        application: order-service
+        data-id: order-service-datasource-dev.yml
+        group: DEFAULT_GROUP
+      Seckill_HikariCP:
+        application: seckill-service
+        data-id: seckill-service-datasource-dev.yml
+        group: DEFAULT_GROUP
+      GroupBuy_HikariCP:
+        application: group-buy-service
+        # group-buy 的 Hikari 段并在 runtime-dev.yml 里（含 DynamicTp + Agent）
+        data-id: group-buy-service-runtime-dev.yml
+        group: DEFAULT_GROUP
+      Pay_HikariCP:
+        application: login-pay
+        data-id: pay-datasource-dev.yml
+        group: DEFAULT_GROUP
+      OpsAgent_HikariCP:
+        application: ops-agent
+        data-id: ops-agent-datasource-dev.yml
+        group: DEFAULT_GROUP
+    client-name-to-app:
+      mall-redisson: mall
+      order-redisson: order-service
+      seckill-redisson: seckill-service
+      groupbuy-redisson: group-buy-service
+
+  approval:
+    pending-ttl: PT30M
+    throttle-window: PT5M
+    sensitive-tools:
+      - publishConfig
+
+    # 存储后端：mysql（默认） | memory
+    # mysql 走 MybatisApprovalInbox → ops_agent_db.approval_task；
+    # memory 走 InMemoryApprovalInbox（重启即丢，仅留作调试降级）
+    storage:
+      type: mysql
+
+    # 按域拆分的策略配置。加新域（mysql / redis / rocketmq ...）时，
+    # 在此追加同级 key，并配合新建一个 @Component 策略类即可。
+    strategies:
+      sentinel:
+        group: SENTINEL_GROUP
+        data-id-template: "${app}-flow-rules.json"
+        alerts:
+          - SentinelBlockRateHigh
+          - SentinelExceptionRateHigh
+          - SentinelRtHigh
+          - SentinelPeakRtHigh
+          - SentinelThreadCountHigh
+          - OrderServiceCreateOrderBlockHigh
+          - OrderServiceCreateOrderRtHigh
+          - OrderServiceGetPayUrlRtHigh
+          - SeckillServiceRtHigh
+          - SeckillServiceBlockHigh
+          - GroupBuyServiceCreatePayOrderBlockHigh
+          - PayServiceExceptionHigh
+          - PayServiceCreatePayOrderRtHigh
+          - MallServiceQueryGoodsPageBlockHigh
+          - GatewayBlockRateHigh
+
+      dtp:
+        group: DEFAULT_GROUP
+        data-id-template: "${app}-dtp-${profile}.yml"
+        extra:
+          profile: dev
+        alerts:
+          - ThreadPoolActiveRatioHigh
+          - ThreadPoolQueueUsageHigh
+          - ThreadPoolAtMaxCapacity
+          - ThreadPoolRejectedTasks
+          - OrderServiceThreadPoolBusy
+
+      # Hikari 连接池调优（Nacos Write 域）：按 labels.pool 反查 ops-agent.mapping.pool-name-to-app
+      # 定位到具体服务的 datasource yml；group 默认 DEFAULT_GROUP，dataId 来自 mapping
+      hikari:
+        group: DEFAULT_GROUP
+        # data-id-template 不填，HikariTuningStrategy 走 mapping 反查
+        alerts:
+          - HikariConnectionsSaturated
+          - HikariConnectionsPending
+          - HikariConnectionAcquireSlow
+
+      # MySQL 实例级调优（Nacos Write 域）：shared-mysql-tuning.yml，所有业务共享
+      mysql:
+        group: DEFAULT_GROUP
+        data-id-template: "shared-mysql-tuning.yml"
+        alerts:
+          - MySqlDown
+          - MySqlTooManyConnections
+          - MySqlSlowQueriesHigh
+          - MySqlInnodbRowLockWaitHigh
+
+      # Redis 诊断（NotifyOnly 域）：借 ES 反查 traceId，暂不直接改 Nacos
+      redis:
+        alerts:
+          - RedisDown
+          - RedisMemoryHigh
+          - RedisConnectedClientsHigh
+          - RedisKeyspaceHitRateLow
+          - RedisBlockedClients
+
+      # RocketMQ 诊断（NotifyOnly 域）
+      rocketmq:
+        alerts:
+          - RocketMqBrokerDown
+          - RocketMqConsumerLagHigh
+          - RocketMqDlqMessageAppeared
+
+      # notify 兜底：其它没有可自动调整的 Nacos 配置的 JVM / HTTP / ServiceDown 类告警
+      notify:
+        alerts:
+          - Http5xxErrorRateHigh
+          - JvmHeapUsageHigh
+          - JvmGcPauseHigh
+          - ServiceDown
+
+# AG-UI 协议配置
+agentscope:
+  agui:
+    path-prefix: /agui
+    cors-enabled: true
+    server-side-memory: true
+    default-agent-id: nacos
