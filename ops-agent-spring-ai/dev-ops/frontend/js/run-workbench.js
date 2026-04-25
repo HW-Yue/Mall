@@ -1,49 +1,59 @@
 window.RunWorkbench = (() => {
-    const examples = {
-        http5xx: {
+    const alertExamples = [
+        { key: 'ServiceDown', group: 'system', severity: 'critical' },
+        { key: 'JvmHeapUsageHigh', group: 'system', severity: 'warning' },
+        { key: 'JvmGcPauseHigh', group: 'system', severity: 'warning' },
+        { key: 'Http5xxErrorRateHigh', group: 'http', severity: 'critical' },
+        { key: 'SentinelRtHigh', group: 'sentinel', severity: 'warning', labels: { resource: '/api/v1/order/create_order' } },
+        { key: 'SentinelBlockRateHigh', group: 'sentinel', severity: 'critical', labels: { resource: '/api/v1/order/create_order' } },
+        { key: 'HikariConnectionsSaturated', group: 'hikari', severity: 'critical' },
+        { key: 'HikariConnectionsPending', group: 'hikari', severity: 'warning' },
+        { key: 'HikariConnectionAcquireSlow', group: 'hikari', severity: 'warning' },
+        { key: 'MySqlSlowQueriesHigh', group: 'mysql', severity: 'warning' },
+        { key: 'MySqlTooManyConnections', group: 'mysql', severity: 'critical' },
+        { key: 'MySqlDown', group: 'mysql', severity: 'critical' },
+        { key: 'MySqlInnodbRowLockWaitHigh', group: 'mysql', severity: 'warning' },
+        { key: 'RedisMemoryHigh', group: 'redis', severity: 'warning' },
+        { key: 'RedisDown', group: 'redis', severity: 'critical' },
+        { key: 'RedisBlockedClients', group: 'redis', severity: 'warning' },
+        { key: 'RedisKeyspaceHitRateLow', group: 'redis', severity: 'warning' },
+        { key: 'RedisConnectedClientsHigh', group: 'redis', severity: 'warning' },
+        { key: 'RocketMqConsumerLagHigh', group: 'rocketmq', severity: 'warning', labels: { topic: 'order-topic', consumerGroup: 'order-consumer-group' } },
+        { key: 'RocketMqDlqMessageAppeared', group: 'rocketmq', severity: 'critical', labels: { topic: 'order-topic', consumerGroup: 'order-consumer-group' } },
+        { key: 'RocketMqBrokerDown', group: 'rocketmq', severity: 'critical' },
+        { key: 'ThreadPoolQueueUsageHigh', group: 'dynamictp', severity: 'warning' },
+        { key: 'ThreadPoolRejectedTasks', group: 'dynamictp', severity: 'critical' },
+        { key: 'NacosConfigDrill', group: 'drill', severity: 'warning' },
+    ];
+
+    const examples = Object.fromEntries(alertExamples.map((item) => [
+        item.key,
+        {
             mode: 'alert',
-            value: {
-                status: 'firing',
-                alerts: [{
-                    status: 'firing',
-                    labels: {
-                        alertname: 'Http5xxErrorRateHigh',
-                        severity: 'critical',
-                        application: 'order-service',
-                        category: 'http',
-                        instance: 'order-service:8080'
-                    },
-                    annotations: {
-                        summary: 'order-service 5xx 错误率过高',
-                        description: '最近 5 分钟 5xx 错误率超过阈值'
-                    }
-                }]
-            }
+            value: alertPayload(item),
         },
+    ]));
+
+    Object.assign(examples, {
+        http5xx: examples.Http5xxErrorRateHigh,
         nacos: {
-            mode: 'alert',
-            value: {
-                status: 'firing',
-                alerts: [{
-                    status: 'firing',
-                    labels: {
-                        alertname: 'NacosConfigDrill',
-                        severity: 'warning',
-                        application: 'ops-agent-spring-ai',
-                        category: 'nacos'
-                    },
-                    annotations: {
-                        summary: 'Nacos 配置发布审批演练',
-                        description: '触发含 nacos_publish_config 的 SOP，用于确认前端审批暂停与恢复'
-                    }
-                }]
-            }
+            ...examples.NacosConfigDrill,
+            value: alertPayload({
+                key: 'NacosConfigDrill',
+                group: 'drill',
+                severity: 'warning',
+                application: 'ops-agent-spring-ai',
+                annotations: {
+                    summary: 'Nacos 配置发布审批演练',
+                    description: '触发含 nacos_publish_config 的 SOP，用于确认前端审批暂停与恢复',
+                },
+            }),
         },
         plain: {
             mode: 'text',
             value: '订单服务最近大量报错，用户反馈下单接口偶发 500，请选择已有 SOP 或给出排查草案。'
         }
-    };
+    });
 
     const state = {
         mode: 'alert',
@@ -62,6 +72,7 @@ window.RunWorkbench = (() => {
         dom.status = document.getElementById('run-status');
         dom.timeline = document.getElementById('timeline');
         dom.refresh = document.getElementById('run-refresh');
+        dom.alertExample = document.getElementById('alert-example-select');
 
         document.querySelectorAll('[data-route-mode]').forEach((button) => {
             button.addEventListener('click', () => setMode(button.dataset.routeMode));
@@ -69,6 +80,7 @@ window.RunWorkbench = (() => {
         document.querySelectorAll('[data-run-example]').forEach((button) => {
             button.addEventListener('click', () => fillExample(button.dataset.runExample));
         });
+        dom.alertExample.addEventListener('change', () => fillExample(dom.alertExample.value));
         dom.form.addEventListener('submit', (event) => {
             event.preventDefault();
             submit();
@@ -76,8 +88,57 @@ window.RunWorkbench = (() => {
         dom.refresh.addEventListener('click', refresh);
         dom.cancel.addEventListener('click', cancel);
 
+        renderAlertExamples();
         fillExample('http5xx');
         renderTimeline();
+    }
+
+    function alertPayload(item) {
+        const labels = {
+            alertname: item.key,
+            severity: item.severity,
+            application: item.application || 'order-service',
+            instance: '192.168.1.10:18081',
+            job: 'spring-boot',
+            category: item.group,
+            ...(item.labels || {}),
+        };
+        return {
+            status: 'firing',
+            alerts: [{
+                status: 'firing',
+                labels,
+                annotations: {
+                    summary: `测试告警 ${item.key}`,
+                    description: `手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=${item.key}`,
+                    ...(item.annotations || {}),
+                },
+                startsAt: '2026-04-25T10:00:00Z',
+                endsAt: '0001-01-01T00:00:00Z',
+            }],
+        };
+    }
+
+    function renderAlertExamples() {
+        const groups = new Map();
+        alertExamples.forEach((item) => {
+            if (!groups.has(item.group)) {
+                groups.set(item.group, []);
+            }
+            groups.get(item.group).push(item);
+        });
+        dom.alertExample.innerHTML = '';
+        for (const [group, items] of groups.entries()) {
+            const optgroup = document.createElement('optgroup');
+            optgroup.label = group;
+            items.forEach((item) => {
+                const option = document.createElement('option');
+                option.value = item.key;
+                option.textContent = `${item.key} · ${item.severity}`;
+                optgroup.appendChild(option);
+            });
+            dom.alertExample.appendChild(optgroup);
+        }
     }
 
     function setMode(mode) {
@@ -93,6 +154,12 @@ window.RunWorkbench = (() => {
         if (!item) return;
         setMode(item.mode);
         dom.input.value = item.mode === 'alert' ? JSON.stringify(item.value, null, 2) : item.value;
+        if (dom.alertExample && examples[dom.alertExample.value] !== item) {
+            const alert = item.value?.alerts?.[0]?.labels?.alertname;
+            if (alert && examples[alert]) {
+                dom.alertExample.value = alert;
+            }
+        }
     }
 
     async function submit() {
