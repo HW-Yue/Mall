@@ -166,7 +166,7 @@
             </exclusions>
         </dependency>
 
-        <!-- OpenTelemetry OTLP：GenAI span 上报 SkyWalking OAP 10.4（与 ops-agent 同思路，receiver-otel 共用 gRPC 11800） -->
+        <!-- OpenTelemetry OTLP：GenAI span 上报 SkyWalking OAP 10.4（receiver-otel 共用 gRPC 11800） -->
         <dependency>
             <groupId>io.opentelemetry</groupId>
             <artifactId>opentelemetry-api</artifactId>
@@ -188,6 +188,18 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>dev-ops/frontend</directory>
+                <targetPath>static</targetPath>
+                <excludes>
+                    <exclude>README.md</exclude>
+                </excludes>
+            </resource>
+        </resources>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

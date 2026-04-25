@@ -12,9 +12,9 @@
 
 ## 使用
 
-1. 启动 **ops-agent-spring-ai** 并注册到 Nacos；启动 **springcloud-gateway**（dev 一般为 `8090`）。
-2. 浏览器打开本目录下 `index.html`。
-3. 默认 API 基址在 `config.js`：`http://100.86.250.112:8090/gw/api/v1/ops-ai`。直连服务时使用 `?api=http://127.0.0.1:2322/api/v1`。
+1. 执行 `mvn package` 后启动 **ops-agent-spring-ai** jar。
+2. 浏览器打开服务端口，例如 `http://127.0.0.1:2322/`。
+3. 默认 API 基址随当前页面同源访问：`http://127.0.0.1:2322/api/v1`。经 Gateway 时使用 `?api=http://127.0.0.1:8090/gw/api/v1/ops-ai`。
 
 ## 文件
 
