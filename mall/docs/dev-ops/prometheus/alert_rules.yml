@@ -300,7 +300,7 @@ groups:
           description: "服务 {{ $labels.application }} 5xx 错误率 = {{ $value | humanizePercentage }}"
 
   # ============================================================================
-  # Hikari 连接池告警（category=hikari，ops-agent 的 HikariTuningStrategy 按 pool 标签反查 app）
+  # Hikari 连接池告警（category=hikari，由 ops-agent-spring-ai 处理：按 pool 标签反查 application）
   # ============================================================================
   - name: hikari-global
     rules:
@@ -374,7 +374,7 @@ groups:
 
   # ============================================================================
   # MySQL 实例告警（mysqld_exporter，category=mysql，application=shared）
-  # ops-agent 的 MySqlTuningStrategy 会把调优建议写入 Nacos shared-mysql-tuning.yml
+  # ops-agent-spring-ai 处理 MySQL 实例级告警，必要时按 SOP 写 Nacos shared-mysql-tuning.yml（写操作走审批）
   # ============================================================================
   - name: mysql-exporter-global
     rules:
@@ -431,7 +431,7 @@ groups:
 
   # ============================================================================
   # Redis 实例告警（redis_exporter，category=redis，application=shared）
-  # ops-agent 的 RedisNotifyStrategy 只通知 + 调 ES 反查 traceId，不直接改 Nacos
+  # ops-agent-spring-ai 处理：通过 redis_inspect / elasticsearch_ops 诊断，不直接改 Nacos
   # ============================================================================
   - name: redis-exporter-global
     rules:
@@ -499,7 +499,7 @@ groups:
 
   # ============================================================================
   # RocketMQ 实例告警（rocketmq-exporter，category=rocketmq，application=shared）
-  # ops-agent 的 RocketMqNotifyStrategy 只通知，不直接改 Nacos
+  # ops-agent-spring-ai 处理：通过 rocketmq_inspect 诊断，不直接改 Nacos
   # ============================================================================
   - name: rocketmq-exporter-global
     rules:

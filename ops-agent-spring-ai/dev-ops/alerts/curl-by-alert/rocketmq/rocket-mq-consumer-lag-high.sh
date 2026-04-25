@@ -6,7 +6,7 @@
 set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export BODIES_JSON="${SCRIPT_DIR}/../../samples/alert-receive-bodies.json"
-BASE_URL="${BASE_URL:-http://127.0.0.1:8098}"
+BASE_URL="${BASE_URL:-http://127.0.0.1:2322}"
 
 curl -sS -X POST "${BASE_URL}/api/v1/alert/receive" \
   -H 'Content-Type: application/json' \

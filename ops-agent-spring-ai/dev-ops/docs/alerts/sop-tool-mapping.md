@@ -19,12 +19,7 @@
 | `redis` | 内存、连接、命中率、阻塞 | **redis_inspect** → **metrics_ops**（redis_exporter） |
 | `rocketmq` | Broker、堆积、DLQ | **rocketmq_inspect** → **metrics_ops** → **elasticsearch_ops**（业务失败日志） |
 
-## 2. 与 `ops-agent`（8098）策略域的关系
-
-`ops-agent` 内 `approval.strategies` 按告警名路由（Sentinel/DTP/Hikari/MySQL/Redis/RocketMQ/notify）。  
-**spring-ai 模块**当前以 **工具 + ReAct** 为主，不复制该 YAML；SOP 可把上表 **人工固化** 为纯文本步骤说明，实现类似 playbook。
-
-## 3. 相关文档
+## 2. 相关文档
 
 - 逐条告警名：[`by-category/README.md`](by-category/README.md)
 - 流水线：[`overview-alert-pipeline.md`](overview-alert-pipeline.md)

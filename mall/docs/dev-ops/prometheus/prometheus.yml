@@ -33,7 +33,7 @@ scrape_configs:
 
   # ===== 中间件 Exporter =====
   # 三个 exporter 通过 docker-compose-exporters.yml 启动；统一打 application=shared，
-  # ops-agent 通过 category 标签把告警路由到对应策略域（mysql / redis / rocketmq / hikari）。
+  # ops-agent-spring-ai 通过 category 标签匹配 SOP 规则后委派到对应 skill 域（mysql / redis / rocketmq / hikari）。
 
   - job_name: 'mysqld-exporter'
     static_configs:

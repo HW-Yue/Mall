@@ -9,7 +9,7 @@ Alertmanager 向 `webhook_configs.url` 发送 **HTTP POST**，`Content-Type` 一
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `receiver` | string | 如 `ops-agent` |
+| `receiver` | string | 如 `ops-agent-spring-ai` |
 | `status` | string | `firing` / `resolved`（或兼容旧版仅顶层 status） |
 | `alerts` | array | 告警列表（见下） |
 | `groupLabels` | object | 分组标签子集 |
@@ -51,7 +51,7 @@ Java 端 `AlertmanagerPayload` 只强依赖两个字段：**顶层 `alerts` 数�
 
 ### 5.1 仅含本项目解析字段的「最小可运行」体
 
-POST `Content-Type: application/json` → `http://<host>:8098/api/v1/alert/receive`
+POST `Content-Type: application/json` → `http://<host>:2322/api/v1/alert/receive`
 
 ```json
 {
@@ -89,7 +89,7 @@ POST `Content-Type: application/json` → `http://<host>:8098/api/v1/alert/recei
 
 ```json
 {
-  "receiver": "ops-agent",
+  "receiver": "ops-agent-spring-ai",
   "status": "firing",
   "alerts": [
     {

@@ -3,7 +3,7 @@
 **规则组**：`hikari-global`  
 **来源文件**：`mall/docs/dev-ops/prometheus/alert_rules.yml`
 
-**说明**：`ops-agent` 的 **HikariTuningStrategy** 依赖 `labels.pool` 反查 Nacos dataId（见规则文件注释）。
+**说明**：`ops-agent-spring-ai` 在 hikari 类告警的 SOP 流程中按 `labels.pool` 反查 `application` 后查 Nacos dataId（见规则文件注释）。
 
 | alertname | for | severity | expr（摘要） |
 |-----------|-----|----------|--------------|

@@ -6,7 +6,7 @@
 #
 # Prometheus scrape 约定（见 prometheus/prometheus.yml）：
 #   - application: shared（统一打标，和业务服务的 {application}=mall/order/... 区分开）
-#   - category: mysql / redis / rocketmq（ops-agent 通过此标签路由到对应 domain 策略）
+#   - category: mysql / redis / rocketmq（ops-agent-spring-ai 通过此标签匹配 SOP 规则后委派到对应 skill 域）
 #
 # 端口（宿主机）：
 #   9104 - mysqld-exporter

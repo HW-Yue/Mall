@@ -1,14 +1,14 @@
 # MySQL 实例级调优共享档案（application=shared）
 # DataId: shared-mysql-tuning.yml  Group: DEFAULT_GROUP
 #
-# 用途：给 ops-agent 的 MySqlTuningStrategy 提供一份"可被 Agent 重写"的 YAML 骨架。
-# 真正生效仍需运维把下列关键参数映射到 my.cnf / RDS 参数组；ops-agent 只负责把意图
-# 以版本化配置的形式推给 Nacos，审批后再由人决定是否手动同步到实例。
+# 用途：给 ops-agent-spring-ai 在 mysql 类告警的 SOP 流程中作为"基线 YAML"读取并按需重写。
+# 真正生效仍需运维把下列关键参数映射到 my.cnf / RDS 参数组；ops-agent-spring-ai 把意图
+# 以版本化配置形式推到 Nacos，写操作走内存审批队列，由人决定是否手动同步到实例。
 #
 # 与业务服务的 Hikari 连接池配置完全解耦：
 #   - 这里写"实例级"：max_connections、buffer pool、flush 策略、慢查询阈值；
 #   - 业务服务的 Hikari 最大/最小连接、timeout 请写在 <app>-datasource-*.yml，
-#     由 HikariTuningStrategy 按 pool 反查修改。
+#     由 ops-agent-spring-ai 在 hikari 类告警的 SOP 流程中按 pool 反查 application 后修改。
 
 tuning:
   # 最大同时连接数；超过后新连接会被拒绝

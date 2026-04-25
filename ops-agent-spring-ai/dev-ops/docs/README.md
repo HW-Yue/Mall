@@ -1,6 +1,6 @@
 # 开发文档（DevOps / 告警 / Agent）
 
-本文档树为 **ops-agent / ops-agent-spring-ai** 与 **商城 Prometheus 告警** 对齐的「单一事实入口」。细则按主题拆文件，便于检索与 AI 引用。
+本文档树为 **ops-agent-spring-ai** 与 **商城 Prometheus 告警** 对齐的「单一事实入口」。细则按主题拆文件，便于检索与 AI 引用。
 
 ## 必读索引
 
@@ -23,7 +23,6 @@
 | Prometheus | `mall/docs/dev-ops/prometheus/prometheus.yml` |
 | Alertmanager | `mall/docs/dev-ops/prometheus/alertmanager.yml` |
 | Spring AI Agent 示例配置 | `ops-agent-spring-ai/src/main/resources/application.yml` |
-| 旧 AgentScope Agent 配置 | `ops-agent/src/main/resources/application.yml` |
 
 ## 前端资源
 

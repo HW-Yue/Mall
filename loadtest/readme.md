@@ -72,7 +72,7 @@ make seckill-k6-rps-10k-50k  # 固定 RPS 渐增
 
 - Sentinel 指标暴露：需要先打一次业务请求，`/actuator/prometheus` 才会出现 `sentinel_*`。本压测脚本即满足该前置条件。
 - 资源名命名规范：Sentinel resource 是**纯 URI**（如 `/api/v1/mall/index/query_goods_page`），配 Nacos 流控规则时 `resource` 字段按此格式写。
-- 触发告警最快路径：在 Nacos 里把某接口的 QPS 阈值调低（如 mall 的 `query_goods_page` 配 QPS=10），`make mall-goods` 启动后用 Locust Web UI 调到 100+ Users，约 1 分钟即可触发 `MallServiceQueryGoodsPageBlockHigh`，通过 Alertmanager 推到 ops-agent 的 `/api/v1/alert/receive`。
+- 触发告警最快路径：在 Nacos 里把某接口的 QPS 阈值调低（如 mall 的 `query_goods_page` 配 QPS=10），`make mall-goods` 启动后用 Locust Web UI 调到 100+ Users，约 1 分钟即可触发 `MallServiceQueryGoodsPageBlockHigh`，通过 Alertmanager 推到 ops-agent-spring-ai 的 `/api/v1/alert/receive`。
 
 ## 常见问题
 

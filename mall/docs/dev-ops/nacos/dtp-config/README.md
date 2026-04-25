@@ -36,8 +36,8 @@
 | `seckill-service-dtp-dev.yml` | 秒杀服务 DynamicTp |
 | `seckill-service-datasource-dev.yml` | 秒杀服务 Hikari 可选覆盖 |
 | `group-buy-service-runtime-dev.yml` | 拼团服务运行时（DynamicTp + Agent / Hikari / 日志 / app.agent / Feign） |
-| `pay-datasource-dev.yml` | pay 服务 Hikari 可选覆盖（**ops-agent HikariTuningStrategy 目标**） |
-| `shared-mysql-tuning.yml` | MySQL 实例级调优共享档案（**ops-agent MySqlTuningStrategy 目标**，application=shared） |
+| `pay-datasource-dev.yml` | pay 服务 Hikari 可选覆盖（**ops-agent-spring-ai 在 hikari SOP 中可写入**） |
+| `shared-mysql-tuning.yml` | MySQL 实例级调优共享档案（**ops-agent-spring-ai 在 mysql SOP 中读写**，application=shared） |
 
 所有配置 **Group = `DEFAULT_GROUP`**，namespace 默认 **`public`**（与 `spring.config.import` 中未写 namespace 时的行为一致）。
 
@@ -87,7 +87,7 @@ NACOS_ADDR=100.86.250.112:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-dt
 
 修改线程池默认值时，建议 **先改各服务 `src/main/resources/nacos/*-dtp-dev.yml`（拼团服务为 `*-runtime-dev.yml`），再同步本目录同名文件后执行脚本**，避免两处长期不一致。
 
-> **ops-agent 相关 DataId 首次上传**：`pay-datasource-dev.yml` 已被 `init-nacos-dtp.sh` 的 `*-datasource-dev.yml` 通配覆盖（首次执行脚本即会发布）；`shared-mysql-tuning.yml` 文件名不在脚本通配内，首次请手动用 Nacos 3.x **Admin API** 发布（v1/cs/configs 已下线，一定要走 v3）：
+> **ops-agent-spring-ai 相关 DataId 首次上传**：`pay-datasource-dev.yml` 已被 `init-nacos-dtp.sh` 的 `*-datasource-dev.yml` 通配覆盖（首次执行脚本即会发布）；`shared-mysql-tuning.yml` 文件名不在脚本通配内，首次请手动用 Nacos 3.x **Admin API** 发布（v1/cs/configs 已下线，一定要走 v3）：
 >
 > ```bash
 > NACOS_ADDR=100.86.250.112:8848
@@ -104,7 +104,7 @@ NACOS_ADDR=100.86.250.112:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-dt
 >   --data-urlencode "content=${content}"
 > ```
 >
-> 发布成功后，ops-agent 处理 MySQL / Hikari 告警时 `getConfig` 就能拉到初值，避免 Agent 凭空生成 YAML。
+> 发布成功后，ops-agent-spring-ai 处理 MySQL / Hikari 告警时 nacos_get_config 能拉到初值，避免 Agent 凭空生成 YAML。
 
 ## 5. 常见问题
 

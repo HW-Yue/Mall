@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import java.time.Duration;
 
 /**
- * OTLP gRPC 导出到 SkyWalking OAP 10.4（与 {@code ops-agent} 一致）。
+ * OTLP gRPC 导出到 SkyWalking OAP 10.4。
  */
 @Configuration
 @ConditionalOnProperty(prefix = "ops-ai.otlp", name = "enabled", havingValue = "true", matchIfMissing = true)

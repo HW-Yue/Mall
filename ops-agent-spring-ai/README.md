@@ -5,7 +5,7 @@
 ## 运行
 
 ```bash
-# 与 ops-agent 相同：优先 DASHSCOPE_API_KEY；未导出时与 ops-agent 共用 application.yml 中的默认占位
+# 优先 DASHSCOPE_API_KEY；未导出时使用 application.yml 中的默认占位
 export DASHSCOPE_API_KEY=your-key
 mvn -pl ops-agent-spring-ai spring-boot:run
 ```
@@ -92,7 +92,3 @@ mvn -pl ops-agent-spring-ai test -Dtest=BackendConnectivitySmokeIT
 冒烟会连 `application.yml` 里的真实地址：本机未起依赖、MySQL 账号/权限不对、Docker socket 不可用时对应用例会失败，需先对齐 mall dev-ops 或改本地配置。
 
 覆盖范围：每个 `*Toolkit` 的 **public 方法** 都会跑到（Prometheus 仅 `queryInstant` 一项）。**Nacos `publishConfig` 有写副作用，冒烟里不测**，需人工验证。可选环境变量见 `BackendConnectivitySmokeIT` 类注释（Docker 容器 ID、Nacos dataId/服务名、MQ group/topic 等）；未设则跳过需要业务参数的用例，不判失败。
-
-## 与 `ops-agent` 关系
-
-本模块独立演进；原 `ops-agent`（AgentScope + MCP）保留不变。

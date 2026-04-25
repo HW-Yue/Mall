@@ -11,7 +11,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 - `group-buy-service` — 拼团服务
 - `seckill-service` — 秒杀服务
 - `pay` — 支付服务（Spring Boot 2.7.12, Java 8），对接支付宝
-- `ops-agent` — 运维 Agent（Sentinel 流控 / DTP 线程池动态调整），审批库 `ops_agent_db`，详见 `ops-agent/CLAUDE.md`
+- `ops-agent-spring-ai` — 运维 Agent（Spring AI Alibaba，:2322），SOP 驱动 ReAct + 7 域 skill 工具（Docker / MySQL / RocketMQ / Prometheus / Elasticsearch / Redis / Nacos）；详见 `ops-agent-spring-ai/README.md`
 
 ## DDD Module Layout
 
@@ -35,7 +35,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 | `seckill-service` | 独立维护秒杀商品，秒杀下单，内部调 order-service |
 | `order-service` | 统一订单创建、支付URL获取、退款执行、订单查询 |
 | `pay` | 对接支付宝，按 marketType 发布 `pay-success-*` 三个 Topic |
-| `ops-agent` | 动态调整 Sentinel / DTP 配置，详见 `ops-agent/CLAUDE.md` |
+| `ops-agent-spring-ai` | 接收 Alertmanager webhook，按 SOP 规则用 ReAct 调度 7 域 skill 工具诊断；Nacos 写操作走内存审批队列 |
 
 **商品数据冗余**：拼团/秒杀商品各自独立存储，不依赖 mall 服务，后台配置时同步写入各服务。
 
@@ -156,7 +156,7 @@ RabbitMQ 用于：mall 内部退款通知（`RefundSuccessTopicListener`，`grou
 ## 关键文件路径
 
 ### SQL（`mall/docs/dev-ops/mysql/sql/`）
-`mall_db.sql` / `order_service.sql` / `group_buy_service.sql` / `seckill_service.sql` / `grafana.sql` / `ops_agent.sql`
+`mall_db.sql` / `order_service.sql` / `group_buy_service.sql` / `seckill_service.sql` / `grafana.sql`
 
 > 新增表/字段必须同步更新对应 SQL 文件。
 
@@ -207,8 +207,6 @@ ORM: MyBatis，Cache: Redisson，MQ: RocketMQ（主）+ RabbitMQ（mall 内部�
 ### Hikari 连接池命名（全局唯一）
 `Mall_HikariCP` / `Order_HikariCP` / `Seckill_HikariCP` / `GroupBuy_HikariCP` / `Pay_HikariCP`
 
-> 两个命名反查表见 `ops-agent/src/main/resources/application.yml`（`ops-agent.mapping.client-name-to-app` / `pool-name-to-app`）
-
 ### Spring Profiles & 启动类
 
 Profiles: `dev` / `test` / `prod`，配置在各 app 模块 `src/main/resources/application-{profile}.yml`，本地默认 `dev`。
@@ -237,7 +235,7 @@ docker-compose -f docs/dev-ops/docker-compose-app.yml up -d
 
 ## 监控（Prometheus / Sentinel / DynamicTP / ELK）
 
-> ops-agent 详细配置（告警规则、策略路由、ES MCP 诊断）见 `ops-agent/CLAUDE.md`
+> 告警 → SOP → ReAct → 7 域 skill 诊断流水线见 `ops-agent-spring-ai/README.md`
 
 **指标暴露**：各服务开启 `management.endpoints.web.exposure.include: health,prometheus`
 - Sentinel：`SentinelMetricsBinder`（`common-log-starter`）注册 Gauge，**首次请求后才有数据**

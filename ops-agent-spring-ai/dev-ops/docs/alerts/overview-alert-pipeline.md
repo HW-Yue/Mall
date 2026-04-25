@@ -9,7 +9,7 @@
 | **Prometheus** | `mall/docs/dev-ops/prometheus/prometheus.yml` | 按 `scrape_configs` 拉取指标；加载 `alert_rules.yml` **计算告警**；将告警送 Alertmanager |
 | **Exporters** | 同目录 compose（如 `docker-compose-exporters.yml`） | `mysqld-exporter`、`redis-exporter`、`rocketmq-exporter` 提供中间件指标 |
 | **Alertmanager** | `mall/docs/dev-ops/prometheus/alertmanager.yml` | 分组、抑制、去重；**Webhook** 转发到消费方 |
-| **Agent（消费方）** | `ops-agent` / `ops-agent-spring-ai` | HTTP 接收 webhook，匹配 SOP，执行工具或子 Agent |
+| **Agent（消费方）** | `ops-agent-spring-ai` | HTTP 接收 webhook，匹配 SOP，执行工具或子 Agent |
 
 ## 2. 数据流（简图）
 
@@ -25,10 +25,10 @@ Exporters ────────┘              │
                         firing alerts ──► Alertmanager
                                  │
                                  ▼
-                        webhook POST ──► Agent（见各模块 application.yml；ops-agent 为 :8098，ops-agent-spring-ai 为 :2322）
+                        webhook POST ──► Agent（ops-agent-spring-ai 默认 :2322，见 `ops-agent-spring-ai/src/main/resources/application.yml`）
 ```
 
-> **注意**：Alertmanager 指向 `ops-agent` 时默认 webhook 为 **`http://host.docker.internal:8098/api/v1/alert/receive`**；切到 `ops-agent-spring-ai` 时应改为 **`http://host.docker.internal:2322/api/v1/alert/receive`**。
+> **注意**：Alertmanager webhook 默认指向 **`http://host.docker.internal:2322/api/v1/alert/receive`**（与 `mall/docs/dev-ops/prometheus/alertmanager.yml` 一致）。
 
 ## 3. 与「预警」相关的代码路径（商城）
 

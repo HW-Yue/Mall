@@ -14,12 +14,12 @@
 
 4. OAP 地址默认为 `100.86.250.112:11800`（与 `docker-compose-skywalking.yml` 端口映射一致）。
 
-## GenAI 监控（ops-agent）
+## GenAI 监控（ops-agent-spring-ai）
 
-ops-agent 通过 **OpenTelemetry OTLP** 直接向 OAP 10.4 上报 GenAI Span，不依赖 Java Agent 的自动插件（AgentScope 尚无官方插件）。
+ops-agent-spring-ai 通过 **OpenTelemetry OTLP** 直接向 OAP 10.4 上报 GenAI Span（在 `LlmCallTracer` / `GenAiTelemetry` 里手工埋点），不依赖 Java Agent 的自动插件。
 
 - OTLP endpoint: `http://100.86.250.112:11800`（与 SkyWalking gRPC 共享端口）
-- 配置见 `ops-agent/src/main/resources/application.yml` → `ops-agent.otlp.*`
+- 配置见 `ops-agent-spring-ai/src/main/resources/application.yml` → `ops-ai.otlp.*`
 - SkyWalking OAP 的 `receiver-otel` 模块默认启用 `otlp-traces`，无需额外配置
 
-**验证**：在 SkyWalking UI → GenAI 菜单下应能看到 `ops-agent` 服务的 LLM 调用统计（CPM、延迟、Token 用量）。
+**验证**：在 SkyWalking UI → GenAI 菜单下应能看到 `ops-agent-spring-ai` 服务的 LLM 调用统计（CPM、延迟、Token 用量）。

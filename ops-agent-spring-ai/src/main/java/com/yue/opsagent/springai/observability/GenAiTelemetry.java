@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Spring AI 对话映射为 OpenTelemetry GenAI Span，经 OTLP 上报 SkyWalking OAP 10.4 Virtual GenAI。
  *
- * <p>识别规则：span 含 {@code gen_ai.response.model} 等语义属性（与 ops-agent 一致）。</p>
+ * <p>识别规则：span 含 {@code gen_ai.response.model} 等语义属性。</p>
  */
 @Component
 @ConditionalOnBean(Tracer.class)

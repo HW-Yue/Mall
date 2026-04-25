@@ -4,7 +4,7 @@
 #
 # Elasticsearch MCP Server 官方镜像（docker.elastic.co/mcp/elasticsearch）使用说明：
 #   - 参数第一位是传输协议：stdio / http（SSE 已在 0.4.0 弃用）
-#   - http 模式监听容器内 :8080：streamable-HTTP 在 /mcp，旧版 HTTP+SSE 在 /mcp/sse（ops-agent 默认走 sse）
+#   - http 模式监听容器内 :8080：streamable-HTTP 在 /mcp，旧版 HTTP+SSE 在 /mcp/sse（ops-agent-spring-ai 不再使用 MCP，进程内直接调 ES，本 compose 仅供其它工具/调试）
 #   - 认证：ES_API_KEY 或 ES_USERNAME/ES_PASSWORD；dev 环境 ES 无鉴权则都省略
 #   - 仅暴露只读工具：list_indices / get_mappings / search / esql / get_shards
 services:
