@@ -10,10 +10,10 @@ docker compose -f docker-compose-rocketmq.yml up -d
 
 首次启动会在 `docs/dev-ops/rocketmq/data` 下自动创建持久化目录。
 
-- **NameServer**：`127.0.0.1:9876`（应用 `rocketmq.name-server` 指向此处）
-- **Broker 管理端口**：`127.0.0.1:10909`
-- **Broker Remoting**：`127.0.0.1:10911`（直连 `rmq-broker`）
-- **Dashboard**：浏览器打开 `http://127.0.0.1:3003`（容器 `8080` 映射到宿主机 `3003`，与官方默认 CORS 白名单 `http://localhost:3003` 一致，避免 POST 被 403）
+- **NameServer**：`100.86.250.112:9876`（应用 `rocketmq.name-server` 指向此处）
+- **Broker 管理端口**：`100.86.250.112:10909`
+- **Broker Remoting**：`100.86.250.112:10911`（直连 `rmq-broker`）
+- **Dashboard**：浏览器打开 `http://100.86.250.112:3003`（容器 `8080` 映射到宿主机 `3003`，与官方默认 CORS 白名单 `http://100.86.250.112:3003` 一致，避免 POST 被 403）
 
 ### 开发期推荐：使用宿主机固定 IP 注册 Broker
 

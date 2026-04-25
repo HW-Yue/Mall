@@ -5,7 +5,7 @@
 # https://sequel-ace.com/
 # https://github.com/Sequel-Ace/Sequel-Ace
 #
-# 主机: 127.0.0.1 (MySQL 5.6.39)
+# 主机: 100.86.250.112 (MySQL 5.6.39)
 # 数据库: grafana
 # 生成时间: 2025-05-27 23:46:58 +0000
 # ************************************************************
@@ -2107,7 +2107,7 @@ LOCK TABLES `user` WRITE;
 
 INSERT INTO `user` (`id`, `version`, `login`, `email`, `name`, `password`, `salt`, `rands`, `company`, `org_id`, `is_admin`, `email_verified`, `theme`, `created`, `updated`, `help_flags1`, `last_seen_at`, `is_disabled`, `is_service_account`)
 VALUES
-	(1,0,'admin','admin@localhost','','f545134fe73d4887de015e2ab3bfb812fc419cf235aac075879c47c4af2c0200648e60053ad7af6846d9435f0c8a6c9c7882','zXHXdHVHuX','sgj0vgomEM','',1,1,0,'','2023-10-28 04:06:55','2023-10-28 04:06:55',0,'2023-10-28 09:36:07',0,0);
+	(1,0,'admin','admin@100.86.250.112','','f545134fe73d4887de015e2ab3bfb812fc419cf235aac075879c47c4af2c0200648e60053ad7af6846d9435f0c8a6c9c7882','zXHXdHVHuX','sgj0vgomEM','',1,1,0,'','2023-10-28 04:06:55','2023-10-28 04:06:55',0,'2023-10-28 09:36:07',0,0);
 
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;

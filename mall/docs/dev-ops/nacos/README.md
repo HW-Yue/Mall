@@ -25,9 +25,9 @@
 ```bash
 cd mall/docs/dev-ops/nacos
 chmod +x init-nacos-runtime.sh
-NACOS_ADDR=127.0.0.1:8848 ./init-nacos-runtime.sh
+NACOS_ADDR=100.86.250.112:8848 ./init-nacos-runtime.sh
 # 若 Nacos 开启鉴权：
-# NACOS_ADDR=127.0.0.1:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-runtime.sh
+# NACOS_ADDR=100.86.250.112:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-runtime.sh
 ```
 
 仍可按需单独执行 `dtp-config/init-nacos-dtp.sh` 或 `sentinel-rules/init-nacos-rules.sh`。

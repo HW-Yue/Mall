@@ -2,6 +2,8 @@ version: '3.9'
 # 执行脚本；docker-compose -f docker-compose-elk.yml up -d
 # 需已存在网络 nexus-devops：先 docker compose -f docker-compose-environment.yml up -d
 #   或 docker network create nexus-devops
+# SkyWalking（独立 ES 7 + OAP + UI；与下方 ELK ES 9 分离）：再执行
+#   docker compose -f docker-compose-skywalking.yml up -d
 # 控制台；GET _cat/indices - 查看 nexus-<service>-yyyy.MM.dd 是否存在，上报后存在，则表示接入成功
 #
 # 9.x 升级说明：

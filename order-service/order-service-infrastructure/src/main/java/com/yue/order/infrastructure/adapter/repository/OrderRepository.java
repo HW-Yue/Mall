@@ -72,6 +72,34 @@ public class OrderRepository implements IOrderRepository {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String insertOrderWithoutMallLock(OrderEntity order) {
+        String orderId = order.getOrderId();
+        if (orderId == null || orderId.isBlank()) {
+            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "orderId 不能为空");
+        }
+        OrderPO po = OrderPO.builder()
+                .orderId(orderId)
+                .userId(order.getUserId())
+                .goodsId(order.getGoodsId())
+                .goodsName(order.getGoodsName())
+                .goodsImageUrl(order.getGoodsImageUrl())
+                .source(order.getSource())
+                .channel(order.getChannel())
+                .originalPrice(order.getOriginalPrice())
+                .deductionPrice(order.getDeductionPrice())
+                .payPrice(order.getPayPrice())
+                .status(0)
+                .outTradeNo(order.getOutTradeNo())
+                .bizId(order.getGoodsId() + "_" + order.getUserId() + "_" + order.getOutTradeNo())
+                .notifyType(order.getNotifyType() != null ? order.getNotifyType() : "MQ")
+                .marketType(order.getMarketType().getCode())
+                .build();
+        orderDao.insert(po);
+        return orderId;
+    }
+
+    @Override
     public OrderEntity queryByUserIdAndOrderId(String userId, String orderId) {
         OrderPO po = orderDao.queryByUserIdAndOrderId(userId, orderId);
         return po == null ? null : toEntity(po);

@@ -1,0 +1,26 @@
+# category: rocketmq
+match-alertname: RocketMqBrokerDown
+match-category: rocketmq
+sop-markdown: |
+  RocketMqBrokerDown Broker 不可用:
+
+  1 指标 metrics_ops:
+  business_metrics：Broker up、磁盘、句柄；单机还是多节点。
+
+  2 rocketmq_inspect:
+  mq_topic_stats：哪些 Topic 仍有路由；区分 NameServer 视图异常还是真宕机。
+
+  3 docker_ops:
+  Broker 容器或主机：docker_inspect、docker_logs、docker_stats；磁盘满、OOM、进程退出。
+
+  4 日志 elasticsearch_ops:
+  生产者 send failed、超时；消费者 NOT_ONLINE。
+
+  5 FINAL:
+  RTO、是否已切主、消息是否可追平；集群手册与值班升级由人工执行，Agent 只做信息收集。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "up"

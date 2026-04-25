@@ -1,0 +1,30 @@
+# category: hikari
+match-alertname: HikariConnectionsSaturated
+match-category: hikari
+sop-markdown: |
+  HikariConnectionsSaturated 连接池饱和:
+
+  1 指标 metrics_ops:
+  jvm_metrics、business_metrics：配合 Hikari 相关 PromQL（以现网仪表盘为准）看 active、pending、max、timeout。区分真饱和还是阈值过严。
+
+  2 数据库 mysql_inspect:
+  mysql_processlist：来自 ${application} 的会话、长时间 Sleep 或 Query。
+  mysql_status：Threads_connected、Max_used_connections。
+  mysql_locks：锁等待拉长连接占用。
+
+  3 配置 nacos_config:
+  nacos_get_config：数据源 maximum-pool-size、connection-timeout、validation 是否近期变更；只读。
+
+  4 日志 elasticsearch_ops:
+  es_search：Connection is not available、pool、timeout。
+
+  5 下游:
+  若 Redis 或 MQ 慢导致池被占满，按需 redis_inspect、rocketmq_inspect。
+
+  6 FINAL:
+  根因：池过小、SQL 慢、泄漏、DB 限连；调参或 SQL 优化需走变更流程。
+
+steps:
+  - skill: mysql_inspect
+    tool: mysql_processlist
+    args: {}

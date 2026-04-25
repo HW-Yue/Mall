@@ -19,8 +19,10 @@ import com.yue.order.types.enums.ResponseCode;
 import com.yue.order.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,6 +47,9 @@ public class OrderController implements IOrderController {
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+
+    @Value("${app.order.internal-create-token:}")
+    private String internalCreateToken;
 
     /**
      * 创建订单（锁单）
@@ -88,6 +93,51 @@ public class OrderController implements IOrderController {
             return Response.error(e.getCode(), e.getInfo());
         } catch (Exception e) {
             log.error("createOrder 失败 userId:{}", request.getUserId(), e);
+            return Response.error(ResponseCode.UN_ERROR.getCode(), ResponseCode.UN_ERROR.getInfo());
+        }
+    }
+
+    @RequestMapping(value = "create_order_normal_from_mall", method = RequestMethod.POST)
+    @Override
+    public Response<CreateOrderResponseDTO> createOrderNormalFromMall(
+            @RequestBody CreateOrderRequestDTO request,
+            @RequestHeader(value = "X-Internal-Token", required = false) String internalToken) {
+        try {
+            if (StringUtils.isNotBlank(internalCreateToken)
+                    && !internalCreateToken.equals(StringUtils.trimToEmpty(internalToken))) {
+                return Response.error(ResponseCode.ILLEGAL_PARAMETER.getCode(), "无效的内部调用凭证");
+            }
+            log.info("createOrderNormalFromMall req:{}", request);
+            if (StringUtils.isAnyBlank(request.getUserId(), request.getProductId())) {
+                return Response.error(ResponseCode.ILLEGAL_PARAMETER.getCode(), "userId / productId 不能为空");
+            }
+            if (request.getPayPrice() == null) {
+                return Response.error(ResponseCode.ILLEGAL_PARAMETER.getCode(), "payPrice 不能为空");
+            }
+            CreateOrderCommand command = CreateOrderCommand.builder()
+                    .userId(request.getUserId())
+                    .goodsId(request.getProductId())
+                    .marketType("normal")
+                    .originalPrice(request.getOriginalPrice())
+                    .deductionPrice(request.getDeductionPrice())
+                    .payPrice(request.getPayPrice())
+                    .source(request.getSource())
+                    .channel(request.getChannel())
+                    .outTradeNo(request.getOutTradeNo())
+                    .goodsName(request.getGoodsName())
+                    .goodsImageUrl(request.getGoodsImageUrl())
+                    .build();
+            var result = orderDomainService.submitNormalOrderFromMall(command);
+            CreateOrderResponseDTO data = CreateOrderResponseDTO.builder()
+                    .orderId(result.getOrderId())
+                    .outTradeNo(result.getOutTradeNo())
+                    .build();
+            return Response.success(data);
+        } catch (AppException e) {
+            log.warn("createOrderNormalFromMall 业务异常 userId:{} e:{}", request.getUserId(), e.getMessage());
+            return Response.error(e.getCode(), e.getInfo());
+        } catch (Exception e) {
+            log.error("createOrderNormalFromMall 失败 userId:{}", request.getUserId(), e);
             return Response.error(ResponseCode.UN_ERROR.getCode(), ResponseCode.UN_ERROR.getInfo());
         }
     }

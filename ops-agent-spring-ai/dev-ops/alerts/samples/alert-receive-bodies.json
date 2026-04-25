@@ -1,0 +1,535 @@
+{
+  "ServiceDown": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "ServiceDown",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "system"
+        },
+        "annotations": {
+          "summary": "测试告警 ServiceDown",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=ServiceDown"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "JvmHeapUsageHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "JvmHeapUsageHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "system"
+        },
+        "annotations": {
+          "summary": "测试告警 JvmHeapUsageHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=JvmHeapUsageHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "JvmGcPauseHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "JvmGcPauseHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "system"
+        },
+        "annotations": {
+          "summary": "测试告警 JvmGcPauseHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=JvmGcPauseHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "Http5xxErrorRateHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "Http5xxErrorRateHigh",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "http"
+        },
+        "annotations": {
+          "summary": "测试告警 Http5xxErrorRateHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=Http5xxErrorRateHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "SentinelRtHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "SentinelRtHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "sentinel",
+          "resource": "/api/v1/order/create_order"
+        },
+        "annotations": {
+          "summary": "测试告警 SentinelRtHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=SentinelRtHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "SentinelBlockRateHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "SentinelBlockRateHigh",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "sentinel",
+          "resource": "/api/v1/order/create_order"
+        },
+        "annotations": {
+          "summary": "测试告警 SentinelBlockRateHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=SentinelBlockRateHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "HikariConnectionsSaturated": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "HikariConnectionsSaturated",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "hikari"
+        },
+        "annotations": {
+          "summary": "测试告警 HikariConnectionsSaturated",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=HikariConnectionsSaturated"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "HikariConnectionsPending": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "HikariConnectionsPending",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "hikari"
+        },
+        "annotations": {
+          "summary": "测试告警 HikariConnectionsPending",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=HikariConnectionsPending"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "HikariConnectionAcquireSlow": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "HikariConnectionAcquireSlow",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "hikari"
+        },
+        "annotations": {
+          "summary": "测试告警 HikariConnectionAcquireSlow",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=HikariConnectionAcquireSlow"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "MySqlSlowQueriesHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "MySqlSlowQueriesHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "mysql"
+        },
+        "annotations": {
+          "summary": "测试告警 MySqlSlowQueriesHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=MySqlSlowQueriesHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "MySqlTooManyConnections": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "MySqlTooManyConnections",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "mysql"
+        },
+        "annotations": {
+          "summary": "测试告警 MySqlTooManyConnections",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=MySqlTooManyConnections"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "MySqlDown": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "MySqlDown",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "mysql"
+        },
+        "annotations": {
+          "summary": "测试告警 MySqlDown",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=MySqlDown"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "MySqlInnodbRowLockWaitHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "MySqlInnodbRowLockWaitHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "mysql"
+        },
+        "annotations": {
+          "summary": "测试告警 MySqlInnodbRowLockWaitHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=MySqlInnodbRowLockWaitHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "RedisMemoryHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "RedisMemoryHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "redis"
+        },
+        "annotations": {
+          "summary": "测试告警 RedisMemoryHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=RedisMemoryHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "RedisDown": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "RedisDown",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "redis"
+        },
+        "annotations": {
+          "summary": "测试告警 RedisDown",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=RedisDown"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "RedisBlockedClients": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "RedisBlockedClients",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "redis"
+        },
+        "annotations": {
+          "summary": "测试告警 RedisBlockedClients",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=RedisBlockedClients"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "RedisKeyspaceHitRateLow": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "RedisKeyspaceHitRateLow",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "redis"
+        },
+        "annotations": {
+          "summary": "测试告警 RedisKeyspaceHitRateLow",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=RedisKeyspaceHitRateLow"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "RedisConnectedClientsHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "RedisConnectedClientsHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "redis"
+        },
+        "annotations": {
+          "summary": "测试告警 RedisConnectedClientsHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=RedisConnectedClientsHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "RocketMqConsumerLagHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "RocketMqConsumerLagHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "rocketmq",
+          "topic": "order-topic",
+          "consumerGroup": "order-consumer-group"
+        },
+        "annotations": {
+          "summary": "测试告警 RocketMqConsumerLagHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=RocketMqConsumerLagHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "RocketMqDlqMessageAppeared": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "RocketMqDlqMessageAppeared",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "rocketmq",
+          "topic": "order-topic",
+          "consumerGroup": "order-consumer-group"
+        },
+        "annotations": {
+          "summary": "测试告警 RocketMqDlqMessageAppeared",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=RocketMqDlqMessageAppeared"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "RocketMqBrokerDown": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "RocketMqBrokerDown",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "rocketmq"
+        },
+        "annotations": {
+          "summary": "测试告警 RocketMqBrokerDown",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=RocketMqBrokerDown"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "ThreadPoolQueueUsageHigh": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "ThreadPoolQueueUsageHigh",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "dynamictp"
+        },
+        "annotations": {
+          "summary": "测试告警 ThreadPoolQueueUsageHigh",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=ThreadPoolQueueUsageHigh"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "ThreadPoolRejectedTasks": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "ThreadPoolRejectedTasks",
+          "severity": "critical",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot",
+          "category": "dynamictp"
+        },
+        "annotations": {
+          "summary": "测试告警 ThreadPoolRejectedTasks",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=ThreadPoolRejectedTasks"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  },
+  "NacosConfigDrill": {
+    "status": "firing",
+    "alerts": [
+      {
+        "status": "firing",
+        "labels": {
+          "alertname": "NacosConfigDrill",
+          "severity": "warning",
+          "application": "order-service",
+          "instance": "192.168.1.10:18081",
+          "job": "spring-boot"
+        },
+        "annotations": {
+          "summary": "测试告警 NacosConfigDrill",
+          "description": "手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=NacosConfigDrill"
+        },
+        "startsAt": "2026-04-25T10:00:00Z",
+        "endsAt": "0001-01-01T00:00:00Z"
+      }
+    ]
+  }
+}

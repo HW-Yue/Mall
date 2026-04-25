@@ -74,8 +74,8 @@ services:
   # 文档：https://github.com/pab1it0/prometheus-mcp-server
   # 使用方式：
   #   1. 启动：docker-compose -f docker-compose-grafana.yml up -d prometheus-mcp
-  #   2. 测试：curl http://localhost:8001/sse
-  #   3. 接入 Claude Desktop / Cursor 等客户端，添加 SSE 服务端点：http://localhost:8001/sse
+  #   2. 测试：curl http://127.0.0.1:8001/sse
+  #   3. 接入 Claude Desktop / Cursor 等客户端，添加 SSE 服务端点：http://127.0.0.1:8001/sse
   # 可用工具：execute_query（执行 PromQL）、list_metrics（列指标）、execute_range_query（范围查询）
   prometheus-mcp:
     image: ghcr.io/pab1it0/prometheus-mcp-server:latest

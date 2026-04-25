@@ -23,9 +23,9 @@ CHANNEL = "c01"
 # ── Mock 支付宝 ─────────────────────────────────────
 # pay-service 的 alipay.gateway-url 改为 MOCK_ALIPAY_HOST 即可接管所有支付请求
 MOCK_ALIPAY_PORT = 7000
-MOCK_ALIPAY_HOST = f"http://localhost:{MOCK_ALIPAY_PORT}"
+MOCK_ALIPAY_HOST = f"http://100.86.250.112:{MOCK_ALIPAY_PORT}"
 # mock_alipay 收到支付后，向 pay-service 发送的回调地址
-NOTIFY_URL = "http://localhost:9091/api/v1/alipay/alipay_notify_url"
+NOTIFY_URL = "http://100.86.250.112:9091/api/v1/alipay/alipay_notify_url"
 
 # ── 轮询参数（full_flow 等待 MQ 建单）────────────────
 POLL_MAX_RETRIES = 10

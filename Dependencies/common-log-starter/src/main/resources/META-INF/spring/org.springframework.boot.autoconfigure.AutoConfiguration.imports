@@ -1,3 +1,6 @@
 com.yue.common.log.CommonLogAutoConfiguration
+com.yue.common.log.servlet.SkyWalkingServletConfiguration
+com.yue.common.log.webflux.SkyWalkingWebFluxConfiguration
+com.yue.common.log.webflux.SkyWalkingGatewayFilterConfiguration
 com.yue.common.log.logback.LogstashAutoConfiguration
 com.yue.common.log.sentinel.SentinelEnhanceAutoConfiguration

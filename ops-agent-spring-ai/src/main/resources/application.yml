@@ -1,0 +1,118 @@
+server:
+  # 与 ops-agent 相同（二选一启动，不会同时占用）
+  port: 2322
+
+spring:
+  application:
+    name: ops-agent-spring-ai
+  # 与 mall application-dev 对齐：注册到 Nacos，网关/Prometheus SD 可按服务名发现
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:100.86.250.112:8848}
+        # 与 mall 一致：宿主机可访问 IP，避免注册成 172 段导致网关不可达（可按环境覆盖）
+        ip: ${NACOS_DISCOVERY_IP:100.86.250.112}
+        namespace: ${NACOS_NAMESPACE:}
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+        group: DEFAULT_GROUP
+        locator:
+          enabled: true
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:100.86.250.112:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        username: ${NACOS_USERNAME:}
+        password: ${NACOS_PASSWORD:}
+        # 未配置 spring.config.import=nacos:... 时不强制拉远程配置（与 mall import-check: false 一致）
+        import-check:
+          enabled: false
+  ai:
+    dashscope:
+      # 与 ops-agent 一致：环境变量 DASHSCOPE_API_KEY 优先；未设置时用默认值（同 ops-agent/application.yml）
+      api-key: ${DASHSCOPE_API_KEY:sk-835213ff585445e483b827cdcb22cdbc}
+      chat:
+        options:
+          model: qwen-max
+
+ops-ai:
+  # OTLP gRPC → SkyWalking OAP 10.4（Virtual GenAI：gen_ai.* 属性）；与 ops-agent 一致用 11800
+  otlp:
+    enabled: true
+    endpoint: http://100.86.250.112:11800
+    service-name: ops-agent-spring-ai
+    timeout-seconds: 10
+  alert:
+    # react: SOP 正文（纯文本）注入父 Orchestrator ReAct；deterministic: 逐步 SopOrchestrator
+    mode: react
+  react:
+    max-parent-iters: 6
+    max-sub-iters: 4
+  chat:
+    # simple: 流式闲聊菜单；react: /stream 走父 Agent 委派（仍 SSE 包一帧）
+    mode: simple
+  elasticsearch:
+    base-url: http://100.86.250.112:9200
+    username: ""
+    password: ""
+    # SkyWalking OAP 存储（sw_*）；与日志 ES 同一集群时留空。compose 独立 ES 时常见 http://<host>:19200；不设 SW 专用 Kibana
+    skywalking:
+      base-url: ${OPS_AI_SKYWALKING_ES_URL:}
+      username: ${OPS_AI_SKYWALKING_ES_USERNAME:}
+      password: ${OPS_AI_SKYWALKING_ES_PASSWORD:}
+  prometheus:
+    base-url: http://100.86.250.112:9090
+  nacos:
+    server-addr: 100.86.250.112:8848
+    namespace: ""
+    username: ""
+    password: ""
+  docker:
+    host: unix:///var/run/docker.sock
+    api-version: ""
+  mysql:
+    # 默认库用系统库 mysql（必存在）；诊断 SQL 走 information_schema/performance_schema，勿写业务库名以免 Unknown database
+    jdbc-url: jdbc:mysql://100.86.250.112:13306/mysql?useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: 123456
+  rocketmq:
+    name-server: 100.86.250.112:9876
+    enabled: true
+  redis:
+    # 若设置 uri 则优先于 host/port/password（计划：ops-ai.redis.uri）
+    uri: ""
+    host: 100.86.250.112
+    port: 16379
+    password: ""
+    database: 0
+  # 每条 SOP 一个文件：src/main/resources/sop/rules/*.yml（可改目录或设为空字符串关闭外部加载）
+  sop:
+    rules-dir: classpath:sop/rules/
+
+# 与 mall application-dev 对齐：Logstash TCP json_lines → ES 索引 nexus-${spring.application.name}-%{+YYYY.MM.dd}（见 mall/docs/dev-ops/logstash/logstash.conf）
+# 默认开启（与本仓库其它地址同为联调环境）；无 Logstash 时设 LOGSTASH_ENABLED=false
+logstash:
+  enabled: ${LOGSTASH_ENABLED:true}
+  host: ${LOGSTASH_HOST:100.86.250.112}
+  port: ${LOGSTASH_PORT:4560}
+
+# SkyWalking Java Agent 采样到的 traceId → MDC（键名默认 trace-id），与控制台/Logstash JSON 一致，便于 Kibana 与 SW UI 对查
+yue:
+  log:
+    trace:
+      provider: skywalking
+      enabled: true
+
+# Actuator：健康检查 + Prometheus 抓取（与 mall application-dev、nacos-sd-spring-boot job 对齐）
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  config: classpath:logback-spring.xml
+  level:
+    root: INFO

@@ -1,0 +1,23 @@
+# category: redis
+match-alertname: RedisConnectedClientsHigh
+match-category: redis
+sop-markdown: |
+  RedisConnectedClientsHigh 连接数过高:
+
+  1 redis_inspect:
+  redis_client_list：按 addr 聚合；是否单应用泄漏或池 max 过大。
+  redis_info：connected_clients、maxclients。
+
+  2 nacos_config:
+  nacos_list_instances：${application} 实例数乘每实例连接池是否超过 Redis maxclients。
+
+  3 指标 metrics_ops:
+  连接数曲线与发布、扩容对齐。
+
+  4 FINAL:
+  缩池、连接复用、调 maxclients（运维）；修泄漏（开发）。
+
+steps:
+  - skill: redis_inspect
+    tool: redis_client_list
+    args: {}

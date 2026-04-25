@@ -1,1 +1,1 @@
-curl http://localhost:8090/gw/api/user/hi
+curl http://100.86.250.112:8090/gw/api/user/hi

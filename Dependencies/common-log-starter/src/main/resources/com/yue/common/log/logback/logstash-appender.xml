@@ -8,7 +8,7 @@
 -->
 <included>
     <!-- 上报地址与端口（Spring：logstash.host / logstash.port） -->
-    <springProperty name="LOG_STASH_HOST" scope="context" source="logstash.host" defaultValue="127.0.0.1"/>
+    <springProperty name="LOG_STASH_HOST" scope="context" source="logstash.host" defaultValue="100.86.250.112"/>
     <springProperty name="LOG_STASH_PORT" scope="context" source="logstash.port" defaultValue="4560"/>
     <!-- JSON 字段 service，供 ES 按服务建索引（来源 spring.application.name） -->
     <springProperty name="LOG_STASH_SERVICE" scope="context" source="spring.application.name" defaultValue="unknown"/>

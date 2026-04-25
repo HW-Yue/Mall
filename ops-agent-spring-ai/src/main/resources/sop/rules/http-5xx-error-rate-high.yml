@@ -1,0 +1,59 @@
+# category: http
+match-alertname: Http5xxErrorRateHigh
+match-category: http
+sop-markdown: |
+  Http5xxErrorRateHigh 5xx 比例高:
+
+  目标：快速判断是“服务不存在/未注册/未部署/名称不一致”，还是服务存在后的真实 5xx。
+  不要把所有依赖都查一遍；证据足够时立即 FINAL。
+
+  0 服务存在性快速门禁，必须先做:
+  第1步：metrics_ops.business_metrics：
+     查询 up{application="${application}"} or up{app="${application}"} or up{job="${application}"}。
+     若 result 为空，记录证据“Prometheus 没有该服务时序或标签不匹配”。
+  第2步：nacos_config.nacos_list_instances：
+     查询 serviceName=${application}。
+     若实例为空或无健康实例，记录证据“服务未注册或没有健康实例”。
+  第3步：docker_ops.docker_inspect：
+     查询 container=${application}；如果告警 labels.instance 含容器名，也可查 instance 主体。
+     若 not found，记录证据“Docker 未发现该服务容器”。
+
+  快速终止:
+  如果 Prometheus 无该服务时序 + Nacos 无该服务实例 + Docker 无该服务容器：
+  直接 FINAL：
+  结论：该 application 在当前环境未被采集、未注册、未部署，或告警 application 名称错误。
+  证据：分别列出 Prometheus/Nacos/Docker 的空结果。
+  下一步：核对 application 标签、Nacos 服务名、容器名和部署状态；不要继续查 MySQL/Redis/RocketMQ。
+
+  1 服务存在后再查 HTTP 5xx:
+  只有确认服务至少在 Prometheus/Nacos/Docker 任一侧存在时，才继续：
+  metrics_ops.business_metrics：按 application、uri、status 拆 5xx。
+  elasticsearch_ops.es_search：时间窗内查 ERROR/5xx，按 path、exception 汇总。
+  docker_ops.docker_logs / docker_stats：只在容器存在时查看日志和资源。
+
+  2 依赖只在证据指向时查:
+  日志出现 SQL/连接池/锁等待时，查 mysql_inspect。
+  日志出现 Redis 超时或慢命令时，查 redis_inspect。
+  日志出现 MQ 发送/消费异常时，查 rocketmq_inspect。
+  不允许在服务都不存在时继续查依赖。
+
+  FINAL 输出格式:
+  结论：一句话。
+  证据：Prometheus / Nacos / Docker / 日志的关键结果。
+  下一步：最多 3 条，按优先级排列。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "up{application=\"${application}\"} or up{app=\"${application}\"} or up{job=\"${application}\"}"
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      查询 Nacos 是否存在服务 ${application} 的健康实例。只回答存在/不存在/无法确认和证据。
+    context: {}
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      查询 Docker 是否存在 ${application} 对应容器。优先 inspect ${application}；不存在就直接说明，不要执行无关命令。
+    context: {}

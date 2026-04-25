@@ -22,10 +22,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
+        server-addr: 100.86.250.112:8848
         locator:
           enabled: true
-        ip: 127.0.0.1
+        ip: 100.86.250.112
       config:
         server-addr: ${spring.cloud.nacos.discovery.server-addr}
         import-check:
@@ -34,7 +34,7 @@ spring:
     sentinel:
       eager: true
       transport:
-        dashboard: 127.0.0.1:8858
+        dashboard: 100.86.250.112:8858
         port: 8720           # 与 mall(8724) 等错开，避免同机冲突
       datasource:
         flow:
@@ -75,7 +75,7 @@ spring:
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://localhost:13306/order_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
+    url: jdbc:mysql://100.86.250.112:13306/order_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
@@ -91,7 +91,7 @@ spring:
   # 业务里 StringRedisTemplate / RedisTemplate 自动走同一套连接池。clientName 供 redis_exporter 反查。
   data:
     redis:
-      host: localhost
+      host: 100.86.250.112
       port: 16379
       database: 0
       timeout: 3000ms
@@ -100,7 +100,7 @@ spring:
     redisson:
       config: |
         singleServerConfig:
-          address: "redis://localhost:16379"
+          address: "redis://100.86.250.112:16379"
           database: 0
           clientName: order-redisson
           connectionPoolSize: 20
@@ -113,15 +113,23 @@ spring:
           timeout: 3000
           keepAlive: true
 
-# RocketMQ
+# RocketMQ（缺省或连不上时：SeckillOrderCreateListener / NormalOrderCreateListener / NormalOrderPendingPublisher 不生效，
+# 秒杀 seckill-wait 轮询无 orderId、普通品 create_normal_order 入队失败。联调前请启 name-server:9876 并建 Topic）
 rocketmq:
-  name-server: localhost:9876
+  name-server: 100.86.250.112:9876
   producer:
     group: order-service-producer
     send-message-timeout: 3000
 
 # 业务 Topic 配置
 app:
+  order:
+    # 为 false 时禁止直连 create_order 创建 normal 单（应走 mall）
+    allow-direct-normal-create-order: true
+    get-pay-url-pending-retries: 6
+    get-pay-url-pending-wait-ms: 50
+    # 与 mall 同值时可校验 create_order_normal_from_mall
+    internal-create-token: ""
   rocketmq:
     topic:
       # 消费（来自 pay-service）
@@ -140,6 +148,8 @@ app:
       orderPaidSeckill: order-paid-seckill
       # 消费（来自 seckill-service，异步建单）
       seckillOrderCreate: seckill-order-create
+      # 生产 / 自消费：普通商品 mall 已锁库后异步 INSERT
+      normalOrderCreate: normal-order-create
     consumerGroup:
       paySuccessNormal: CG_PAY_SUCCESS_NORMAL
       paySuccessGroupBuy: CG_PAY_SUCCESS_GROUP_BUY
@@ -151,6 +161,7 @@ app:
       payRefundGroupBuy: CG_PAY_REFUND_GROUP_BUY
       payRefundSeckill: CG_PAY_REFUND_SECKILL
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE_ORDER
+      normalOrderCreate: CG_NORMAL_ORDER_CREATE
 
 # MyBatis
 mybatis:
@@ -166,5 +177,11 @@ logging:
 # 日志上报 ELK
 logstash:
   enabled: true
-  host: 127.0.0.1
+  host: 100.86.250.112
   port: 4560
+
+# SkyWalking 本地/IDEA 联调；JVM 见 .run/ 与 dev-tools/skywalking/README.md
+yue:
+  log:
+    trace:
+      provider: skywalking

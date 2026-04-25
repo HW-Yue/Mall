@@ -16,20 +16,23 @@ import jakarta.annotation.Resource;
 
 @Slf4j
 @Service
-public class TeamStockOccupyRuleFilter implements ILogicHandler<TradeLockRuleCommandEntity, TradeLockRuleFilterFactory.DynamicContext, TradeLockRuleFilterBackEntity> {
+public class TeamStockOccupyRuleFilter implements ILogicHandler<TradeLockRuleCommandEntity, TradeLockRuleFilterFactory.TradeLockLinkContext, TradeLockRuleFilterBackEntity> {
 
     @Resource
     private ITradeRepository repository;
 
     @Override
-    public TradeLockRuleFilterBackEntity apply(TradeLockRuleCommandEntity requestParameter, TradeLockRuleFilterFactory.DynamicContext dynamicContext) throws Exception {
+    public TradeLockRuleFilterBackEntity apply(TradeLockRuleCommandEntity requestParameter, TradeLockRuleFilterFactory.TradeLockLinkContext dynamicContext) throws Exception {
         log.info("交易规则过滤-组队库存校验 userId:{} activityId:{}", requestParameter.getUserId(), requestParameter.getActivityId());
 
         String teamId = requestParameter.getTeamId();
         if (StringUtils.isBlank(teamId)) {
-            return TradeLockRuleFilterBackEntity.builder()
-                    .userTakeOrderCount(dynamicContext.getUserTakeOrderCount())
-                    .build();
+            return stop(
+                    requestParameter,
+                    dynamicContext,
+                    TradeLockRuleFilterBackEntity.builder()
+                            .userTakeOrderCount(dynamicContext.getUserTakeOrderCount())
+                            .build());
         }
 
         GroupBuyActivityEntity groupBuyActivity = dynamicContext.getGroupBuyActivity();
@@ -44,10 +47,13 @@ public class TeamStockOccupyRuleFilter implements ILogicHandler<TradeLockRuleCom
             throw new AppException(ResponseCode.E0008);
         }
 
-        return TradeLockRuleFilterBackEntity.builder()
-                .userTakeOrderCount(dynamicContext.getUserTakeOrderCount())
-                .recoveryTeamStockKey(recoveryTeamStockKey)
-                .build();
+        return stop(
+                requestParameter,
+                dynamicContext,
+                TradeLockRuleFilterBackEntity.builder()
+                        .userTakeOrderCount(dynamicContext.getUserTakeOrderCount())
+                        .recoveryTeamStockKey(recoveryTeamStockKey)
+                        .build());
     }
 
 }

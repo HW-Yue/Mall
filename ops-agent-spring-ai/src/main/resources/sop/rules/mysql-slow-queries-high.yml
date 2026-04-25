@@ -1,0 +1,27 @@
+# category: mysql
+match-alertname: MySqlSlowQueriesHigh
+match-category: mysql
+sop-markdown: |
+  MySqlSlowQueriesHigh 慢查询增多:
+
+  1 mysql_inspect:
+  mysql_slow_query：若开了 slow_log 表看最近样本。
+  mysql_processlist：长时间运行 SQL、Sending data、Copying to tmp table。
+  mysql_status：Slow_queries 等，pattern 可用 Slow%。
+
+  2 指标 metrics_ops:
+  business_metrics：mysqld_exporter 指标与慢查询时间线、发布时间对齐。
+
+  3 日志 elasticsearch_ops:
+  ORM SQL、DataSource 报错；对齐应用实例。
+
+  4 配置 nacos_config:
+  nacos_get_config：shared-mysql-tuning 或 JDBC 参数只读；max_execution_time、索引类发布。
+
+  5 FINAL:
+  Top 慢 SQL 模式、是否缺索引、是否需 DBA；避免单条样本下结论。
+
+steps:
+  - skill: mysql_inspect
+    tool: mysql_slow_query
+    args: {}

@@ -19,7 +19,7 @@ public class IndexController {
 
     /**
      * curl --request GET \
-     *   --url 'http://127.0.0.1:9191/api/v1/index/draw?userId=xiaofuge'
+     *   --url 'http://100.86.250.112:9191/api/v1/index/draw?userId=xiaofuge'
      */
     // @RateLimiterAccessInterceptor(key = "userId", fallbackMethod = "drawErrorRateLimiter", permitsPerSecond = 1.0d, blacklistCount = 1)
     @RequestMapping(value = "draw", method = RequestMethod.GET)

@@ -20,7 +20,7 @@ xfg:
       system: test-system
       register:
         # redis host
-        host: 127.0.0.1
+        host: 100.86.250.112
         # redis port
         port: 16379
     # 任务调度配置

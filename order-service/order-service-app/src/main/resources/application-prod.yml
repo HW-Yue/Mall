@@ -1,10 +1,15 @@
 rocketmq:
-  name-server: ${ROCKETMQ_NAME_SERVER:127.0.0.1:9876}
+  name-server: ${ROCKETMQ_NAME_SERVER:100.86.250.112:9876}
   producer:
     group: order-service-producer
     send-message-timeout: 3000
 
 app:
+  order:
+    allow-direct-normal-create-order: true
+    get-pay-url-pending-retries: 6
+    get-pay-url-pending-wait-ms: 50
+    internal-create-token: ""
   rocketmq:
     topic:
       paySuccessNormal: pay-success-normal
@@ -20,6 +25,7 @@ app:
       orderPaidGroupBuy: order-paid-group_buy
       orderPaidSeckill: order-paid-seckill
       seckillOrderCreate: seckill-order-create
+      normalOrderCreate: normal-order-create
     consumerGroup:
       paySuccessNormal: CG_PAY_SUCCESS_NORMAL
       paySuccessGroupBuy: CG_PAY_SUCCESS_GROUP_BUY
@@ -31,3 +37,4 @@ app:
       payRefundGroupBuy: CG_PAY_REFUND_GROUP_BUY
       payRefundSeckill: CG_PAY_REFUND_SECKILL
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE_ORDER
+      normalOrderCreate: CG_NORMAL_ORDER_CREATE

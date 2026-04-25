@@ -11,10 +11,10 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class UniqueRefundNodeFilter implements ILogicHandler<TradeRefundCommandEntity, TradeRefundRuleFilterFactory.DynamicContext, TradeRefundBehaviorEntity> {
+public class UniqueRefundNodeFilter implements ILogicHandler<TradeRefundCommandEntity, TradeRefundRuleFilterFactory.RefundLinkContext, TradeRefundBehaviorEntity> {
 
     @Override
-    public TradeRefundBehaviorEntity apply(TradeRefundCommandEntity tradeRefundCommandEntity, TradeRefundRuleFilterFactory.DynamicContext dynamicContext) throws Exception {
+    public TradeRefundBehaviorEntity apply(TradeRefundCommandEntity tradeRefundCommandEntity, TradeRefundRuleFilterFactory.RefundLinkContext dynamicContext) throws Exception {
         log.info("逆向流程-退单操作，重复退单检查 userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
 
         MarketPayOrderEntity marketPayOrderEntity = dynamicContext.getMarketPayOrderEntity();
@@ -22,12 +22,15 @@ public class UniqueRefundNodeFilter implements ILogicHandler<TradeRefundCommandE
 
         if (TradeOrderStatusEnumVO.CLOSE.equals(tradeOrderStatusEnumVO)) {
             log.info("逆向流程，退单操作(幂等-重复退单) userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
-            return TradeRefundBehaviorEntity.builder()
-                    .userId(tradeRefundCommandEntity.getUserId())
-                    .orderId(marketPayOrderEntity.getOrderId())
-                    .teamId(marketPayOrderEntity.getTeamId())
-                    .tradeRefundBehaviorEnum(TradeRefundBehaviorEntity.TradeRefundBehaviorEnum.REPEAT)
-                    .build();
+            return stop(
+                    tradeRefundCommandEntity,
+                    dynamicContext,
+                    TradeRefundBehaviorEntity.builder()
+                            .userId(tradeRefundCommandEntity.getUserId())
+                            .orderId(marketPayOrderEntity.getOrderId())
+                            .teamId(marketPayOrderEntity.getTeamId())
+                            .tradeRefundBehaviorEnum(TradeRefundBehaviorEntity.TradeRefundBehaviorEnum.REPEAT)
+                            .build());
         }
 
         return next(tradeRefundCommandEntity, dynamicContext);

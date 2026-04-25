@@ -69,7 +69,7 @@ spring:
     name: mall-order-service   # 写入 Logstash JSON 字段 service
 
 logstash:
-  host: 192.168.1.100         # 默认 127.0.0.1
+  host: 192.168.1.100         # 默认 100.86.250.112
   port: 4560                  # 默认 4560
 ```
 
@@ -136,7 +136,7 @@ spring:
     name: your-service-name      # 写入 Logstash JSON 字段 service；未配置时为 unknown
 
 logstash:
-  host: 127.0.0.1                # Logstash TCP 主机
+  host: 100.86.250.112                # Logstash TCP 主机
   port: 4560                     # Logstash TCP 端口
 ```
 

@@ -12,7 +12,7 @@ isTest=true 时，seckill-service 跳过 Redis 库存扣减和 RocketMQ，
 
 直接启动：
   python locust/seckill/lock_only.py
-  访问 http://localhost:7321
+  访问 http://100.86.250.112:7321
 """
 import os
 import subprocess

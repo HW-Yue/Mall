@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Configurable
 @EnableScheduling
 @EnableDiscoveryClient
-@EnableFeignClients(basePackages = {"com.yue.infrastructure.gateway"})
+@EnableFeignClients
 public class MallApplication {
 
     public static void main(String[] args) {

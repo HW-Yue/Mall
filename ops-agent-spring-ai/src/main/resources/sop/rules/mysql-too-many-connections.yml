@@ -1,0 +1,27 @@
+# category: mysql
+match-alertname: MySqlTooManyConnections
+match-category: mysql
+sop-markdown: |
+  MySqlTooManyConnections 连接数过多:
+
+  1 mysql_inspect:
+  mysql_processlist：按 user、host 找异常客户端。
+  mysql_status：Threads_connected、Max_used_connections、max_connections。
+
+  2 规模 nacos_config:
+  nacos_list_instances：实例数乘每实例 pool max 是否超过 DB max_connections。
+  nacos_get_config：数据源 pool 只读。
+
+  3 日志 elasticsearch_ops:
+  连接泄漏、重试风暴、短时大量建连。
+
+  4 指标 metrics_ops:
+  jvm_metrics、business_metrics：扩缩容、发布与连接突增对齐。
+
+  5 FINAL:
+  缩池、限实例、修泄漏、临时调高 max_connections（需 DBA 审批）及风险说明。
+
+steps:
+  - skill: mysql_inspect
+    tool: mysql_processlist
+    args: {}

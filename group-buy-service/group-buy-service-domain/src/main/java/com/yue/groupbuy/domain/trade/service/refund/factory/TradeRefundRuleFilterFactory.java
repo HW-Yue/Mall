@@ -9,25 +9,27 @@ import com.yue.groupbuy.domain.trade.service.refund.filter.RefundOrderNodeFilter
 import com.yue.groupbuy.domain.trade.service.refund.filter.UniqueRefundNodeFilter;
 import cn.bugstack.wrench.design.framework.link.model2.LinkArmory;
 import cn.bugstack.wrench.design.framework.link.model2.chain.BusinessLinkedList;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+/**
+ * 拼团退单责任链：Wrench {@link BusinessLinkedList}，上下文类型为 {@link RefundLinkContext}。
+ */
 @Slf4j
 @Service
 public class TradeRefundRuleFilterFactory {
 
     @Bean("tradeRefundRuleFilter")
-    public BusinessLinkedList<TradeRefundCommandEntity, DynamicContext, TradeRefundBehaviorEntity> tradeRefundRuleFilter(
+    public BusinessLinkedList<TradeRefundCommandEntity, RefundLinkContext, TradeRefundBehaviorEntity> tradeRefundRuleFilter(
             DataNodeFilter dataNodeFilter,
             UniqueRefundNodeFilter uniqueRefundNodeFilter,
             RefundOrderNodeFilter refundOrderNodeFilter) {
 
-        LinkArmory<TradeRefundCommandEntity, DynamicContext, TradeRefundBehaviorEntity> linkArmory =
+        LinkArmory<TradeRefundCommandEntity, RefundLinkContext, TradeRefundBehaviorEntity> linkArmory =
                 new LinkArmory<>("退单规则过滤链",
                         dataNodeFilter,
                         uniqueRefundNodeFilter,
@@ -36,13 +38,15 @@ public class TradeRefundRuleFilterFactory {
         return linkArmory.getLogicLink();
     }
 
+    /**
+     * 退单责任链专用上下文，继承 Wrench {@link cn.bugstack.wrench.design.framework.link.model2.DynamicContext}。
+     */
     @Data
-    @Builder
-    @AllArgsConstructor
     @NoArgsConstructor
-    public static class DynamicContext {
+    @EqualsAndHashCode(callSuper = false)
+    public static class RefundLinkContext extends cn.bugstack.wrench.design.framework.link.model2.DynamicContext {
+
         private MarketPayOrderEntity marketPayOrderEntity;
         private GroupBuyTeamEntity groupBuyTeamEntity;
     }
-
 }

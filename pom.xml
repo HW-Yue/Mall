@@ -29,6 +29,7 @@
 
         <!-- 运维 Agent -->
         <module>ops-agent</module>
+        <module>ops-agent-spring-ai</module>
 
         <!--依赖-->
         <module>Dependencies/common-log-starter</module>

@@ -1,6 +1,7 @@
 package com.yue.order.domain.order.service;
 
 import com.yue.order.domain.order.model.entity.CreateOrderCommand;
+import com.yue.order.domain.order.model.entity.NormalOrderEnqueueResult;
 import com.yue.order.domain.order.model.entity.OrderEntity;
 
 import java.util.List;
@@ -14,6 +15,11 @@ public interface IOrderDomainService {
      * 创建订单（锁单），返回 orderId
      */
     String createOrder(CreateOrderCommand command);
+
+    /**
+     * 普通商品：mall 已锁可售库存，生成本服务 orderId/outTradeNo，同步发 MQ 异步落单，不经过 mall 二次锁库
+     */
+    NormalOrderEnqueueResult submitNormalOrderFromMall(CreateOrderCommand command);
 
     /**
      * 获取/创建支付 URL（用户点击支付时调用）

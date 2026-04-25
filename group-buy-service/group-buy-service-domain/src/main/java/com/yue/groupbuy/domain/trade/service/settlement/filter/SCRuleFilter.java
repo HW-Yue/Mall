@@ -14,13 +14,13 @@ import jakarta.annotation.Resource;
 
 @Slf4j
 @Service
-public class SCRuleFilter implements ILogicHandler<TradeSettlementRuleCommandEntity, TradeSettlementRuleFilterFactory.DynamicContext, TradeSettlementRuleFilterBackEntity> {
+public class SCRuleFilter implements ILogicHandler<TradeSettlementRuleCommandEntity, TradeSettlementRuleFilterFactory.SettlementLinkContext, TradeSettlementRuleFilterBackEntity> {
 
     @Resource
     private ITradeRepository repository;
 
     @Override
-    public TradeSettlementRuleFilterBackEntity apply(TradeSettlementRuleCommandEntity requestParameter, TradeSettlementRuleFilterFactory.DynamicContext dynamicContext) throws Exception {
+    public TradeSettlementRuleFilterBackEntity apply(TradeSettlementRuleCommandEntity requestParameter, TradeSettlementRuleFilterFactory.SettlementLinkContext dynamicContext) throws Exception {
         log.info("结算规则过滤-渠道黑名单校验 userId:{} outTradeNo:{}", requestParameter.getUserId(), requestParameter.getOutTradeNo());
 
         boolean intercept = repository.isSCBlackIntercept(requestParameter.getSource(), requestParameter.getChannel());

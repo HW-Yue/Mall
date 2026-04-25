@@ -1,0 +1,30 @@
+# category: redis
+match-alertname: RedisDown
+match-category: redis
+sop-markdown: |
+  RedisDown Redis 不可用:
+
+  1 指标 metrics_ops:
+  business_metrics：redis exporter 的 up；单点还是集群多节点探测失败。
+
+  2 redis_inspect:
+  redis_info：若部分可连，看 role、master_link_status。
+  redis_client_list：是否打满 maxclients。
+
+  3 docker_ops:
+  Redis 容器：docker_inspect、docker_logs、docker_stats；OOM、重启、磁盘。
+
+  4 nacos_config:
+  中间件地址变更；只读。
+
+  5 日志 elasticsearch_ops:
+  连接拒绝、超时风暴时间。
+
+  6 FINAL:
+  主从切换、网络、进程、误杀；恢复步骤与是否已降级。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "up"

@@ -4,7 +4,7 @@
     const STORAGE_BASE_URL = 'gbm_config_base_url';
 
     function getBaseUrl() {
-        return (document.getElementById('baseUrl') && document.getElementById('baseUrl').value.trim()) || localStorage.getItem(STORAGE_BASE_URL) || 'http://localhost:8091';
+        return (document.getElementById('baseUrl') && document.getElementById('baseUrl').value.trim()) || localStorage.getItem(STORAGE_BASE_URL) || 'http://100.86.250.112:8091';
     }
 
     function setBaseUrl(url) {

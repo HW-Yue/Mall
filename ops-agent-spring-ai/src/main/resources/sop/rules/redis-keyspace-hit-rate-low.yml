@@ -1,0 +1,24 @@
+# category: redis
+match-alertname: RedisKeyspaceHitRateLow
+match-category: redis
+sop-markdown: |
+  RedisKeyspaceHitRateLow 缓存命中率低:
+
+  1 redis_inspect:
+  redis_info：keyspace_hits、keyspace_misses、内存与驱逐。
+  redis_memory：是否频繁淘汰导致 miss 升。
+
+  2 日志 elasticsearch_ops:
+  穿透、随机 key、批量失效（发布导致）。
+
+  3 指标 metrics_ops:
+  QPS 与 miss 曲线；对齐扩容缩容。
+
+  4 FINAL:
+  容量不足、键设计、TTL 过短；扩容或本地缓存建议。
+
+steps:
+  - skill: redis_inspect
+    tool: redis_info
+    args:
+      section: "stats"

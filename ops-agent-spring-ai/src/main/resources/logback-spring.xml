@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  与 mall-app 一致：common-log-starter 的 base（控制台/文件 + MDC trace-id）；
+  Logstash TCP 由 starter 的 LogstashAutoConfiguration 在 logstash.enabled=true 时挂到 Root，无需在此重复定义 LOGSTASH。
+-->
+<configuration scan="true" scanPeriod="10 seconds">
+
+    <include resource="com/yue/common/log/logback/base.xml"/>
+
+    <logger name="com.yue.opsagent.springai" level="INFO"/>
+    <logger name="org.springframework.web" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ASYNC_FILE_INFO"/>
+        <appender-ref ref="ASYNC_FILE_ERROR"/>
+    </root>
+</configuration>

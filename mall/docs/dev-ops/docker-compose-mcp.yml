@@ -21,11 +21,29 @@ services:
     networks:
       - my-network
     healthcheck:
-      test: [ "CMD-SHELL", "wget -q --spider http://localhost:8080/ping || exit 1" ]
+      # MCP 进程监听容器内 :8080；勿写宿主机 IP
+      test: [ "CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/ping || exit 1" ]
       interval: 15s
       timeout: 3s
       retries: 5
       start_period: 20s
+
+  prometheus-mcp:
+    image: ghcr.io/pab1it0/prometheus-mcp-server:latest
+    container_name: prometheus-mcp
+    restart: unless-stopped
+    environment:
+      PROMETHEUS_URL: "http://prometheus:9090"
+      # 若 Prometheus 开启了认证，取消下面注释并填写：
+      # PROMETHEUS_USERNAME: "admin"
+      # PROMETHEUS_PASSWORD: "password"
+      PROMETHEUS_MCP_SERVER_TRANSPORT: sse
+      PROMETHEUS_MCP_BIND_HOST: "0.0.0.0"
+      PROMETHEUS_MCP_BIND_PORT: "8080"
+    ports:
+      - "8001:8080"
+    networks:
+      - my-network
 
 networks:
   my-network:

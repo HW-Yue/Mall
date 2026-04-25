@@ -53,7 +53,7 @@ docker compose -f docker-compose-environment.yml up -d mysql nacos
 
 待 Nacos 就绪后，在宿主机执行下方 **3.2 批量发布**（`docker-compose-environment.yml` 不再包含自动跑 `init-nacos-dtp.sh` 的一次性容器）。
 
-控制台（Nacos 3.x）：<http://127.0.0.1:8080>（具体端口以 compose 为准）。
+控制台（Nacos 3.x）：<http://100.86.250.112:8080>（具体端口以 compose 为准）。
 
 ### 3.2 批量发布（宿主机）
 
@@ -64,10 +64,10 @@ cd mall/docs/dev-ops/nacos/dtp-config
 chmod +x init-nacos-dtp.sh
 
 # 未开启鉴权
-NACOS_ADDR=127.0.0.1:8848 ./init-nacos-dtp.sh
+NACOS_ADDR=100.86.250.112:8848 ./init-nacos-dtp.sh
 
 # Nacos 开启鉴权（示例：NACOS_AUTH_ENABLE=true）
-NACOS_ADDR=127.0.0.1:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-dtp.sh
+NACOS_ADDR=100.86.250.112:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-dtp.sh
 ```
 
 ### 3.3 验证
@@ -90,7 +90,7 @@ NACOS_ADDR=127.0.0.1:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-dtp.sh
 > **ops-agent 相关 DataId 首次上传**：`pay-datasource-dev.yml` 已被 `init-nacos-dtp.sh` 的 `*-datasource-dev.yml` 通配覆盖（首次执行脚本即会发布）；`shared-mysql-tuning.yml` 文件名不在脚本通配内，首次请手动用 Nacos 3.x **Admin API** 发布（v1/cs/configs 已下线，一定要走 v3）：
 >
 > ```bash
-> NACOS_ADDR=127.0.0.1:8848
+> NACOS_ADDR=100.86.250.112:8848
 > TOKEN=$(curl -s -X POST "http://${NACOS_ADDR}/nacos/v3/auth/user/login" \
 >         -d "username=nacos&password=nacos" \
 >         | sed -n 's/.*"accessToken":"\([^"]*\)".*/\1/p')

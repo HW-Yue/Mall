@@ -1,0 +1,25 @@
+# category: hikari
+match-alertname: HikariConnectionAcquireSlow
+match-category: hikari
+sop-markdown: |
+  HikariConnectionAcquireSlow 获取连接耗时高:
+
+  1 指标 metrics_ops:
+  Hikari acquire 与 active、pending 联动；对齐慢 SQL 出现时间。
+
+  2 数据库 mysql_inspect:
+  mysql_processlist、mysql_slow_query、mysql_locks。
+
+  3 网络:
+  跨 AZ、DNS、防火墙可导致 TCP 慢；结合 instance 在 FINAL 提示人工核对基础设施。
+
+  4 配置 nacos_config:
+  connection-timeout、validationTimeout 是否过短误杀；只读。
+
+  5 FINAL:
+  根因树：DB 慢、网络、池配置、泄漏；下一步归属应用、DBA 或网络。
+
+steps:
+  - skill: metrics_ops
+    tool: jvm_metrics
+    args: {}

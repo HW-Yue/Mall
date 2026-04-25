@@ -15,13 +15,13 @@ import java.util.Map;
 
 @Slf4j
 @Service
-public class RefundOrderNodeFilter implements ILogicHandler<TradeRefundCommandEntity, TradeRefundRuleFilterFactory.DynamicContext, TradeRefundBehaviorEntity> {
+public class RefundOrderNodeFilter implements ILogicHandler<TradeRefundCommandEntity, TradeRefundRuleFilterFactory.RefundLinkContext, TradeRefundBehaviorEntity> {
 
     @Resource
     private Map<String, IRefundOrderStrategy> refundOrderStrategyMap;
 
     @Override
-    public TradeRefundBehaviorEntity apply(TradeRefundCommandEntity tradeRefundCommandEntity, TradeRefundRuleFilterFactory.DynamicContext dynamicContext) throws Exception {
+    public TradeRefundBehaviorEntity apply(TradeRefundCommandEntity tradeRefundCommandEntity, TradeRefundRuleFilterFactory.RefundLinkContext dynamicContext) throws Exception {
         log.info("逆向流程-退单操作，退单策略处理 userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
 
         MarketPayOrderEntity marketPayOrderEntity = dynamicContext.getMarketPayOrderEntity();
@@ -40,12 +40,15 @@ public class RefundOrderNodeFilter implements ILogicHandler<TradeRefundCommandEn
                 .activityId(groupBuyTeamEntity.getActivityId())
                 .build());
 
-        return TradeRefundBehaviorEntity.builder()
-                .userId(tradeRefundCommandEntity.getUserId())
-                .orderId(marketPayOrderEntity.getOrderId())
-                .teamId(marketPayOrderEntity.getTeamId())
-                .tradeRefundBehaviorEnum(TradeRefundBehaviorEntity.TradeRefundBehaviorEnum.SUCCESS)
-                .build();
+        return stop(
+                tradeRefundCommandEntity,
+                dynamicContext,
+                TradeRefundBehaviorEntity.builder()
+                        .userId(tradeRefundCommandEntity.getUserId())
+                        .orderId(marketPayOrderEntity.getOrderId())
+                        .teamId(marketPayOrderEntity.getTeamId())
+                        .tradeRefundBehaviorEnum(TradeRefundBehaviorEntity.TradeRefundBehaviorEnum.SUCCESS)
+                        .build());
     }
 
 }

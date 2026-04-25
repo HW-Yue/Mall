@@ -1,6 +1,11 @@
 server:
   port: 8091
 
+# 与 order-service 的 app.order.internal-create-token 一致时，Feign 会带 X-Internal-Token
+app:
+  order:
+    internal-create-token: ""
+
 # 线程池配置
 thread:
   pool:
@@ -18,7 +23,7 @@ spring:
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://127.0.0.1:13306/group_buy_market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
+    url: jdbc:mysql://100.86.250.112:13306/group_buy_market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
     driver-class-name: com.mysql.cj.jdbc.Driver
   hikari:
     pool-name: Mall_HikariCP
@@ -33,7 +38,7 @@ spring:
   # Redis：统一用官方 redisson-spring-boot-starter（prod）
   data:
     redis:
-      host: localhost
+      host: 100.86.250.112
       port: 16379
       database: 0
       timeout: 3000ms
@@ -42,7 +47,7 @@ spring:
     redisson:
       config: |
         singleServerConfig:
-          address: "redis://localhost:16379"
+          address: "redis://100.86.250.112:16379"
           database: 0
           clientName: mall-redisson
           connectionPoolSize: 10

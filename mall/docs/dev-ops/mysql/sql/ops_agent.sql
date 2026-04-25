@@ -6,7 +6,7 @@
 --   提交到审批队列等人工 approve / reject。本库只存这一类任务记录。
 --
 -- 和其它服务的关系：
---   - 复用 mall 的 MySQL 实例（localhost:13306）
+--   - 复用 mall 的 MySQL 实例（100.86.250.112:13306）
 --   - 独立库，不和业务表共用 schema
 -- ============================================================
 
@@ -46,3 +46,34 @@ CREATE TABLE `approval_task` (
   KEY `idx_status_created` (`status`, `created_at`),
   KEY `idx_alert_key_created` (`alert_key`, `created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='ops-agent 审批任务流水';
+
+-- 本地/联调示例：一条待审批、一条已应用（JSON 为占位，实跑时由服务写入真实 AlertEvent）
+INSERT INTO `approval_task` (
+  `id`, `alert_key`, `alert_json`, `domain`, `tool_name`, `data_id`, `group_name`, `content_before`, `content_after`, `reasoning`, `status`, `error_message`, `created_at`, `decided_at`
+) VALUES
+  (
+    'a1b2c3d4e5f64789999001100112233',
+    'HighCPU|order-service|pod-1',
+    '{"status":"firing","summary":"CPU > 80%"}',
+    'dtp', 'applyThreadPool', 'order-service-dtp-dev.yml', 'SENTINEL_GROUP',
+    'corePoolSize: 4',
+    'corePoolSize: 8',
+    '示例：压测窗口临时上调核心线程，审批通过后由 Agent 落库 Nacos',
+    'PENDING',
+    NULL,
+    '2026-04-23 10:00:00.000',
+    NULL
+  ),
+  (
+    'b2c3d4e5f6478999900110011223344',
+    'NacosPushLatency|pay-service|nacos-1',
+    '{"status":"firing","summary":"push latency p99 高"}',
+    'manual', 'publishConfig', 'pay-routes.yaml', 'DEFAULT_GROUP',
+    'timeoutMs: 3000',
+    'timeoutMs: 5000',
+    '已人工确认网络抖动，提高超时阈值',
+    'APPLIED',
+    NULL,
+    '2026-04-20 14:00:00.000',
+    '2026-04-20 14:05:00.123'
+  );

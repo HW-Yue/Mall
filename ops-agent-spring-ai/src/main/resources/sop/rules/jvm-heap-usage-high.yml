@@ -1,0 +1,30 @@
+# category: system
+match-alertname: JvmHeapUsageHigh
+match-category: system
+sop-markdown: |
+  JvmHeapUsageHigh 堆占用高:
+
+  1 指标 metrics_ops:
+  jvm_metrics：jvm_memory_used_bytes、jvm_memory_max_bytes、jvm_gc 相关，区分长期贴近上限还是突发尖峰。
+  business_metrics：看 QPS、线程是否同步涨，判断流量型还是泄漏型。
+
+  2 容器 docker_ops:
+  docker_stats：容器内存 limit 与实际 RSS。cgroup 过小可能 OOM 前兆。
+  docker_logs：搜 OutOfMemoryError、GC overhead。
+
+  3 日志 elasticsearch_ops:
+  es_search：ERROR、OOM、大对象分配栈，时间与告警对齐。
+
+  4 下游 redis_inspect / mysql_inspect:
+  堆高若伴随 Redis 慢或 MySQL 慢，会话堆积会驻留对象。redis_info、redis_slowlog；mysql_processlist、mysql_slow_query。
+
+  5 配置 nacos_config:
+  nacos_get_config：只读看 Xmx、G1、连接池等是否近期变更。改配置需审批。
+
+  6 FINAL:
+  结论偏向泄漏还是容量不足；是否建议 dump（说明风险）。
+
+steps:
+  - skill: metrics_ops
+    tool: jvm_metrics
+    args: {}

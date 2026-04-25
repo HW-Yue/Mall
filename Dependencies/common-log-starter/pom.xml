@@ -16,6 +16,8 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- 与 OAP / Java Agent 主版本一致；apm-toolkit-trace 以 Maven Central 可用版本为准 -->
+        <skywalking.version>9.6.0</skywalking.version>
         <spring-boot.version>3.2.12</spring-boot.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
         <!-- 与各业务服务使用的 SCA BOM 对齐；Sentinel 1.8.6 由 SCA 2023.0.1.0 锁定 -->
@@ -117,6 +119,13 @@
             <groupId>io.projectreactor</groupId>
             <artifactId>reactor-core</artifactId>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- SkyWalking：日志 MDC 与 UI Trace 对齐（无 Agent 时 TraceContext 返回占位符，不写入 MDC） -->
+        <dependency>
+            <groupId>org.apache.skywalking</groupId>
+            <artifactId>apm-toolkit-trace</artifactId>
+            <version>${skywalking.version}</version>
         </dependency>
 
         <!-- Lombok -->

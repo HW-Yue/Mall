@@ -45,7 +45,8 @@ public class CommonLogAutoConfiguration {
         // 初始化常量
         CommonLogConstants.init(properties);
 
-        log.info("[CommonLogStarter] 全链路日志已启用 - headerName: {}, mdcKey: {}, responseHeader: {}, taskDecorator: {}",
+        log.info("[CommonLogStarter] 全链路日志已启用 - provider: {}, headerName: {}, mdcKey: {}, responseHeader: {}, taskDecorator: {}",
+                properties.getProvider(),
                 properties.getHeaderName(),
                 properties.getMdcKey(),
                 properties.isResponseHeader(),

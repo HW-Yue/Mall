@@ -1,9 +1,10 @@
 package com.yue.common.log.servlet;
 
 import com.yue.common.log.CommonLogProperties;
+import com.yue.common.log.conditional.OnLegacyTraceModeCondition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +24,7 @@ import jakarta.servlet.Filter;
 @Configuration
 @ConditionalOnClass(Filter.class)
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
-@ConditionalOnProperty(prefix = "yue.log.trace", name = "enabled", havingValue = "true", matchIfMissing = true)
+@Conditional(OnLegacyTraceModeCondition.class)
 public class TraceIdServletConfiguration {
 
     /**

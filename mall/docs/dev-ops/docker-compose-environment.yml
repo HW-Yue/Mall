@@ -22,7 +22,8 @@ services:
       - ./mysql/conf/my.cnf:/etc/mysql/my.cnf
       - ./mysql/data:/var/lib/mysql
     healthcheck:
-      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+      # 在 mysql 容器内探测本实例，勿写宿主机 IP
+      test: [ "CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p123456" ]
       interval: 5s
       timeout: 10s
       retries: 10
@@ -153,7 +154,7 @@ services:
       - "8858:8858"
       - "8719:8719" # Dashboard 拉取客户端 /metric 指标的 transport 端口
     environment:
-      - JAVA_OPTS=-Dserver.port=8858 -Dcsp.sentinel.dashboard.server=localhost:8858 -Dproject.name=sentinel-dashboard -Dsentinel.dashboard.auth.username=sentinel -Dsentinel.dashboard.auth.password=sentinel
+      - JAVA_OPTS=-Dserver.port=8858 -Dcsp.sentinel.dashboard.server=127.0.0.1:8858 -Dproject.name=sentinel-dashboard -Dsentinel.dashboard.auth.username=sentinel -Dsentinel.dashboard.auth.password=sentinel
     networks:
       - my-network
 

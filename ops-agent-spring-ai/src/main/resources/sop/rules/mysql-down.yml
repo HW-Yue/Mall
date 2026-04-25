@@ -1,0 +1,29 @@
+# category: mysql
+match-alertname: MySqlDown
+match-category: mysql
+sop-markdown: |
+  MySqlDown MySQL 探测失败:
+
+  1 指标 metrics_ops:
+  business_metrics：mysqld_exporter 或 up；区分 DB 真挂还是采集失败。
+
+  2 mysql_inspect:
+  若仍能连：mysql_status 看只读、连接拒绝。mysql_processlist：锁表、备份导致探针超时。
+
+  3 基础设施 docker_ops:
+  数据库容器或主机：docker_logs。
+
+  4 nacos_config:
+  应用数据源 host 是否变更；只读。
+
+  5 日志 elasticsearch_ops:
+  Communications link failure 大面积出现时间。
+
+  6 FINAL:
+  主从切换、宕机、网络、误告警；RTO 与升级路径。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "up"

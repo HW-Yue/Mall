@@ -2,7 +2,7 @@
 #
 # 把当前目录下所有 *-rules.json 批量发布到 Nacos（Group = SENTINEL_GROUP）
 # 用法：
-#   NACOS_ADDR=127.0.0.1:8848 ./init-nacos-rules.sh
+#   NACOS_ADDR=100.86.250.112:8848 ./init-nacos-rules.sh
 # 可选：
 #   NAMESPACE=public NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-rules.sh
 #
@@ -11,7 +11,7 @@
 # 本地 compose 已设 NACOS_AUTH_ADMIN_ENABLE=false；生产开启 Admin 鉴权时请：NACOS_USER=nacos NACOS_PASS=*** ./init-nacos-rules.sh
 set -euo pipefail
 
-NACOS_ADDR="${NACOS_ADDR:-127.0.0.1:8848}"
+NACOS_ADDR="${NACOS_ADDR:-100.86.250.112:8848}"
 NAMESPACE="${NAMESPACE:-public}"
 GROUP="${GROUP:-SENTINEL_GROUP}"
 NACOS_USER="${NACOS_USER:-}"

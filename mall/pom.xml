@@ -205,6 +205,11 @@
                 <artifactId>mall-trigger</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
+            <dependency>
+                <groupId>com.yue</groupId>
+                <artifactId>order-service-api</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
             <!-- DynamicTp（Spring Boot 3.x 使用 1.1.9.1-3.x 系列） -->
             <dependency>
                 <groupId>org.dromara.dynamictp</groupId>

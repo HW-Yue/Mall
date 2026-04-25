@@ -51,7 +51,7 @@ public class AliPayController implements IPayService {
     private AlipayClient alipayClient;
 
     /**
-     * http://localhost:8080/api/v1/alipay/create_pay_order
+     * http://100.86.250.112:8080/api/v1/alipay/create_pay_order
      * <p>
      * {
      * "userId": "10001",

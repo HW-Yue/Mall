@@ -64,6 +64,21 @@
     return window.AppUtils.getCurrentUserId();
   }
 
+  /** 确认支付页 URL，可带 payAmount 供展示（与 payment.js 读取一致） */
+  function buildPaymentPageUrl(orderId, userId, payAmount) {
+    var base =
+      "payment.html?orderId=" +
+      encodeURIComponent(orderId) +
+      "&userId=" +
+      encodeURIComponent(userId);
+    if (payAmount != null && payAmount !== "" && !isNaN(Number(payAmount))) {
+      base +=
+        "&payAmount=" +
+        encodeURIComponent(Number(payAmount).toFixed(2));
+    }
+    return base;
+  }
+
   function fetchCategories() {
     const url = apiMarket(P.mallIndex.queryCategoryTypeList);
     return fetch(url)
@@ -567,9 +582,20 @@
           const seckillToken = json.data.seckillToken;
           if (seckillToken) {
             window.localStorage.setItem("lastSeckillToken", seckillToken);
-            window.location.href =
-              "seckill-wait.html?seckillToken=" + encodeURIComponent(seckillToken) +
-              "&userId=" + encodeURIComponent(userId);
+            var est =
+              currentSeckillItem.payPrice != null
+                ? currentSeckillItem.payPrice
+                : currentSeckillItem.originalPrice;
+            var waitUrl =
+              "seckill-wait.html?seckillToken=" +
+              encodeURIComponent(seckillToken) +
+              "&userId=" +
+              encodeURIComponent(userId);
+            if (est != null && !isNaN(Number(est))) {
+              waitUrl +=
+                "&payAmount=" + encodeURIComponent(Number(est).toFixed(2));
+            }
+            window.location.href = waitUrl;
             return;
           }
           alert("秒杀请求已受理，但未返回 token");
@@ -737,11 +763,10 @@
         goodsImageUrl: selectedGoods.imageUrl || "",
       };
     } else {
-      url = window.AppApi.order(P.order.createOrder);
+      url = window.AppApi.market(P.mallTrade.createNormalOrder);
       body = {
         userId: userId,
         productId: String(selectedGoods.id),
-        marketType: "normal",
         originalPrice: selectedGoods.price || 0,
         deductionPrice: 0,
         payPrice: selectedGoods.price || 0,
@@ -766,17 +791,33 @@
             const seckillToken = json.data.seckillToken;
             if (seckillToken) {
               window.localStorage.setItem("lastSeckillToken", seckillToken);
-              window.location.href =
-                "seckill-wait.html?seckillToken=" + encodeURIComponent(seckillToken) +
-                "&userId=" + encodeURIComponent(userId);
+              var est2 =
+                selectedGoods.payPrice != null
+                  ? selectedGoods.payPrice
+                  : selectedGoods.originalPrice;
+              var waitUrl2 =
+                "seckill-wait.html?seckillToken=" +
+                encodeURIComponent(seckillToken) +
+                "&userId=" +
+                encodeURIComponent(userId);
+              if (est2 != null && !isNaN(Number(est2))) {
+                waitUrl2 +=
+                  "&payAmount=" +
+                  encodeURIComponent(Number(est2).toFixed(2));
+              }
+              window.location.href = waitUrl2;
               return;
             }
             alert("秒杀请求已受理，但未返回 token");
           } else {
             const orderId = json.data.orderId;
-            window.location.href =
-              "payment.html?orderId=" + encodeURIComponent(orderId) +
-              "&userId=" + encodeURIComponent(userId);
+            window.location.href = buildPaymentPageUrl(
+              orderId,
+              userId,
+              selectedGoods.price != null
+                ? selectedGoods.price
+                : body.payPrice
+            );
           }
         } else {
           console.error("创建支付订单失败：", json.info);
@@ -836,9 +877,10 @@
       .then((json) => {
         if (json.code === "0000" && json.data) {
           const orderId = json.data.orderId;
-          window.location.href =
-            "payment.html?orderId=" + encodeURIComponent(orderId) +
-            "&userId=" + encodeURIComponent(userId);
+          const g = (currentGroupBuyConfig && currentGroupBuyConfig.goods) || {};
+          const payAmt =
+            g.payPrice != null ? g.payPrice : g.originalPrice != null ? g.originalPrice : null;
+          window.location.href = buildPaymentPageUrl(orderId, userId, payAmt);
         } else {
           console.error("拼团创建支付订单失败：", json.info);
           alert("拼团下单失败：" + (json.info || "请稍后重试"));

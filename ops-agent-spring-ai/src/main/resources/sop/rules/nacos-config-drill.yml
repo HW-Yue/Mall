@@ -1,0 +1,31 @@
+# 演练用告警名 NacosConfigDrill
+match-alertname: NacosConfigDrill
+sop-markdown: |
+  Nacos 配置排查 演练 Drill:
+
+  适用：配置疑似错误、注册发现异常、与 Sentinel、DynamicTP、数据源相关的 dataId 只读核查。
+
+  1 服务发现 nacos_config:
+  nacos_list_instances：${application} 的健康实例、IP、端口、metadata；与 Prometheus instance、实际容器对照。
+  nacos_list_services：应用名不确定时分页看服务名。
+
+  2 配置只读:
+  nacos_get_config：按 dataId、group（默认 DEFAULT_GROUP）拉 bootstrap、application、Sentinel、DynamicTP、数据源、Redis、MQ 等。对比告警前后配置版本与发布时间（人工记录，Agent 不做审计）。
+
+  3 交叉:
+  metrics_ops：与配置变更时间对齐的错误率、RT、池指标。
+  elasticsearch_ops：配置刷新失败、Nacos 连接报错。
+
+  4 写操作:
+  nacos_publish_config 高危，需人工审批；未审批禁止自动发布。
+
+  5 FINAL:
+  读出哪些关键配置、与故障的因果关系、建议人工改哪些项（不写死具体值）。
+
+steps:
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      演练 NacosConfigDrill，应用 ${application}。
+      依次 nacos_list_instances；再合理推断并 nacos_get_config 常见 dataId；缺 dataId 或 group 时在 FINAL 写明。
+    context: {}

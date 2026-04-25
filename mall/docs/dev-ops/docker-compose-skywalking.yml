@@ -1,0 +1,101 @@
+# SkyWalking OAP + UI（自带独立 Elasticsearch 7.17 存储，与 ELK 栈互不干扰）
+#
+# 前置：先起基础网络
+#   docker compose -f docker-compose-environment.yml up -d
+# 再起本文件：
+#   docker compose -f docker-compose-skywalking.yml up -d
+#
+# 访问：
+#   - UI：http://127.0.0.1:9988（远程时用 Docker 宿主机 IP；避免与 Nacos 8080 冲突）
+#   - Agent 上报 gRPC：oap:11800（容器内；宿主机联调依赖下方 11800 映射）
+#   - SkyWalking 存储 ES HTTP：宿主机 http://127.0.0.1:19200（与 docker-compose-elk 的 9200 错开；查 sw_* 用 SkyWalking UI 或直连 ES REST，不维护第二套 Kibana）
+#
+# Java Agent（本仓库 OAP 镜像 10.4.0；Agent / apm-toolkit 见 Dependencies 中 skywalking.version，按官方兼容说明使用）：
+#   https://skywalking.apache.org/downloads/
+#   例：apache-skywalking-java-agent-9.6.0.tgz
+#   解压后示例：-javaagent:/path/to/skywalking-agent/skywalking-agent.jar
+#   -Dskywalking.collector.backend_service=127.0.0.1:11800
+#   -Dskywalking.agent.service_name=your-service-name
+#   应用在宿主机、OAP 在 Docker：backend_service 填能访问到映射端口 11800 的地址（常为 127.0.0.1:11800）
+#
+# 参考：https://skywalking.apache.org/docs/main/latest/en/setup/backend/backend-docker/
+
+name: nexus-skywalking
+
+services:
+  elasticsearch-skywalking:
+    image: elasticsearch:7.17.28
+    container_name: elasticsearch-skywalking
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    networks:
+      - my-network
+    volumes:
+      - es-skywalking-data:/usr/share/elasticsearch/data
+    ports:
+      - "19200:9200"
+    healthcheck:
+      # 在 ES 容器内探测本实例；宿主机访问用上方 19200
+      test: [ "CMD-SHELL", "curl --silent --fail http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+      start_period: 60s
+
+  skywalking-oap:
+    image: apache/skywalking-oap-server:10.4.0
+    container_name: skywalking-oap
+    restart: always
+    depends_on:
+      elasticsearch-skywalking:
+        condition: service_healthy
+    environment:
+      SW_STORAGE: elasticsearch
+      SW_STORAGE_ES_CLUSTER_NODES: elasticsearch-skywalking:9200
+      SW_STORAGE_ES_HTTP_PROTOCOL: http
+      SW_HEALTH_CHECKER: default
+      # 开发环境可酌情调小；默认镜像内 JVM 可能较大
+      JAVA_OPTS: "-Xms512m -Xmx512m"
+    networks:
+      - my-network
+    ports:
+      # Agent（宿主机上跑的 Spring Boot）上报用；纯容器内互通可不映射
+      - "11800:11800"
+      - "12800:12800"
+    healthcheck:
+      # 10.4.x 镜像内无 curl/wget；用 bash /dev/tcp 发 GET /healthcheck（就绪首行为 HTTP/1.1 200）
+      test:
+        [
+          "CMD-SHELL",
+          "bash -c \"exec 3<>/dev/tcp/127.0.0.1/12800 && printf 'GET /healthcheck HTTP/1.1\\r\\nHost:localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 200\" || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+      start_period: 120s
+
+  skywalking-ui:
+    image: apache/skywalking-ui:10.4.0
+    container_name: skywalking-ui
+    restart: always
+    depends_on:
+      skywalking-oap:
+        condition: service_healthy
+    environment:
+      SW_OAP_ADDRESS: http://skywalking-oap:12800
+    networks:
+      - my-network
+    ports:
+      # 与 docker-compose-environment 中 nacos 的 8080 错开
+      - "9988:8080"
+
+volumes:
+  es-skywalking-data:
+
+networks:
+  my-network:
+    name: nexus-devops
+    external: true

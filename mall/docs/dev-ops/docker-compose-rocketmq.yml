@@ -55,7 +55,7 @@ services:
     container_name: rmq-dashboard
     restart: unless-stopped
     ports:
-      # 与 Dashboard 内置 CORS 允许的 http://localhost:3003 一致，否则 POST 易 403
+      # 与 Dashboard 内置 CORS 允许的 http://127.0.0.1:3003 一致，否则 POST 易 403
       - "3003:8080"
     environment:
       TZ: Asia/Shanghai

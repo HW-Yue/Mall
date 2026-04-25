@@ -1,0 +1,24 @@
+# category: mysql
+match-alertname: MySqlInnodbRowLockWaitHigh
+match-category: mysql
+sop-markdown: |
+  MySqlInnodbRowLockWaitHigh 行锁等待高:
+
+  1 mysql_inspect:
+  mysql_processlist：Waiting for lock、Locked；记阻塞者会话。
+  mysql_locks：metadata 与行锁相关视图。
+  mysql_status：Innodb_row_lock 相关，pattern Innodb_row%。
+
+  2 日志 elasticsearch_ops:
+  长事务、批处理、未提交事务。
+
+  3 指标 metrics_ops:
+  与锁等待时间线对齐的发布、批任务。
+
+  4 FINAL:
+  阻塞 SQL 对、是否可 kill（需 DBA）、应用重试风暴风险。
+
+steps:
+  - skill: mysql_inspect
+    tool: mysql_locks
+    args: {}

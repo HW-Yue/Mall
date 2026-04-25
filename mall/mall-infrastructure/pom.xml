@@ -58,6 +58,10 @@
             <groupId>com.yue</groupId>
             <artifactId>mall-domain</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.yue</groupId>
+            <artifactId>order-service-api</artifactId>
+        </dependency>
 
     </dependencies>
 

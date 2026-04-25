@@ -14,13 +14,13 @@ import jakarta.annotation.Resource;
 
 @Slf4j
 @Service
-public class UserTakeLimitRuleFilter implements ILogicHandler<TradeLockRuleCommandEntity, TradeLockRuleFilterFactory.DynamicContext, TradeLockRuleFilterBackEntity> {
+public class UserTakeLimitRuleFilter implements ILogicHandler<TradeLockRuleCommandEntity, TradeLockRuleFilterFactory.TradeLockLinkContext, TradeLockRuleFilterBackEntity> {
 
     @Resource
     private ITradeRepository repository;
 
     @Override
-    public TradeLockRuleFilterBackEntity apply(TradeLockRuleCommandEntity requestParameter, TradeLockRuleFilterFactory.DynamicContext dynamicContext) throws Exception {
+    public TradeLockRuleFilterBackEntity apply(TradeLockRuleCommandEntity requestParameter, TradeLockRuleFilterFactory.TradeLockLinkContext dynamicContext) throws Exception {
         log.info("交易规则过滤-用户参与次数限制校验 userId:{} activityId:{}", requestParameter.getUserId(), requestParameter.getActivityId());
 
         Integer userTakeOrderCount = repository.queryOrderCountByGoodsId(requestParameter.getGoodsId(), requestParameter.getUserId());

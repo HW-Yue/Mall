@@ -16,6 +16,11 @@ public interface IOrderRepository {
      */
     String saveOrder(OrderEntity orderEntity);
 
+    /**
+     * 仅插入订单行（普通商品，mall 侧已完成库存锁定）
+     */
+    String insertOrderWithoutMallLock(OrderEntity orderEntity);
+
     /** 按用户ID + 订单ID 查询 */
     OrderEntity queryByUserIdAndOrderId(String userId, String orderId);
 

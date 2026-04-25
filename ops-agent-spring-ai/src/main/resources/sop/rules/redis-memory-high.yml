@@ -1,0 +1,24 @@
+# category: redis
+match-alertname: RedisMemoryHigh
+match-category: redis
+sop-markdown: |
+  RedisMemoryHigh 内存高:
+
+  1 redis_inspect:
+  redis_memory：used_memory、maxmemory、淘汰策略；是否顶满 maxmemory。
+  redis_info：memory、stats、persistence。
+  redis_get：大 key 用 scanPattern、scanCount 受控采样，勿全量 KEYS。
+
+  2 指标 metrics_ops:
+  business_metrics：redis_exporter 内存与告警时间对齐。
+
+  3 日志 elasticsearch_ops:
+  缓存滥用、序列化过大、未设 TTL 导致写入暴涨。
+
+  4 FINAL:
+  大 key、热 key、无过期哪类为主；扩容、清理、改策略；大 key 处理选低峰。
+
+steps:
+  - skill: redis_inspect
+    tool: redis_memory
+    args: {}

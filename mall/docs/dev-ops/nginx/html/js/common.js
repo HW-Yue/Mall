@@ -1,11 +1,12 @@
 // 公共配置和工具函数。接口路径见 js/api-config.js；引入顺序：common.js → api-config.js → 业务脚本。
+// 与 springcloud-gateway 同端口时，各路径见 api-config.js。普通品走 mall create_normal_order 需本机 RocketMQ（order-service 消费 normal-order-create）；秒杀需 seckill-order-create 消费。
 const AppConfig = {
-    groupBuyMarketUrl: "http://localhost:8090",
-    payApiBase: "http://localhost:8090",
-    loginApiUrl: "http://localhost:8090",
-    orderServiceUrl: "http://localhost:8090",
-    groupBuyServiceUrl: "http://localhost:8090",
-    seckillServiceUrl: "http://localhost:8090",
+    groupBuyMarketUrl: "http://100.86.250.112:8090",
+    payApiBase: "http://100.86.250.112:8090",
+    loginApiUrl: "http://100.86.250.112:8090",
+    orderServiceUrl: "http://100.86.250.112:8090",
+    groupBuyServiceUrl: "http://100.86.250.112:8090",
+    seckillServiceUrl: "http://100.86.250.112:8090",
 };
 
 // 工具函数

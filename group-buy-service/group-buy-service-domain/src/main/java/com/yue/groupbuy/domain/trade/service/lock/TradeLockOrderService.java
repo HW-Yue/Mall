@@ -19,7 +19,7 @@ public class TradeLockOrderService implements ITradeLockOrderService {
     @Resource
     private ITradeRepository repository;
     @Resource
-    private BusinessLinkedList<TradeLockRuleCommandEntity, TradeLockRuleFilterFactory.DynamicContext, TradeLockRuleFilterBackEntity> tradeRuleFilter;
+    private BusinessLinkedList<TradeLockRuleCommandEntity, TradeLockRuleFilterFactory.TradeLockLinkContext, TradeLockRuleFilterBackEntity> tradeRuleFilter;
 
     @Override
     public MarketPayOrderEntity queryNoPayMarketPayOrderByOutTradeNo(String userId, String outTradeNo) {
@@ -44,7 +44,7 @@ public class TradeLockOrderService implements ITradeLockOrderService {
                         .userId(userEntity.getUserId())
                         .teamId(payActivityEntity.getTeamId())
                         .build(),
-                new TradeLockRuleFilterFactory.DynamicContext());
+                new TradeLockRuleFilterFactory.TradeLockLinkContext());
 
         Integer userTakeOrderCount = back.getUserTakeOrderCount();
 

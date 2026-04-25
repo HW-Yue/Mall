@@ -1,0 +1,28 @@
+# category: sentinel
+match-alertname: SentinelBlockRateHigh
+match-category: sentinel
+sop-markdown: |
+  SentinelBlockRateHigh 限流熔断触发比例高:
+
+  1 指标 metrics_ops:
+  sentinel_metrics：block QPS、pass QPS、RT、异常比例；对应 resource 与 app。
+
+  2 意图:
+  预期内限流（大促）则看容量与降级预案。非预期则查突增流量、爬虫、下游拖慢导致线程耗尽触发熔断。
+
+  3 日志 elasticsearch_ops:
+  es_search：BlockException、429，对齐 resource。
+
+  4 依赖与实例:
+  mysql_inspect、redis_inspect。nacos_list_instances 看实例是否过少。
+
+  5 配置 nacos_config:
+  Sentinel 规则只读；调阈值需审批。
+
+  6 FINAL:
+  误杀还是保护生效；调阈值、扩容、修下游的优先级。
+
+steps:
+  - skill: metrics_ops
+    tool: sentinel_metrics
+    args: {}

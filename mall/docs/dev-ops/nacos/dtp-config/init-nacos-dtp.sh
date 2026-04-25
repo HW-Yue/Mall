@@ -10,7 +10,7 @@
 #   *-runtime-dev.yml       — 拼团等：DynamicTp + Agent 等合并配置（见 group-buy-service）
 #
 # 用法：
-#   NACOS_ADDR=127.0.0.1:8848 ./init-nacos-dtp.sh
+#   NACOS_ADDR=100.86.250.112:8848 ./init-nacos-dtp.sh
 # 可选：
 #   NAMESPACE=public NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-dtp.sh
 #
@@ -18,7 +18,7 @@
 # 配置发布使用 Admin API：POST /nacos/v3/admin/cs/config（勿再用已废弃的 /v1/cs/configs，否则 404）。
 set -euo pipefail
 
-NACOS_ADDR="${NACOS_ADDR:-127.0.0.1:8848}"
+NACOS_ADDR="${NACOS_ADDR:-100.86.250.112:8848}"
 NAMESPACE="${NAMESPACE:-public}"
 GROUP="${GROUP:-DEFAULT_GROUP}"
 NACOS_USER="${NACOS_USER:-}"

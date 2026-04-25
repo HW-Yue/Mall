@@ -1,0 +1,25 @@
+# category: system
+match-alertname: JvmGcPauseHigh
+match-category: system
+sop-markdown: |
+  JvmGcPauseHigh GC 停顿高:
+
+  1 指标 metrics_ops:
+  jvm_metrics：GC 暂停时间、分配速率、老年代增长；对比 business_metrics 的 QPS。判断 Full GC 频繁还是 Young GC 过长。
+
+  2 线程池 metrics_ops:
+  dynamictp_metrics：队列与活跃线程突增会间接推高分配与 GC 压力。
+
+  3 容器 docker_ops:
+  docker_stats：CPU throttle、内存压力会放大 STW 感知。
+
+  4 日志 elasticsearch_ops:
+  es_search：Pause、GC、safepoint，可对齐 trace 看尾延迟。
+
+  5 FINAL:
+  归纳堆过大过小、元空间、池大小、突发流量中主因；调参方向（具体值需环境评审）。
+
+steps:
+  - skill: metrics_ops
+    tool: jvm_metrics
+    args: {}

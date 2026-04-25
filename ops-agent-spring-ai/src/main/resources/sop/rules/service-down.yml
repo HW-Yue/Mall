@@ -1,0 +1,33 @@
+# category: system
+match-alertname: ServiceDown
+match-category: system
+sop-markdown: |
+  ServiceDown 服务不可用:
+
+  含义：Prometheus 对目标 up==0 或探测失败。常见原因：实例宕机、网络隔离、端口未监听、容器退出。
+
+  1 影响面 metrics_ops:
+  用 business_metrics 或 jvm_metrics 看 up、jvm_memory_used_bytes 等，对照 labels 里 instance、job、application（${application}）是单点挂还是整组 job 不可用。若整组 job 全挂，优先查抓取配置、网络、K8s 命名空间。
+
+  2 注册与路由 nacos_config:
+  nacos_list_instances：查 ${application} 在 Nacos 的健康实例与 IP。若 Nacos 有实例但 Prometheus up==0，常见是 IP 端口不一致（双网卡、容器 IP 漂移、注册 metadata 错）。
+  nacos_get_config：只读拉 bootstrap、端口、管理端点相关 dataId，看是否近期发布改端口。
+
+  3 容器 docker_ops:
+  若知道容器名或可从 ${instance} 推断：docker_inspect、docker_stats、docker_logs（tail 加大）看 OOMKilled、重启、健康检查失败。
+
+  4 日志 elasticsearch_ops:
+  es_indices 确认日志索引名。es_search 按 application、pod、host 或 traceId 对齐告警 startsAt 看错误爆发。可搜 5xx、连接拒绝。
+
+  5 输出 FINAL:
+  写清根因类别（进程、网络、配置、依赖、假死）、证据（指标或日志摘要）、建议动作（重启、扩容、回滚、修注册）。信息不足时写明缺哪些标签（如 pod、container_id）。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "up"
+  - skill: nacos_config
+    tool: nacos_list_instances
+    args:
+      serviceName: "${application}"

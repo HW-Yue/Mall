@@ -20,7 +20,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://127.0.0.1:13306/group_buy_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    url: jdbc:mysql://100.86.250.112:13306/group_buy_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
     username: root
     password: 123456
     hikari:
@@ -34,7 +34,7 @@ spring:
   # Redis：group-buy 当前业务未直接用 Redis，这里仅做 starter 预接入（方便后续迁入 Redisson/RedisTemplate）
   data:
     redis:
-      host: localhost
+      host: 100.86.250.112
       port: 16379
       database: 0
       timeout: 3000ms
@@ -43,7 +43,7 @@ spring:
     redisson:
       config: |
         singleServerConfig:
-          address: "redis://localhost:16379"
+          address: "redis://100.86.250.112:16379"
           database: 0
           clientName: groupbuy-redisson
           connectionPoolSize: 10
@@ -58,8 +58,8 @@ spring:
   cloud:
     nacos:
       discovery:
-        ip: 127.0.0.1
-        server-addr: 127.0.0.1:8848
+        ip: 100.86.250.112
+        server-addr: 100.86.250.112:8848
       config:
         server-addr: ${spring.cloud.nacos.discovery.server-addr}
         import-check:
@@ -68,7 +68,7 @@ spring:
     sentinel:
       eager: true
       transport:
-        dashboard: 127.0.0.1:8858
+        dashboard: 100.86.250.112:8858
         port: 8721
       datasource:
         flow:
@@ -111,7 +111,7 @@ mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
 
 rocketmq:
-  name-server: 127.0.0.1:9876
+  name-server: 100.86.250.112:9876
   producer:
     group: group-buy-service-producer
 
@@ -136,5 +136,11 @@ logging:
 # 日志上报 ELK
 logstash:
   enabled: true
-  host: 127.0.0.1
+  host: 100.86.250.112
   port: 4560
+
+# SkyWalking 本地/IDEA 联调；JVM 见 .run/ 与 dev-tools/skywalking/README.md
+yue:
+  log:
+    trace:
+      provider: skywalking

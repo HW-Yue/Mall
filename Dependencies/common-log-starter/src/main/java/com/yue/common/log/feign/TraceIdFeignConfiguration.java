@@ -1,10 +1,11 @@
 package com.yue.common.log.feign;
 
+import com.yue.common.log.conditional.OnLegacyTraceModeCondition;
 import feign.Feign;
 import feign.RequestInterceptor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -20,7 +21,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @ConditionalOnClass(Feign.class)
-@ConditionalOnProperty(prefix = "yue.log.trace", name = "enabled", havingValue = "true", matchIfMissing = true)
+@Conditional(OnLegacyTraceModeCondition.class)
 public class TraceIdFeignConfiguration {
 
     /**

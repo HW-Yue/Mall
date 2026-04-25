@@ -4,6 +4,7 @@
     var params = new URLSearchParams(window.location.search);
     var orderId = params.get("orderId") || "";
     var userId = params.get("userId") || (window.AppUtils && window.AppUtils.getCurrentUserId()) || "";
+    var payAmountParam = params.get("payAmount") || "";
 
     document.addEventListener("DOMContentLoaded", function () {
         if (!orderId) {
@@ -12,8 +13,12 @@
             return;
         }
         document.getElementById("orderIdDisplay").textContent = orderId;
-        // amount is unknown at this stage; order-service will confirm when fetching payUrl
-        document.getElementById("amountDisplay").textContent = "待确认";
+        var amtEl = document.getElementById("amountDisplay");
+        if (payAmountParam && !isNaN(Number(payAmountParam))) {
+            amtEl.textContent = "￥" + Number(payAmountParam).toFixed(2);
+        } else {
+            amtEl.textContent = "待确认";
+        }
     });
 
     window.doPayment = function () {

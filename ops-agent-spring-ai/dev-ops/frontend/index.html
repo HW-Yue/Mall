@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Ops Spring AI</title>
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+    <header class="shell-header">
+        <div class="brand">
+            <div class="brand-mark">AI</div>
+            <div>
+                <h1>Nexus Ops Spring AI</h1>
+                <p>Rule Tree · ReAct · Approval Trace</p>
+            </div>
+        </div>
+        <div class="connection" id="api-chip">
+            <span class="status-dot"></span>
+            <span id="api-text">连接中</span>
+        </div>
+    </header>
+
+    <main class="ops-layout">
+        <section class="approvals-panel panel">
+            <div class="panel-head compact">
+                <div>
+                    <h2>审批队列 <span class="approval-count" id="approval-count">0</span></h2>
+                    <p>Nacos 发布等受控操作会在这里等待确认。</p>
+                </div>
+                <button type="button" class="btn secondary" id="approval-refresh">刷新</button>
+            </div>
+            <div class="approval-list" id="approval-list"></div>
+        </section>
+
+        <section class="run-panel panel">
+            <div class="panel-head">
+                <div>
+                    <h2>运行工作台</h2>
+                    <p>标准告警先硬匹配 SOP，纯文本直接进入 AI SOP 选择。</p>
+                </div>
+                <div class="segmented" role="group" aria-label="请求类型">
+                    <button type="button" class="segment active" data-route-mode="alert">Alert JSON</button>
+                    <button type="button" class="segment" data-route-mode="text">Plain Text</button>
+                </div>
+            </div>
+
+            <div class="prompt-row">
+                <button type="button" data-run-example="http5xx">标准 5xx 告警</button>
+                <button type="button" data-run-example="nacos">Nacos 发布演练</button>
+                <button type="button" data-run-example="plain">纯文本报错</button>
+            </div>
+
+            <form class="route-form" id="route-form">
+                <textarea id="route-input" rows="10" spellcheck="false"></textarea>
+                <div class="route-actions">
+                <div class="run-id" id="run-id">未运行</div>
+                    <div class="run-buttons">
+                        <button type="button" class="btn secondary danger" id="run-cancel" disabled>暂停执行</button>
+                        <button type="submit" class="btn primary" id="run-submit">发起运行</button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="timeline-head">
+                <div>
+                    <h3>运行时间线</h3>
+                    <p id="run-status">等待提交。</p>
+                </div>
+                <button type="button" class="btn secondary" id="run-refresh" disabled>刷新状态</button>
+            </div>
+            <div class="timeline" id="timeline" aria-live="polite"></div>
+        </section>
+
+        <aside class="tools-panel panel">
+            <div class="panel-head compact">
+                <div>
+                    <h2>工具调用</h2>
+                    <p>直接执行后端 `/tools/execute`，写操作进入审批。</p>
+                </div>
+            </div>
+
+            <form class="tool-form" id="tool-form">
+                <label>
+                    <span>Skill</span>
+                    <select id="skill-select"></select>
+                </label>
+                <label>
+                    <span>Tool</span>
+                    <select id="tool-select"></select>
+                </label>
+                <label>
+                    <span>参数 JSON</span>
+                    <textarea id="tool-args" rows="9" spellcheck="false"></textarea>
+                </label>
+                <div class="tool-actions">
+                    <button type="button" class="btn secondary" id="tool-reset">填入示例</button>
+                    <button type="submit" class="btn primary" id="tool-run">执行工具</button>
+                </div>
+            </form>
+
+            <div class="result-box">
+                <div class="result-title">执行结果</div>
+                <pre id="tool-result">等待调用。</pre>
+            </div>
+        </aside>
+    </main>
+
+    <div id="toast" class="toast" role="status"></div>
+
+    <script src="config.js"></script>
+    <script src="js/run-workbench.js"></script>
+    <script src="js/tools.js"></script>
+    <script src="js/inbox.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

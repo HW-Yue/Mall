@@ -1,0 +1,34 @@
+# category: sentinel
+match-alertname: SentinelRtHigh
+match-category: sentinel
+sop-markdown: |
+  SentinelRtHigh RT 升高:
+
+  说明：labels.category=sentinel。resource 为 URI 字符串，无 Method 前缀。
+
+  1 指标 metrics_ops:
+  sentinel_metrics：对告警中的 resource、app 看 RT、QPS、异常数，与历史对比是陡增还是缓升。
+  business_metrics：下游 RT（DB、Redis、HTTP 出站）是否同步变差。
+
+  2 日志 elasticsearch_ops:
+  es_search：按 resource 路径、traceId 查慢调用、超时、连接池等待。
+
+  3 依赖:
+  mysql_inspect：mysql_processlist、mysql_slow_query。
+  redis_inspect：redis_slowlog、redis_client_list。
+  rocketmq_inspect：若含 MQ 查消费延迟。
+
+  4 配置 nacos_config:
+  nacos_get_config：Sentinel 规则 dataId 只读，阈值熔断是否过紧；变更需审批。
+  nacos_list_instances：实例数是否下降导致单机流量放大。
+
+  5 容器 docker_ops:
+  CPU throttle、网络问题可致 RT 高：docker_stats、docker_logs。
+
+  6 FINAL:
+  区分容量、下游慢、代码回归、限流误伤；给出优先验证的一条证据链。
+
+steps:
+  - skill: metrics_ops
+    tool: sentinel_metrics
+    args: {}

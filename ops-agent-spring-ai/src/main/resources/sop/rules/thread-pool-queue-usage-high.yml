@@ -1,0 +1,26 @@
+# category: dynamictp
+match-alertname: ThreadPoolQueueUsageHigh
+match-category: dynamictp
+sop-markdown: |
+  ThreadPoolQueueUsageHigh 线程池队列占用高:
+
+  1 指标 metrics_ops:
+  dynamictp_metrics：队列长度、活跃线程、完成数、拒绝数；对比发布时间。
+  jvm_metrics：CPU、堆；队列高有时是下游慢导致任务完成慢。
+
+  2 下游:
+  任务若偏 IO：mysql_inspect、redis_inspect、elasticsearch_ops 查慢点。
+
+  3 配置 nacos_config:
+  nacos_get_config：DynamicTP 的 core、max、队列容量、拒绝策略；只读，变更需审批。
+
+  4 日志 elasticsearch_ops:
+  RejectedExecution、pool is full、业务队列告警。
+
+  5 FINAL:
+  扩容线程池、优化任务、降级；写清证据与变更风险。
+
+steps:
+  - skill: metrics_ops
+    tool: dynamictp_metrics
+    args: {}

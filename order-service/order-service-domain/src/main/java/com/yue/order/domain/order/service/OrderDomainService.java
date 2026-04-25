@@ -1,8 +1,11 @@
 package com.yue.order.domain.order.service;
 
+import com.alibaba.fastjson.JSON;
+import com.yue.order.domain.order.adapter.port.INormalOrderPendingPublisher;
 import com.yue.order.domain.order.adapter.port.IPayPort;
 import com.yue.order.domain.order.adapter.repository.IOrderRepository;
 import com.yue.order.domain.order.model.entity.CreateOrderCommand;
+import com.yue.order.domain.order.model.entity.NormalOrderEnqueueResult;
 import com.yue.order.domain.order.model.entity.OrderEntity;
 import com.yue.order.domain.order.model.valobj.MarketTypeVO;
 import com.yue.order.domain.order.model.valobj.OrderStatusVO;
@@ -11,12 +14,15 @@ import com.yue.order.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -36,8 +42,26 @@ public class OrderDomainService implements IOrderDomainService {
     @Resource
     private IOrderRefundPublisher refundPublisher;
 
+    @Resource
+    private INormalOrderPendingPublisher normalOrderPendingPublisher;
+
+    @Value("${app.order.allow-direct-normal-create-order:true}")
+    private boolean allowDirectNormalCreateOrder;
+
+    @Value("${app.order.get-pay-url-pending-retries:6}")
+    private int getPayUrlPendingRetries;
+
+    @Value("${app.order.get-pay-url-pending-wait-ms:50}")
+    private long getPayUrlPendingWaitMs;
+
     @Override
     public String createOrder(CreateOrderCommand command) {
+        if (!allowDirectNormalCreateOrder
+                && "normal".equalsIgnoreCase(StringUtils.trimToEmpty(command.getMarketType()))) {
+            throw new AppException(
+                    ResponseCode.ILLEGAL_PARAMETER.getCode(),
+                    "普通商品请走商城 create_normal_order 接口，直连 create_order 已关闭");
+        }
         // 生成外部交易单号（若未提供）
         String outTradeNo = StringUtils.isNotBlank(command.getOutTradeNo())
                 ? command.getOutTradeNo().trim()
@@ -68,8 +92,56 @@ public class OrderDomainService implements IOrderDomainService {
     }
 
     @Override
+    public NormalOrderEnqueueResult submitNormalOrderFromMall(CreateOrderCommand command) {
+        if (!"normal".equalsIgnoreCase(StringUtils.trimToEmpty(command.getMarketType()))) {
+            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "仅支持 marketType=normal");
+        }
+        if (StringUtils.isAnyBlank(command.getUserId(), command.getGoodsId()) || command.getPayPrice() == null) {
+            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "userId、goodsId、payPrice 不能为空");
+        }
+        String outTradeNo = StringUtils.isNotBlank(command.getOutTradeNo())
+                ? command.getOutTradeNo().trim()
+                : RandomStringUtils.randomNumeric(12);
+        command.setOutTradeNo(outTradeNo);
+        String orderId = RandomStringUtils.randomNumeric(12);
+
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("orderId", orderId);
+        msg.put("outTradeNo", outTradeNo);
+        msg.put("userId", command.getUserId());
+        msg.put("goodsId", command.getGoodsId());
+        msg.put("goodsName", command.getGoodsName());
+        msg.put("goodsImageUrl", command.getGoodsImageUrl());
+        msg.put("source", command.getSource());
+        msg.put("channel", command.getChannel());
+        msg.put("originalPrice", command.getOriginalPrice());
+        msg.put("deductionPrice", command.getDeductionPrice() != null ? command.getDeductionPrice() : BigDecimal.ZERO);
+        msg.put("payPrice", command.getPayPrice());
+        msg.put("marketType", "normal");
+        msg.put("notifyType", "MQ");
+        normalOrderPendingPublisher.publishInsertSync(JSON.toJSONString(msg));
+        log.info("submitNormalOrderFromMall 已入队 userId:{} orderId:{}", command.getUserId(), orderId);
+        return NormalOrderEnqueueResult.builder().orderId(orderId).outTradeNo(outTradeNo).build();
+    }
+
+    @Override
     public String getPayUrl(String userId, String orderId) {
-        OrderEntity order = orderRepository.queryByUserIdAndOrderId(userId, orderId);
+        OrderEntity order = null;
+        int attempts = Math.max(1, getPayUrlPendingRetries);
+        for (int i = 0; i < attempts; i++) {
+            order = orderRepository.queryByUserIdAndOrderId(userId, orderId);
+            if (order != null) {
+                break;
+            }
+            if (i < attempts - 1) {
+                try {
+                    Thread.sleep(Math.max(1, getPayUrlPendingWaitMs));
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        }
         if (order == null) {
             throw new AppException(ResponseCode.ORDER_NOT_FOUND.getCode(), "订单不存在: " + orderId);
         }

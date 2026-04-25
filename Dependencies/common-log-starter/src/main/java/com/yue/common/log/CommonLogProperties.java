@@ -11,6 +11,12 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public class CommonLogProperties {
 
     /**
+     * 追踪提供者：legacy=自研 Header/UUID+Feign 透传；skywalking=使用 SkyWalking Java Agent
+     * 的上下文，将 org.apache.skywalking.apm.toolkit.trace.TraceContext#traceId 写入 MDC，不再自造 trace-id 头与 Feign 透传。
+     */
+    private TraceProvider provider = TraceProvider.legacy;
+
+    /**
      * 是否启用全链路 TraceId
      */
     private boolean enabled = true;

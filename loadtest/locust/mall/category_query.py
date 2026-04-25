@@ -8,7 +8,7 @@ Mall 商城类目列表查询压测
 
 直接启动：
   python locust/mall/category_query.py
-  访问 http://localhost:7322
+  访问 http://100.86.250.112:7322
 """
 import os
 import subprocess

@@ -23,7 +23,7 @@ spring:
       - optional:nacos:seckill-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:13306/seckill_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    url: jdbc:mysql://100.86.250.112:13306/seckill_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
     username: root
     password: 123456
     type: com.zaxxer.hikari.HikariDataSource
@@ -39,7 +39,7 @@ spring:
   # Redisson 会接管 Spring Data Redis 的 connection factory，StringRedisTemplate / Lua 脚本自动共享一套连接池。
   data:
     redis:
-      host: localhost
+      host: 100.86.250.112
       port: 16379
       database: 0
       timeout: 3000ms
@@ -48,7 +48,7 @@ spring:
     redisson:
       config: |
         singleServerConfig:
-          address: "redis://localhost:16379"
+          address: "redis://100.86.250.112:16379"
           database: 0
           clientName: seckill-redisson
           connectionPoolSize: 1000
@@ -63,8 +63,8 @@ spring:
   cloud:
     nacos:
       discovery:
-        ip: 127.0.0.1
-        server-addr: 127.0.0.1:8848
+        ip: 100.86.250.112
+        server-addr: 100.86.250.112:8848
       config:
         server-addr: ${spring.cloud.nacos.discovery.server-addr}
         import-check:
@@ -74,7 +74,7 @@ spring:
     sentinel:
       eager: true
       transport:
-        dashboard: 127.0.0.1:8858
+        dashboard: 100.86.250.112:8858
         port: 8722
       datasource:
         flow:
@@ -117,8 +117,9 @@ mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
 
 rocketmq:
-  name-server: 127.0.0.1:9876
+  name-server: 100.86.250.112:9876
   producer:
+    # 与 order-service 消费组同一 name-server；Topic seckill-order-create 需存在，否则秒杀无法异步建单
     group: seckill-service-producer
 
 app:
@@ -141,5 +142,11 @@ logging:
 # 日志上报 ELK
 logstash:
   enabled: true
-  host: 127.0.0.1
+  host: 100.86.250.112
   port: 4560
+
+# SkyWalking 本地/IDEA 联调；JVM 见 .run/ 与 dev-tools/skywalking/README.md
+yue:
+  log:
+    trace:
+      provider: skywalking

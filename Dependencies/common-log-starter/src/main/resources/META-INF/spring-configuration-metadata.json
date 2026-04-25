@@ -41,7 +41,7 @@
       "name": "logstash.host",
       "type": "java.lang.String",
       "description": "Logstash TCP 上报主机（见 logback logstash-appender.xml）",
-      "defaultValue": "127.0.0.1"
+      "defaultValue": "100.86.250.112"
     },
     {
       "name": "logstash.port",

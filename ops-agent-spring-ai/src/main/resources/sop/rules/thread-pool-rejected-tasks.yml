@@ -1,0 +1,24 @@
+# category: dynamictp
+match-alertname: ThreadPoolRejectedTasks
+match-category: dynamictp
+sop-markdown: |
+  ThreadPoolRejectedTasks 线程池拒绝任务:
+
+  1 指标 metrics_ops:
+  dynamictp_metrics：拒绝计数、队列、活跃线程；与 ThreadPoolQueueUsageHigh 联查。
+
+  2 根因:
+  下游慢：mysql、redis、HTTP 出站。
+  池过小：nacos_get_config DynamicTP 只读。
+  突发流量：Sentinel 或网关限流是否已挡。
+
+  3 日志 elasticsearch_ops:
+  RejectedExecution、降级失败。
+
+  4 FINAL:
+  紧急：临时扩容池或限流（走变更）；根本：优化慢调用或异步化。
+
+steps:
+  - skill: metrics_ops
+    tool: dynamictp_metrics
+    args: {}

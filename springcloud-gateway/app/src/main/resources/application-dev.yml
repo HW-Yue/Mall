@@ -7,8 +7,8 @@ spring:
   cloud:
     nacos:
       discovery:
-        ip: 127.0.0.1
-        server-addr: 127.0.0.1:8848
+        ip: 100.86.250.112
+        server-addr: 100.86.250.112:8848
         locator:
           enabled: true
       config:
@@ -25,7 +25,7 @@ spring:
         # Spring Cloud Gateway 使用专用过滤器，关掉默认的 Servlet CommonFilter 以避免冲突
         enabled: false
       transport:
-        dashboard: 127.0.0.1:8858
+        dashboard: 100.86.250.112:8858
         port: 8718
       scg:
         fallback:
@@ -58,6 +58,12 @@ spring:
             allowedHeaders: "*"
             allowCredentials: false
             maxAge: 3600
+      # 与静态页 AppConfig 基址（如 http://100.86.250.112:8090）+ js/api-config.js 路径一致：
+      #   /gw/api/v1/ops-ai/** -> ops-agent-spring-ai（Nacos 服务名 ops-agent-spring-ai）
+      #   /gw/api/v1/mall/**   -> mall：create_normal_order、index、trade
+      #   /gw/api/v1/order/**  -> order-service：create_order、get_pay_url、query_seckill_order
+      #   /gw/api/v1/group-buy/**、/gw/api/v1/seckill/** -> 各营销服务
+      # StripPrefix=1 去掉首段 gw，下游收到 /api/v1/...
       routes:
         - id: 1
           uri: lb://mall
@@ -77,6 +83,13 @@ spring:
           order: 1
           predicates:
             - Path=/gw/api/v1/login-pay/**
+          filters:
+            - StripPrefix=1
+        - id: login-pay-alipay
+          uri: lb://login-pay
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/alipay/**
           filters:
             - StripPrefix=1
         - id: order-service
@@ -100,6 +113,30 @@ spring:
             - Path=/gw/api/v1/seckill/**
           filters:
             - StripPrefix=1
+        # ops-agent-spring-ai：StripPrefix 去掉 gw 后 RewritePath 将 /api/v1/ops-ai/... 转为下游 /api/v1/...
+        # 须用 name/args 形式，避免简写 RewritePath=...,... 在部分环境下未生效导致下游仍为 /api/v1/ops-ai/** → 404
+        - id: ops-agent-spring-ai
+          uri: lb://ops-agent-spring-ai
+          order: 1
+          metadata:
+            # ops-agent-spring-ai 包含 SSE 长连接（审批队列、运行时间线）。
+            # 全局 response-timeout=60s 适合普通 HTTP，但会让 SSE 在响应过程中被网关关闭。
+            # Spring Cloud Gateway 路由级负值表示禁用该路由的响应超时。
+            response-timeout: -1
+          predicates:
+            - Path=/gw/api/v1/ops-ai/**
+          filters:
+            - StripPrefix=1
+            - name: RewritePath
+              args:
+                # 用 $1 避免双引号里 $\{segment} 触发 SnakeYAML 非法转义；$1 也不会被 Spring 当成 ${...} 占位符
+                regexp: /api/v1/ops-ai/(.*)
+                replacement: /api/v1/$1
+            - name: DedupeResponseHeader
+              args:
+                # Gateway 和 ops-agent-spring-ai 都会写 CORS 响应头；浏览器不接受重复的 ACAO。
+                name: Access-Control-Allow-Origin Access-Control-Allow-Credentials
+                strategy: RETAIN_FIRST
       # 网关连接池配置（防止压测时连接耗尽）
       httpclient:
         connect-timeout: 5000
@@ -118,8 +155,14 @@ logging:
 # 日志上报 ELK
 logstash:
   enabled: true
-  host: 127.0.0.1
+  host: 100.86.250.112
   port: 4560
+
+# SkyWalking 本地/IDEA 联调。skywalking-ui 映射 9988，与上方 server.port 不冲突
+yue:
+  log:
+    trace:
+      provider: skywalking
 
 # 监控配置：暴露 /actuator/prometheus 供 Prometheus 抓取
 management:

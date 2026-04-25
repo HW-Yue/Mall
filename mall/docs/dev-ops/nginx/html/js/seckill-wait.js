@@ -2,6 +2,7 @@
     var params = new URLSearchParams(window.location.search);
     var seckillToken = params.get("seckillToken") || "";
     var userId = params.get("userId") || (window.AppUtils && window.AppUtils.getCurrentUserId()) || "";
+    var payAmountParam = params.get("payAmount") || "";
     var statusTextEl = null;
     var errorMsgEl = null;
     var pollingTimer = null;
@@ -61,9 +62,13 @@
             if (orderId) {
                 clearPolling();
                 setStatus("订单已生成，正在跳转支付页...");
-                window.location.href =
+                var payQ =
                     "payment.html?orderId=" + encodeURIComponent(orderId) +
                     "&userId=" + encodeURIComponent(userId);
+                if (payAmountParam) {
+                    payQ += "&payAmount=" + encodeURIComponent(payAmountParam);
+                }
+                window.location.href = payQ;
                 return;
             }
 

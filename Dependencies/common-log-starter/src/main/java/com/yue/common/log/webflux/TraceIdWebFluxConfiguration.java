@@ -1,9 +1,10 @@
 package com.yue.common.log.webflux;
 
 import com.yue.common.log.CommonLogProperties;
+import com.yue.common.log.conditional.OnLegacyTraceModeCondition;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,7 +26,7 @@ import jakarta.annotation.PostConstruct;
 @Configuration
 @ConditionalOnClass({Mono.class, Flux.class})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.REACTIVE)
-@ConditionalOnProperty(prefix = "yue.log.trace", name = "enabled", havingValue = "true", matchIfMissing = true)
+@Conditional(OnLegacyTraceModeCondition.class)
 public class TraceIdWebFluxConfiguration {
 
     /**

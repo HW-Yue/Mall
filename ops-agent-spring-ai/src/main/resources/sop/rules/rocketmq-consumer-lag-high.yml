@@ -1,0 +1,31 @@
+# category: rocketmq
+match-alertname: RocketMqConsumerLagHigh
+match-category: rocketmq
+sop-markdown: |
+  RocketMqConsumerLagHigh 消费堆积:
+
+  1 rocketmq_inspect:
+  mq_topic_stats：Topic 路由、队列数；优先用 labels 里 topic。
+  mq_consumer_status：consumerGroup 必填，用 labels 里的 group；没有则据 ${application} 推断并在 FINAL 说明假设。
+  看 lag、消费 TPS、重试。
+
+  2 指标 metrics_ops:
+  business_metrics：Broker、消费延迟相关 exporter。
+
+  3 消费者实例:
+  nacos_list_instances：健康实例数是否下降。
+  docker_logs：消费线程 OOM、频繁 rebalance。
+
+  4 日志 elasticsearch_ops:
+  ConsumeMessage、RECONSUME、timeout；对齐堆积开始时间。
+
+  5 FINAL:
+  根因：消费慢、缩容、Broker 热点、下游拖慢；扩容消费者、优化逻辑、限流建议。
+
+steps:
+  - type: delegate_subagent
+    sub-agent-id: rocketmq_inspect
+    task: |
+      告警 RocketMqConsumerLagHigh，应用 ${application}。
+      用 labels 里 topic、consumerGroup（若有）依次 mq_topic_stats、mq_consumer_status，必要时 mq_dead_letter，给出堆积原因与建议。
+    context: {}

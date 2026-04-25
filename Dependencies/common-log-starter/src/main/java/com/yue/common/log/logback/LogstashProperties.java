@@ -10,7 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * <pre>
  * logstash:
  *   enabled: true
- *   host: 127.0.0.1
+ *   host: 100.86.250.112
  *   port: 4560
  * </pre>
  */
@@ -22,7 +22,7 @@ public class LogstashProperties {
     private boolean enabled = false;
 
     /** Logstash TCP 地址 */
-    private String host = "127.0.0.1";
+    private String host = "100.86.250.112";
 
     /** Logstash TCP 端口 */
     private int port = 4560;

@@ -1,0 +1,27 @@
+# category: rocketmq
+match-alertname: RocketMqDlqMessageAppeared
+match-category: rocketmq
+sop-markdown: |
+  RocketMqDlqMessageAppeared 死信 DLQ:
+
+  1 rocketmq_inspect:
+  mq_dead_letter：DLQ Topic 命名、消费组、原 Topic。
+  mq_consumer_status：原组是否大量重试、超时。
+  mq_topic_stats：原 Topic 与各队列分布。
+
+  2 日志 elasticsearch_ops:
+  与 DLQ 时间对齐的异常栈、业务校验失败；尽量用 msgId、keys。
+
+  3 依赖:
+  mysql_inspect、redis_inspect：DB 或缓存失败导致反复进 DLQ。
+
+  4 FINAL:
+  是否可重放、是否修数据后重试、Poison message 处理；勿擅自清空 DLQ。
+
+steps:
+  - type: delegate_subagent
+    sub-agent-id: rocketmq_inspect
+    task: |
+      告警 RocketMqDlqMessageAppeared，应用 ${application}。
+      执行 mq_dead_letter、mq_topic_stats、mq_consumer_status，结合 labels 里 topic、consumerGroup 说明来源与处理步骤。
+    context: {}

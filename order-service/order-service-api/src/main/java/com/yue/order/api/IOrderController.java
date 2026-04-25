@@ -11,6 +11,7 @@ import com.yue.order.api.dto.RefundRequestDTO;
 import com.yue.order.api.response.Response;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 /**
  * 订单服务 HTTP 接口契约
@@ -19,6 +20,14 @@ public interface IOrderController {
 
     /** 创建订单（锁单）：普通/拼团/秒杀都调此接口 */
     Response<CreateOrderResponseDTO> createOrder(CreateOrderRequestDTO request);
+
+    /**
+     * 普通商品：mall 已锁库存后调用，同步发 MQ 异步落单；建议仅服务间调用，可配 X-Internal-Token
+     */
+    @PostMapping("create_order_normal_from_mall")
+    Response<CreateOrderResponseDTO> createOrderNormalFromMall(
+            @RequestBody CreateOrderRequestDTO request,
+            @RequestHeader(value = "X-Internal-Token", required = false) String internalToken);
 
     /** 获取支付 URL：用户在支付页点击"立即支付"时调用 */
     Response<String> getPayUrl(GetPayUrlRequestDTO request);

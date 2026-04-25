@@ -8,15 +8,17 @@ import com.yue.groupbuy.domain.trade.service.lock.filter.TeamStockOccupyRuleFilt
 import com.yue.groupbuy.domain.trade.service.lock.filter.UserTakeLimitRuleFilter;
 import cn.bugstack.wrench.design.framework.link.model2.LinkArmory;
 import cn.bugstack.wrench.design.framework.link.model2.chain.BusinessLinkedList;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
+/**
+ * 拼团锁单责任链：由 Wrench {@link BusinessLinkedList} 组装，与 {@link TradeLockLinkContext} 配合使用。
+ */
 @Slf4j
 @Service
 public class TradeLockRuleFilterFactory {
@@ -24,12 +26,12 @@ public class TradeLockRuleFilterFactory {
     private static final String teamStockKey = "group_buy_market_team_stock_key_";
 
     @Bean("tradeRuleFilter")
-    public BusinessLinkedList<TradeLockRuleCommandEntity, DynamicContext, TradeLockRuleFilterBackEntity> tradeRuleFilter(
+    public BusinessLinkedList<TradeLockRuleCommandEntity, TradeLockLinkContext, TradeLockRuleFilterBackEntity> tradeRuleFilter(
             ActivityUsabilityRuleFilter activityUsabilityRuleFilter,
             UserTakeLimitRuleFilter userTakeLimitRuleFilter,
             TeamStockOccupyRuleFilter teamStockOccupyRuleFilter) {
 
-        LinkArmory<TradeLockRuleCommandEntity, DynamicContext, TradeLockRuleFilterBackEntity> linkArmory =
+        LinkArmory<TradeLockRuleCommandEntity, TradeLockLinkContext, TradeLockRuleFilterBackEntity> linkArmory =
                 new LinkArmory<>("交易规则过滤链",
                         activityUsabilityRuleFilter,
                         userTakeLimitRuleFilter,
@@ -38,11 +40,15 @@ public class TradeLockRuleFilterFactory {
         return linkArmory.getLogicLink();
     }
 
+    /**
+     * 锁单责任链专用上下文：继承 Wrench {@link cn.bugstack.wrench.design.framework.link.model2.DynamicContext}，
+     * 使 {@link BusinessLinkedList#apply} 能识别 {@code next}/{@code stop} 与 {@code proceed}。链上携带的
+     * {@link #groupBuyActivity}、{@link #userTakeOrderCount} 等仍为拼团域业务态。
+     */
     @Data
-    @Builder
-    @AllArgsConstructor
     @NoArgsConstructor
-    public static class DynamicContext {
+    @EqualsAndHashCode(callSuper = false)
+    public static class TradeLockLinkContext extends cn.bugstack.wrench.design.framework.link.model2.DynamicContext {
 
         private GroupBuyActivityEntity groupBuyActivity;
         private Integer userTakeOrderCount;
@@ -56,7 +62,6 @@ public class TradeLockRuleFilterFactory {
             if (StringUtils.isBlank(teamId)) return null;
             return TradeLockRuleFilterFactory.generateRecoveryTeamStockKey(groupBuyActivity.getActivityId(), teamId);
         }
-
     }
 
     public static String generateTeamStockKey(Long activityId, String teamId) {
@@ -66,5 +71,4 @@ public class TradeLockRuleFilterFactory {
     public static String generateRecoveryTeamStockKey(Long activityId, String teamId) {
         return teamStockKey + activityId + "_" + teamId + "_recovery";
     }
-
 }

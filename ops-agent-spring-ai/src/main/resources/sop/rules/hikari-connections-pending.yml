@@ -1,0 +1,18 @@
+# category: hikari
+match-alertname: HikariConnectionsPending
+match-category: hikari
+sop-markdown: |
+  HikariConnectionsPending 等待连接的线程多:
+
+  与 HikariConnectionsSaturated 同类，侧重 getConnection 排队。
+
+  排查顺序：metrics_ops 看 Hikari pending 与 QPS；mysql_processlist、mysql_locks；elasticsearch_ops 查连接获取超时日志；nacos_get_config 只读数据源配置。
+
+  FINAL:
+  区分池过小、DB 慢、突刺流量；处置建议同饱和类。
+
+steps:
+  - skill: mysql_inspect
+    tool: mysql_status
+    args:
+      pattern: "Threads%"

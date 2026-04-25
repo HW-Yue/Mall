@@ -7,15 +7,18 @@ app:
     cross-origin: '*'
     # SC 渠道配置 - 拼团对接渠道值、回调通知
     ali-pay:
-      api-url: http://127.0.0.1:8080
-      notify-url: http://127.0.0.1:8091/api/v1/
+      api-url: http://100.86.250.112:8080
+      notify-url: http://100.86.250.112:8091/api/v1/
       source: s01
       chanel: c01
     no-market:
-      api-url: http://127.0.0.1:8091
-      notify-url: http://127.0.0.1:8001/
+      api-url: http://100.86.250.112:8091
+      notify-url: http://100.86.250.112:8001/
       source: s01
       chanel: c01
+  # 调用 order-service create_order_normal_from_mall 时与订单侧 app.order.internal-create-token 对齐（空表示不校验）
+  order:
+    internal-create-token: ""
   # RocketMQ 业务配置（mall 不再消费 pay-success-* 和 group-buy-success-notify，已迁移到各微服务）
 
 
@@ -42,8 +45,8 @@ spring:
   cloud:
     nacos:
       discovery:
-        ip: 127.0.0.1
-        server-addr: 127.0.0.1:8848
+        ip: 100.86.250.112
+        server-addr: 100.86.250.112:8848
         # 注意：locator 必须和 server-addr 对齐！！
         locator:
           enabled: true
@@ -56,7 +59,7 @@ spring:
     sentinel:
       eager: true  # 启动即建立 Dashboard 心跳，不必等首次请求
       transport:
-        dashboard: 127.0.0.1:8858
+        dashboard: 100.86.250.112:8858
         port: 8724           # 同机与 Dashboard(宿主机 8719)及其它服务 transport 错开
       datasource:
         # 流控规则（FlowRule）
@@ -102,7 +105,7 @@ spring:
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://localhost:13306/mall_db?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
+    url: jdbc:mysql://100.86.250.112:13306/mall_db?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
@@ -119,7 +122,7 @@ spring:
   # - spring.redis.redisson.config：Redisson 专属 YAML inline，clientName 便于 redis_exporter 反查
   data:
     redis:
-      host: localhost
+      host: 100.86.250.112
       port: 16379
       database: 0
       timeout: 3000ms
@@ -128,7 +131,7 @@ spring:
     redisson:
       config: |
         singleServerConfig:
-          address: "redis://localhost:16379"
+          address: "redis://100.86.250.112:16379"
           database: 0
           clientName: mall-redisson
           connectionPoolSize: 10
@@ -142,7 +145,7 @@ spring:
           keepAlive: true
 # Apache RocketMQ（docker-compose-rocketmq.yml 启动后可用；前缀必须为 rocketmq，勿放在 spring 下）
 rocketmq:
-  name-server: localhost:9876
+  name-server: 100.86.250.112:9876
   producer:
     group: mall-producer
     send-message-timeout: 3000
@@ -161,13 +164,13 @@ xfg:
       system: group-buy-market
       register:
         #redis host ,动态配置中心要用
-        host: localhost
+        host: 100.86.250.112
         port: 16379
 
 # 日志；logstash部署的服务器IP
 logstash:
   enabled: true
-  host: 127.0.0.1
+  host: 100.86.250.112
   port: 4560
 
 # 监控配置 Prometheus + Grafana（/actuator/prometheus 供 Prometheus 抓取）
@@ -180,6 +183,12 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+# SkyWalking 本地/IDEA 联调：OAP 10.4.0 + Agent 9.6.0（向后兼容）；JVM 见 .run/ 与 dev-tools/skywalking/README.md
+yue:
+  log:
+    trace:
+      provider: skywalking
 
 # 日志
 logging:

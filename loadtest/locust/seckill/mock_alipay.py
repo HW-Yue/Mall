@@ -13,7 +13,7 @@ pay-service 的 alipay.gateway-url 改为本服务地址即可接管所有支付
 
 启动：
   python locust/seckill/mock_alipay.py
-  PORT=7000 NOTIFY_URL=http://localhost:9091/api/v1/alipay/alipay_notify_url \
+  PORT=7000 NOTIFY_URL=http://100.86.250.112:9091/api/v1/alipay/alipay_notify_url \
       python locust/seckill/mock_alipay.py
 """
 import os
@@ -55,7 +55,7 @@ def alipay_trade_page_pay():
     subject = biz.get("subject") or params.get("subject", "Mock商品")
     trade_no = f"MOCK_{int(time.time() * 1000)}_{out_trade_no[-8:]}"
     pay_url = (
-        f"http://localhost:{PORT}/mock/pay_page"
+        f"http://100.86.250.112:{PORT}/mock/pay_page"
         f"?outTradeNo={out_trade_no}&tradeNo={trade_no}&amount={total_amount}"
     )
 
@@ -177,9 +177,9 @@ if __name__ == "__main__":
     print(f"[Mock Alipay] 监听 http://0.0.0.0:{PORT}")
     print(f"[Mock Alipay] 支付成功回调目标: {_NOTIFY_URL}")
     print(
-        f"[Mock Alipay] 收银台页面: http://localhost:{PORT}/mock/pay_page"
+        f"[Mock Alipay] 收银台页面: http://100.86.250.112:{PORT}/mock/pay_page"
         "?outTradeNo=xxx&tradeNo=xxx&amount=1.00"
     )
-    print(f"[Mock Alipay] 查看订单:   GET  http://localhost:{PORT}/mock/orders")
-    print(f"[Mock Alipay] 手动触发:   POST http://localhost:{PORT}/mock/trigger_callback")
+    print(f"[Mock Alipay] 查看订单:   GET  http://100.86.250.112:{PORT}/mock/orders")
+    print(f"[Mock Alipay] 手动触发:   POST http://100.86.250.112:{PORT}/mock/trigger_callback")
     app.run(host="0.0.0.0", port=PORT, debug=False)

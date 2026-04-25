@@ -61,20 +61,20 @@ docker-compose -f docker-compose-environment.yml up -d nacos mysql sentinel-dash
 
 Nacos 就绪后执行 **4.2** 发布规则（compose 不自动执行 `init-nacos-rules.sh`）。
 
-访问 Sentinel Dashboard：<http://127.0.0.1:8858>，默认账号 `sentinel / sentinel`。
+访问 Sentinel Dashboard：<http://100.86.250.112:8858>，默认账号 `sentinel / sentinel`。
 
 ### 4.2 批量发布规则到 Nacos
 
 ```bash
 cd mall/docs/dev-ops/nacos/sentinel-rules
 # Nacos 未开启鉴权
-NACOS_ADDR=127.0.0.1:8848 ./init-nacos-rules.sh
+NACOS_ADDR=100.86.250.112:8848 ./init-nacos-rules.sh
 
 # Nacos 3.x 开启鉴权（NACOS_AUTH_ENABLE=true）
-NACOS_ADDR=127.0.0.1:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-rules.sh
+NACOS_ADDR=100.86.250.112:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-rules.sh
 ```
 
-发布后在 Nacos 控制台 <http://127.0.0.1:8080>（3.x）搜索 Group `SENTINEL_GROUP` 可看到所有规则。
+发布后在 Nacos 控制台 <http://100.86.250.112:8080>（3.x）搜索 Group `SENTINEL_GROUP` 可看到所有规则。
 
 ### 4.3 启动业务服务
 
@@ -91,7 +91,7 @@ NACOS_ADDR=127.0.0.1:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-rules.s
 # 持续请求
 hey -n 5000 -c 50 -m POST -H "Content-Type: application/json" \
   -d '{"goodsId":"P001"}' \
-  http://127.0.0.1:8077/api/v1/mall/index/query_sku_detail
+  http://100.86.250.112:8077/api/v1/mall/index/query_sku_detail
 ```
 
 在 Nacos 中把 `mall-flow-rules.json` 里 `query_sku_detail` 的 `count` 从 500 改成 10，保存后：

@@ -32,6 +32,10 @@
             queryGoodsPage: "/gw/api/v1/mall/index/query_goods_page",
             querySkuDetail: "/gw/api/v1/mall/index/query_sku_detail",
         },
+        /** 普通商品：mall 防刷 + 锁库后异步落单（需 RocketMQ normal-order-create 消费） */
+        mallTrade: {
+            createNormalOrder: "/gw/api/v1/mall/trade/create_normal_order",
+        },
         gbm: {
             // 拼团市场配置查询已迁移至 group-buy-service
             queryGroupBuyMarketConfig: "/gw/api/v1/group-buy/market/query_group_buy_market_config",

@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="SeckillService_SkyWalking" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ACTIVE_PROFILES" value="dev" />
+    <module name="seckill-service-app" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.yue.seckill.SeckillServiceApplication" />
+    <option name="VM_PARAMETERS" value="-javaagent:$PROJECT_DIR$/dev-tools/skywalking/apache-skywalking-java-agent-9.6.0/skywalking-agent/skywalking-agent.jar -Dskywalking.collector.backend_service=100.86.250.112:11800 -Dskywalking.agent.service_name=seckill-service -Dskywalking.trace.ignore_path=*:/actuator/**,SpringScheduled/**,HikariCP/**" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

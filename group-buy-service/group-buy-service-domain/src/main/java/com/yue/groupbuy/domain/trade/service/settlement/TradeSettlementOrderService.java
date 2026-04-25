@@ -30,7 +30,7 @@ public class TradeSettlementOrderService implements ITradeSettlementOrderService
     @Resource
     private ITradeTaskService tradeTaskService;
     @Resource
-    private BusinessLinkedList<TradeSettlementRuleCommandEntity, TradeSettlementRuleFilterFactory.DynamicContext, TradeSettlementRuleFilterBackEntity> tradeSettlementRuleFilter;
+    private BusinessLinkedList<TradeSettlementRuleCommandEntity, TradeSettlementRuleFilterFactory.SettlementLinkContext, TradeSettlementRuleFilterBackEntity> tradeSettlementRuleFilter;
 
     @Override
     public TradePaySettlementEntity settlementMarketPayOrder(TradePaySuccessEntity tradePaySuccessEntity) throws Exception {
@@ -45,7 +45,7 @@ public class TradeSettlementOrderService implements ITradeSettlementOrderService
                         .outTradeNo(tradePaySuccessEntity.getOutTradeNo())
                         .outTradeTime(tradePaySuccessEntity.getOutTradeTime())
                         .build(),
-                new TradeSettlementRuleFilterFactory.DynamicContext());
+                new TradeSettlementRuleFilterFactory.SettlementLinkContext());
 
         String teamId = back.getTeamId();
 
