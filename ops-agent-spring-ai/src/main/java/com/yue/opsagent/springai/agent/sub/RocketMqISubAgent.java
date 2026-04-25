@@ -1,7 +1,7 @@
 package com.yue.opsagent.springai.agent.sub;
 
-import com.yue.opsagent.springai.config.OpsAiProperties;
-import com.yue.opsagent.springai.observability.LlmCallTracer;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
 import com.yue.opsagent.springai.skill.registry.MasterRegistry;
 import com.yue.opsagent.springai.skill.rocketmq.RocketMqSkillRegistry;
 import org.springframework.ai.chat.model.ChatModel;

@@ -1,7 +1,7 @@
 package com.yue.opsagent.springai;
 
 import com.yue.opsagent.springai.agent.sub.ISubAgent;
-import com.yue.opsagent.springai.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.skill.registry.MasterRegistry;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

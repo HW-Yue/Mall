@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.skill.redis;
 
-import com.yue.opsagent.springai.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import io.lettuce.core.KeyScanCursor;
 import io.lettuce.core.RedisClient;

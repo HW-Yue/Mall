@@ -1,8 +1,8 @@
 package com.yue.opsagent.springai.agent.sub;
 
-import com.yue.opsagent.springai.config.OpsAiProperties;
-import com.yue.opsagent.springai.observability.LlmCallTracer;
-import com.yue.opsagent.springai.observability.OpsLogFormatter;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
+import com.yue.opsagent.springai.infrastructure.observability.OpsLogFormatter;
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import com.yue.opsagent.springai.skill.registry.MasterRegistry;

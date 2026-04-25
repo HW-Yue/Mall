@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.skill.mysql;
 
-import com.yue.opsagent.springai.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import org.springframework.stereotype.Component;
 

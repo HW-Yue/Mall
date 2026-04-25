@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.skill.registry;
 
-import com.yue.opsagent.springai.opsroute.OpsRunService;
+import com.yue.opsagent.springai.service.OpsRunService;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;

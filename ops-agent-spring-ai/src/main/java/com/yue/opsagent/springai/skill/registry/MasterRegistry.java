@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.skill.registry;
 
-import com.yue.opsagent.springai.opsroute.OpsRunContextHolder;
+import com.yue.opsagent.springai.domain.opsroute.OpsRunContextHolder;
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import org.springframework.stereotype.Component;

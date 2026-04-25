@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.integration;
 
-import com.yue.opsagent.springai.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import com.yue.opsagent.springai.skill.docker.DockerToolkit;
 import com.yue.opsagent.springai.skill.elasticsearch.ElasticsearchToolkit;

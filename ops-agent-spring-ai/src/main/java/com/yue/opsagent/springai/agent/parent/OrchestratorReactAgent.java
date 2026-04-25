@@ -2,10 +2,10 @@ package com.yue.opsagent.springai.agent.parent;
 
 import com.yue.opsagent.springai.agent.OrchestrationContextHolder;
 import com.yue.opsagent.springai.agent.sub.ISubAgent;
-import com.yue.opsagent.springai.alert.AlertEvent;
-import com.yue.opsagent.springai.config.OpsAiProperties;
-import com.yue.opsagent.springai.observability.LlmCallTracer;
-import com.yue.opsagent.springai.observability.OpsLogFormatter;
+import com.yue.opsagent.springai.domain.alert.AlertEvent;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
+import com.yue.opsagent.springai.infrastructure.observability.OpsLogFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;

@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai;
 
-import com.yue.opsagent.springai.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

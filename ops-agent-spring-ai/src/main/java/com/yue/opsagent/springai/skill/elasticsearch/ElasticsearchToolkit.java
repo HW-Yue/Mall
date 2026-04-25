@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.skill.elasticsearch;
 
-import com.yue.opsagent.springai.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;

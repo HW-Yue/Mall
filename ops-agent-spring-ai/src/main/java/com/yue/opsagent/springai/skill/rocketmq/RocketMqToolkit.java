@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.skill.rocketmq;
 
-import com.yue.opsagent.springai.config.OpsAiProperties;
+import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.springframework.stereotype.Component;

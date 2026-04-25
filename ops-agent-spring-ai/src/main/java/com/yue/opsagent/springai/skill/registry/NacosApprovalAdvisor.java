@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.skill.registry;
 
-import com.yue.opsagent.springai.approval.ApprovalService;
+import com.yue.opsagent.springai.service.ApprovalService;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
