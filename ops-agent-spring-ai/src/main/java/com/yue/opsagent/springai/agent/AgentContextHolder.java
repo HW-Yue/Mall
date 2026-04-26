@@ -7,10 +7,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Per-thread context for parent→sub delegation (alert + SOP) during a single orchestrator/chat call.
+ * Per-thread context for parent→sub delegation during a single agent call.
  */
 @Component
-public class OrchestrationContextHolder {
+public class AgentContextHolder {
 
     private final ThreadLocal<Map<String, Object>> context = new ThreadLocal<>();
 

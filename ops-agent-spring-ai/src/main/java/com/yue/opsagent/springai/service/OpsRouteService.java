@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.service;
 
-import com.yue.opsagent.springai.agent.parent.OrchestratorReactAgent;
+import com.yue.opsagent.springai.agent.parent.OpsAgent;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.domain.alert.SopDispatcher;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunContextHolder;
@@ -26,8 +26,8 @@ public class OpsRouteService {
     private final OpsRunService opsRunService;
     private final SopDispatcher sopDispatcher;
     private final SopAiMatcherService sopAiMatcherService;
-    private final SopOrchestrator sopOrchestrator;
-    private final OrchestratorReactAgent orchestratorReactAgent;
+    private final SopStepRunner sopStepRunner;
+    private final OpsAgent opsAgent;
     private final OpsAiProperties opsAiProperties;
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "ops-route-worker");
@@ -39,14 +39,14 @@ public class OpsRouteService {
             OpsRunService opsRunService,
             SopDispatcher sopDispatcher,
             SopAiMatcherService sopAiMatcherService,
-            SopOrchestrator sopOrchestrator,
-            OrchestratorReactAgent orchestratorReactAgent,
+            SopStepRunner sopStepRunner,
+            OpsAgent opsAgent,
             OpsAiProperties opsAiProperties) {
         this.opsRunService = opsRunService;
         this.sopDispatcher = sopDispatcher;
         this.sopAiMatcherService = sopAiMatcherService;
-        this.sopOrchestrator = sopOrchestrator;
-        this.orchestratorReactAgent = orchestratorReactAgent;
+        this.sopStepRunner = sopStepRunner;
+        this.opsAgent = opsAgent;
         this.opsAiProperties = opsAiProperties;
     }
 
@@ -141,14 +141,14 @@ public class OpsRouteService {
         opsRunService.node(runId, "ReactExecute", "开始执行命中的 SOP");
         String mode = opsAiProperties.getAlert().getMode();
         if ("deterministic".equalsIgnoreCase(mode) && rule.getSteps() != null && !rule.getSteps().isEmpty()) {
-            var result = sopOrchestrator.run(event, rule.getSteps());
+            var result = sopStepRunner.run(event, rule.getSteps());
             if (!opsRunService.isCancelled(runId)) {
                 opsRunService.complete(runId, "End", "SOP 步骤执行完成",
                         Map.of("match", matchData, "result", result));
             }
             return;
         }
-        String summary = orchestratorReactAgent.runForAlert(event, rule);
+        String summary = opsAgent.runForAlert(event, rule);
         if (!opsRunService.isCancelled(runId)) {
             opsRunService.complete(runId, "End", "ReAct 编排完成",
                     Map.of("match", matchData, "summary", summary == null ? "" : summary));

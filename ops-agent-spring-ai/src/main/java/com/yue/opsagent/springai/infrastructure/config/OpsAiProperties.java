@@ -115,7 +115,7 @@ public class OpsAiProperties {
     }
 
     public static class Alert {
-        /** react: SOP 注入父 Agent ReAct；deterministic: 逐步 SopOrchestrator */
+        /** react: SOP 注入 OpsAgent ReAct；deterministic: 逐步 SopStepRunner */
         private String mode = "react";
 
         public String getMode() {
@@ -438,7 +438,7 @@ public class OpsAiProperties {
             private String matchCategory = "";
             private String matchSeverity = "";
             private String matchApplication = "";
-            /** 标准作业程序正文（纯文本即可），供父 Orchestrator Agent 使用；配置键仍为 sop-markdown */
+            /** 标准作业程序正文（纯文本即可），供 OpsAgent 使用；配置键仍为 sop-markdown */
             private String sopMarkdown = "";
             private List<Step> steps = new ArrayList<>();
 

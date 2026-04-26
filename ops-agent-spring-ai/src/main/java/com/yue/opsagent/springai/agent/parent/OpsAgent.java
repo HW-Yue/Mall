@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.agent.parent;
 
-import com.yue.opsagent.springai.agent.OrchestrationContextHolder;
+import com.yue.opsagent.springai.agent.AgentContextHolder;
 import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
@@ -16,21 +16,21 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 告警编排父 Agent：system 注入 SOP 正文（纯文本），工具委派七子域；线程内通过 {@link OrchestrationContextHolder} 传递告警上下文。
+ * 告警运维父 Agent：system 注入 SOP 正文（纯文本），工具委派七子域；线程内通过 {@link AgentContextHolder} 传递告警上下文。
  */
 @Component
-public class OrchestratorReactAgent {
+public class OpsAgent {
 
-    private static final Logger log = LoggerFactory.getLogger(OrchestratorReactAgent.class);
+    private static final Logger log = LoggerFactory.getLogger(OpsAgent.class);
 
     private final ChatClient chatClient;
-    private final OrchestrationContextHolder contextHolder;
+    private final AgentContextHolder contextHolder;
     private final LlmCallTracer llmCallTracer;
 
-    public OrchestratorReactAgent(
+    public OpsAgent(
             ChatModel chatModel,
             AgentToolRegistry agentToolRegistry,
-            OrchestrationContextHolder contextHolder,
+            AgentContextHolder contextHolder,
             LlmCallTracer llmCallTracer) {
         this.contextHolder = contextHolder;
         this.llmCallTracer = llmCallTracer;
@@ -54,12 +54,12 @@ public class OrchestratorReactAgent {
         ctx.put("sopMarkdown", rule.getSopMarkdown() == null ? "" : rule.getSopMarkdown());
         contextHolder.set(ctx);
         try {
-            log.info("[Orchestrator] 开始处理告警 alertname={} application={} labels={} annotations={}",
+            log.info("[OpsAgent] 开始处理告警 alertname={} application={} labels={} annotations={}",
                     event.alertname(),
                     event.application(),
                     event.labels(),
                     event.annotations());
-            String system = buildOrchestratorSystem(rule);
+            String system = buildOpsAgentSystem(rule);
             String user = """
                     请根据上述 SOP 与下列告警信息排查。
                     要求：
@@ -74,14 +74,14 @@ public class OrchestratorReactAgent {
                     + OpsLogFormatter.truncate(system, OpsLogFormatter.LLM_BODY_MAX) + "\n[user]\n"
                     + OpsLogFormatter.truncate(user, OpsLogFormatter.LLM_BODY_MAX);
             String out = llmCallTracer.chatText(
-                    "orchestrator-react",
+                    "ops-agent-react",
                     outbound,
                     () -> chatClient.prompt()
                             .system(system)
                             .user(user)
                             .call()
                             .chatResponse());
-            log.info("[Orchestrator] 父 Agent 本轮编排结束 alertname={} replyChars={}（完整回复见上方 [LLM] 大模型回复）",
+            log.info("[OpsAgent] 父 Agent 本轮排查结束 alertname={} replyChars={}（完整回复见上方 [LLM] 大模型回复）",
                     event.alertname(), out == null ? 0 : out.length());
             return out;
         } finally {
@@ -89,7 +89,7 @@ public class OrchestratorReactAgent {
         }
     }
 
-    private static String buildOrchestratorSystem(OpsAiProperties.Sop.Rule rule) {
+    private static String buildOpsAgentSystem(OpsAiProperties.Sop.Rule rule) {
         String sop = rule.getSopMarkdown() == null ? "" : rule.getSopMarkdown();
         return """
                 你是运维编排 Agent，负责按标准作业程序（SOP）处理告警。目标是尽快给出可执行结论，而不是把所有工具跑一遍。

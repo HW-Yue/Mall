@@ -1,6 +1,6 @@
 package com.yue.opsagent.springai.agent.parent;
 
-import com.yue.opsagent.springai.agent.OrchestrationContextHolder;
+import com.yue.opsagent.springai.agent.AgentContextHolder;
 import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
 import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
 import com.yue.opsagent.springai.infrastructure.observability.OpsLogFormatter;
@@ -25,7 +25,7 @@ public class ParentReactAgent {
     public ParentReactAgent(
             ChatModel chatModel,
             AgentToolRegistry agentToolRegistry,
-            OrchestrationContextHolder contextHolder,
+            AgentContextHolder contextHolder,
             LlmCallTracer llmCallTracer) {
         this.llmCallTracer = llmCallTracer;
         this.chatClient = ChatClient.builder(chatModel)

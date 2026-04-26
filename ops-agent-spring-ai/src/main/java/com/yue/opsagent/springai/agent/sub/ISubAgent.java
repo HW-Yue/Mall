@@ -38,7 +38,7 @@ public interface ISubAgent {
     }
 
     /**
-     * Inner ReAct loop for this domain; returns summary for parent / SOP orchestrator.
+     * Inner ReAct loop for this domain; returns summary for parent agent / SOP runner.
      */
     String runReact(String task, Map<String, Object> context);
 }

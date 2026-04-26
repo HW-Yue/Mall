@@ -22,15 +22,15 @@ import java.util.Map;
  * Executes SOP steps: {@code direct_tool} or {@code delegate_subagent}.
  */
 @Component
-public class SopOrchestrator {
+public class SopStepRunner {
 
-    private static final Logger log = LoggerFactory.getLogger(SopOrchestrator.class);
+    private static final Logger log = LoggerFactory.getLogger(SopStepRunner.class);
 
     private final MasterRegistry masterRegistry;
     private final AgentToolRegistry agentToolRegistry;
     private final ObjectMapper objectMapper;
 
-    public SopOrchestrator(
+    public SopStepRunner(
             MasterRegistry masterRegistry,
             AgentToolRegistry agentToolRegistry,
             ObjectMapper objectMapper) {
@@ -40,7 +40,7 @@ public class SopOrchestrator {
     }
 
     public List<Map<String, Object>> run(AlertEvent event, List<OpsAiProperties.Sop.Step> steps) {
-        log.info("[SopOrchestrator] deterministic 开始 alertname={} application={} severity={} labels={} annotations={} steps={}",
+        log.info("[SopStepRunner] deterministic 开始 alertname={} application={} severity={} labels={} annotations={} steps={}",
                 event.alertname(),
                 event.application(),
                 event.severity(),
@@ -53,7 +53,7 @@ public class SopOrchestrator {
             try {
                 out.add(executeStep(event, step, flat));
             } catch (Exception ex) {
-                log.warn("[SopOrchestrator] step failed: {}", ex.toString());
+                log.warn("[SopStepRunner] step failed: {}", ex.toString());
                 out.add(Map.of(
                         "type", stepType(step),
                         "error", ex.getMessage() == null ? "unknown" : ex.getMessage()));
@@ -63,11 +63,11 @@ public class SopOrchestrator {
             }
         }
         try {
-            log.info("[SopOrchestrator] deterministic 结束 alertname={} 步骤执行结果 JSON（截断）↓↓\n{}",
+            log.info("[SopStepRunner] deterministic 结束 alertname={} 步骤执行结果 JSON（截断）↓↓\n{}",
                     event.alertname(),
                     OpsLogFormatter.truncate(objectMapper.writeValueAsString(out), OpsLogFormatter.ALERT_JSON_MAX));
         } catch (JsonProcessingException e) {
-            log.warn("[SopOrchestrator] 结果序列化失败 alertname={} err={}", event.alertname(), e.toString());
+            log.warn("[SopStepRunner] 结果序列化失败 alertname={} err={}", event.alertname(), e.toString());
         }
         return out;
     }
