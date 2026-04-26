@@ -11,6 +11,7 @@ MODULES=(
   "seckill-service/seckill-service-app"
   "pay/pay-app"
   "springcloud-gateway/app"
+  "ops-agent-spring-ai"
 )
 
 compose() {

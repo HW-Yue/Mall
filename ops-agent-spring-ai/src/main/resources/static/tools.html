@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工具调用 · Nexus Ops Spring AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css?v=20260426-1600">
+</head>
+<body data-page="tools">
+    <header class="shell-header">
+        <div class="brand">
+            <div class="brand-mark">AI</div>
+            <div>
+                <h1>Nexus Ops Spring AI</h1>
+                <p class="brand-tagline" title="能力说明">SOP 匹配 · 工具编排 · 审批与追踪</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <nav class="shell-nav" aria-label="页面导航">
+                <a class="nav-link" href="index.html" data-page-link="workbench">运行工作台</a>
+                <a class="nav-link" href="approvals.html" data-page-link="approvals">审批队列</a>
+                <a class="nav-link active" href="tools.html" data-page-link="tools">工具调用</a>
+            </nav>
+            <div class="connection" id="api-chip">
+                <span class="status-dot"></span>
+                <span id="api-text">连接中</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="tools-page">
+        <section class="tools-panel panel">
+            <div class="panel-head compact">
+                <div>
+                    <h2>工具调用</h2>
+                    <p>直接执行后端 `/tools/execute`，写操作进入审批。</p>
+                </div>
+            </div>
+
+            <form class="tool-form" id="tool-form">
+                <label>
+                    <span>Skill</span>
+                    <select id="skill-select"></select>
+                </label>
+                <label>
+                    <span>Tool</span>
+                    <select id="tool-select"></select>
+                </label>
+                <label class="tool-args-field">
+                    <span>参数 JSON</span>
+                    <textarea id="tool-args" rows="14" spellcheck="false"></textarea>
+                </label>
+                <div class="tool-actions">
+                    <button type="button" class="btn secondary" id="tool-reset">填入示例</button>
+                    <button type="submit" class="btn primary" id="tool-run">执行工具</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="tool-output-panel panel">
+            <div class="panel-head compact">
+                <div>
+                    <h2>执行结果</h2>
+                    <p>工具响应会在这里展示，长内容在区域内滚动。</p>
+                </div>
+            </div>
+            <div class="result-box standalone" id="tool-result-box">
+                <div id="tool-result" class="tool-result-placeholder">等待调用。</div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="toast" role="status"></div>
+
+    <script src="config.js?v=20260426-1600"></script>
+    <script src="js/tools.js?v=20260426-1600"></script>
+    <script src="js/inbox.js?v=20260426-1600"></script>
+    <script src="js/app.js?v=20260426-1600"></script>
+</body>
+</html>

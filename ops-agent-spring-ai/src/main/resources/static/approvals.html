@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>审批队列 · Nexus Ops Spring AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css?v=20260426-1600">
+</head>
+<body data-page="approvals">
+    <header class="shell-header">
+        <div class="brand">
+            <div class="brand-mark">AI</div>
+            <div>
+                <h1>Nexus Ops Spring AI</h1>
+                <p class="brand-tagline" title="能力说明">SOP 匹配 · 工具编排 · 审批与追踪</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <nav class="shell-nav" aria-label="页面导航">
+                <a class="nav-link" href="index.html" data-page-link="workbench">运行工作台</a>
+                <a class="nav-link active" href="approvals.html" data-page-link="approvals">审批队列</a>
+                <a class="nav-link" href="tools.html" data-page-link="tools">工具调用</a>
+            </nav>
+            <div class="connection" id="api-chip">
+                <span class="status-dot"></span>
+                <span id="api-text">连接中</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="approval-page">
+        <section class="approvals-panel panel">
+            <div class="panel-head compact">
+                <div>
+                    <h2>审批队列 <span class="approval-count" id="approval-count">0</span></h2>
+                    <p>Nacos 发布等受控操作会在这里等待确认。</p>
+                </div>
+                <button type="button" class="btn secondary" id="approval-refresh">刷新</button>
+            </div>
+            <div class="approval-list" id="approval-list"></div>
+        </section>
+    </main>
+
+    <div id="toast" class="toast" role="status"></div>
+
+    <script src="config.js?v=20260426-1600"></script>
+    <script src="js/inbox.js?v=20260426-1600"></script>
+    <script src="js/app.js?v=20260426-1600"></script>
+</body>
+</html>

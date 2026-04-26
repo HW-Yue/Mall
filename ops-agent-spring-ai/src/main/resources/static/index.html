@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Ops Spring AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css?v=20260426-1600">
+</head>
+<body data-page="workbench">
+    <header class="shell-header">
+        <div class="brand">
+            <div class="brand-mark">AI</div>
+            <div>
+                <h1>Nexus Ops Spring AI</h1>
+                <p class="brand-tagline" title="能力说明">SOP 匹配 · 工具编排 · 审批与追踪</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <nav class="shell-nav" aria-label="页面导航">
+                <a class="nav-link active" href="index.html" data-page-link="workbench">运行工作台</a>
+                <a class="nav-link" href="approvals.html" data-page-link="approvals">审批队列</a>
+                <a class="nav-link" href="tools.html" data-page-link="tools">工具调用</a>
+            </nav>
+            <div class="connection" id="api-chip">
+                <span class="status-dot"></span>
+                <span id="api-text">连接中</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="ops-layout">
+        <section class="run-panel panel">
+            <div class="panel-head">
+                <div>
+                    <h2>运行工作台</h2>
+                    <p>标准告警先硬匹配 SOP，纯文本直接进入 AI SOP 选择。</p>
+                </div>
+                <div class="segmented" role="group" aria-label="请求类型">
+                    <button type="button" class="segment active" data-route-mode="alert">Alert JSON</button>
+                    <button type="button" class="segment" data-route-mode="text">Plain Text</button>
+                </div>
+            </div>
+
+            <div class="prompt-row">
+                <label class="example-picker">
+                    <span>告警样例</span>
+                    <select id="alert-example-select"></select>
+                </label>
+                <button type="button" data-run-example="http5xx">标准 5xx 告警</button>
+                <button type="button" data-run-example="nacos">Nacos 发布演练</button>
+                <button type="button" data-run-example="plain">纯文本报错</button>
+            </div>
+
+            <form class="route-form" id="route-form">
+                <textarea id="route-input" rows="10" spellcheck="false"></textarea>
+                <div class="route-actions">
+                    <div class="run-id" id="run-id">未运行</div>
+                    <div class="run-buttons">
+                        <button type="button" class="btn secondary danger" id="run-cancel" disabled title="有进行中的 run 且未结束时可暂停">暂停执行</button>
+                        <button type="submit" class="btn primary" id="run-submit">发起运行</button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <section class="run-result-panel panel">
+            <div class="panel-head compact">
+                <div>
+                    <h2>运行结果</h2>
+                    <p id="run-result-meta">提交运行后，这里展示最终输出与当前事件详情。</p>
+                </div>
+            </div>
+            <div class="run-result-body">
+                <div class="result-placeholder" id="run-result-empty">
+                    <div class="empty-state" role="status">
+                        <div class="empty-state-icon" aria-hidden="true">
+                            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 8h16a2 2 0 0 1 2 2v4m0 8v4a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M8 20h4m16 0h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/></svg>
+                        </div>
+                        <p class="empty-state-title">尚无运行输出</p>
+                        <p class="empty-state-hint">发起运行后，这里会显示最终状态与关键事件详情。</p>
+                    </div>
+                </div>
+                <div id="run-result-list" hidden></div>
+            </div>
+        </section>
+
+        <section class="timeline-panel panel">
+            <div class="timeline-head">
+                <div>
+                    <h3>运行时间线</h3>
+                    <p id="run-status">等待提交。</p>
+                </div>
+                <button type="button" class="btn secondary" id="run-refresh" disabled>刷新状态</button>
+            </div>
+            <div class="timeline" id="timeline" aria-live="polite"></div>
+        </section>
+    </main>
+    <div id="toast" class="toast" role="status"></div>
+
+    <script src="config.js?v=20260426-1600"></script>
+    <script src="js/run-workbench.js?v=20260426-1600"></script>
+    <script src="js/tools.js?v=20260426-1600"></script>
+    <script src="js/inbox.js?v=20260426-1600"></script>
+    <script src="js/app.js?v=20260426-1600"></script>
+</body>
+</html>

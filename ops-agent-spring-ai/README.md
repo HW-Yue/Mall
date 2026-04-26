@@ -12,7 +12,9 @@ mvn -pl ops-agent-spring-ai spring-boot:run
 
 默认端口 **2322**。**Prometheus**：启动后可访问 `http://<host>:2322/actuator/prometheus`（与 mall 相同，供 Nacos SD 的 `nacos-sd-spring-boot` 等 job 抓取）。
 
-**Web 控制台**：[`dev-ops/frontend/`](dev-ops/frontend/README.md) 默认经 **Gateway** `http://<网关>:8090/gw/api/v1/ops-ai`（需 Nacos 中已注册本服务）；直连时用 `?api=http://127.0.0.1:2322/api/v1`。
+**Web 控制台**：源码位于 [`src/main/resources/static/`](src/main/resources/static/)（`index.html`、`approvals.html`、`tools.html` 与 `css/`、`js/`、`config.js`），随 `mvn package` 进入 `classpath:/static` 并由服务根路径提供。默认经 **Gateway** `http://<网关>:8090/gw/api/v1/ops-ai`（需 Nacos 中已注册本服务）；直连时用 `?api=http://127.0.0.1:2322/api/v1`。
+
+**改完页面仍像旧的？** 进程读的是 `target/classes/static/`（或 JAR 内），不是只保存 `src/.../static` 就自动更新。请在本模块执行 `mvn compile`（或 **Build → Rebuild Project**）再启服务；对照 `target/classes/static/` 下文件时间戳。另可对浏览器 **Ctrl+Shift+R** 强刷。已配置 `spring.web.resources.cache.period: 0` 减轻 CSS/JS 强缓存，但「未编译进 target」时重启也没用。
 
 ## 告警与 SOP
 

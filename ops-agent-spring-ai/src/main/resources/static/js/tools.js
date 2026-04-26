@@ -144,7 +144,46 @@ window.ToolConsole = (() => {
     }
 
     function writeResult(value) {
-        dom.result.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+        if (typeof value === 'string') {
+            dom.result.className = '';
+            dom.result.innerHTML = `<pre class="tool-result-raw">${escapeHtml(value)}</pre>`;
+            return;
+        }
+        dom.result.className = 'tool-result-rendered';
+        dom.result.innerHTML = renderToolResult(value);
+    }
+
+    function renderToolResult(value) {
+        const status = value.status || 'unknown';
+        const message = value.message || '';
+        const data = value.data;
+
+        const statusClass = status === 'ok' || status === 'success' ? 'ok'
+            : status === 'error' || status === 'failed' ? 'bad'
+            : status === 'pending' ? 'warn' : '';
+
+        let dataHtml = '';
+        if (data !== undefined && data !== null) {
+            if (typeof data === 'string') {
+                dataHtml = `<div class="tool-result-data">
+                    <div class="tool-result-data-label">输出</div>
+                    <pre class="tool-result-log">${escapeHtml(data)}</pre>
+                </div>`;
+            } else {
+                dataHtml = `<div class="tool-result-data">
+                    <div class="tool-result-data-label">数据</div>
+                    <pre class="tool-result-json">${escapeHtml(JSON.stringify(data, null, 2))}</pre>
+                </div>`;
+            }
+        }
+
+        return `
+            <div class="tool-result-header">
+                <span class="tool-result-status ${statusClass}">${escapeHtml(String(status).toUpperCase())}</span>
+                <span class="tool-result-message">${escapeHtml(message)}</span>
+            </div>
+            ${dataHtml}
+        `;
     }
 
     function tryParseJson(text) {
@@ -153,6 +192,13 @@ window.ToolConsole = (() => {
         } catch {
             return text;
         }
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
     }
 
     return { init };

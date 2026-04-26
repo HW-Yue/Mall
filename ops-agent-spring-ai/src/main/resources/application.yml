@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: ops-agent-spring-ai
+  # 避免浏览器/中间层长时间缓存 index.html、css、js，改完 static 后仍见旧版时强刷可生效
+  web:
+    resources:
+      cache:
+        period: 0
   # 与 mall application-dev 对齐：注册到 Nacos，网关/Prometheus SD 可按服务名发现
   cloud:
     nacos:
@@ -36,9 +41,9 @@ spring:
 ops-ai:
   # OTLP gRPC → SkyWalking OAP 10.4（Virtual GenAI：gen_ai.* 属性）；与 Java Agent 共用 11800
   otlp:
-    enabled: true
-    endpoint: http://100.86.250.112:11800
-    service-name: ops-agent-spring-ai
+    enabled: ${OPS_AI_OTLP_ENABLED:true}
+    endpoint: ${OPS_AI_OTLP_ENDPOINT:http://100.86.250.112:11800}
+    service-name: ${OPS_AI_OTLP_SERVICE_NAME:ops-agent-spring-ai}
     timeout-seconds: 10
   alert:
     # react: SOP 正文（纯文本）注入父 Orchestrator ReAct；deterministic: 逐步 SopOrchestrator

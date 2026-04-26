@@ -192,13 +192,6 @@
             <resource>
                 <directory>src/main/resources</directory>
             </resource>
-            <resource>
-                <directory>dev-ops/frontend</directory>
-                <targetPath>static</targetPath>
-                <excludes>
-                    <exclude>README.md</exclude>
-                </excludes>
-            </resource>
         </resources>
         <plugins>
             <plugin>

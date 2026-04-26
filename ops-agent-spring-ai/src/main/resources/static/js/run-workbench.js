@@ -73,6 +73,9 @@ window.RunWorkbench = (() => {
         dom.timeline = document.getElementById('timeline');
         dom.refresh = document.getElementById('run-refresh');
         dom.alertExample = document.getElementById('alert-example-select');
+        dom.resultList = document.getElementById('run-result-list');
+        dom.resultMeta = document.getElementById('run-result-meta');
+        dom.resultEmpty = document.getElementById('run-result-empty');
 
         document.querySelectorAll('[data-route-mode]').forEach((button) => {
             button.addEventListener('click', () => setMode(button.dataset.routeMode));
@@ -91,6 +94,24 @@ window.RunWorkbench = (() => {
         renderAlertExamples();
         fillExample('http5xx');
         renderTimeline();
+        renderRunResult();
+
+        dom.resultList.addEventListener('click', (e) => {
+            const btn = e.target.closest('.json-toggle-btn');
+            if (btn) {
+                const block = btn.closest('.json-block');
+                block.classList.toggle('collapsed');
+                btn.querySelector('.json-block-icon').textContent =
+                    block.classList.contains('collapsed') ? '▶' : '▼';
+                return;
+            }
+            const nodeToggle = e.target.closest('.json-node-toggle');
+            if (nodeToggle) {
+                const node = nodeToggle.closest('.json-node-wrap');
+                node.classList.toggle('collapsed');
+                nodeToggle.textContent = node.classList.contains('collapsed') ? '▶' : '▼';
+            }
+        });
     }
 
     function alertPayload(item) {
@@ -168,6 +189,7 @@ window.RunWorkbench = (() => {
         state.events = [];
         closeEventSource();
         renderTimeline();
+        renderRunResult();
         setBusy(true);
         dom.status.textContent = '提交中...';
         try {
@@ -204,6 +226,7 @@ window.RunWorkbench = (() => {
                 data: {}
             });
             renderTimeline();
+            renderRunResult();
         } finally {
             setBusy(false);
         }
@@ -225,6 +248,7 @@ window.RunWorkbench = (() => {
             if (!item || item.type === 'heartbeat') return;
             state.events.push(item);
             renderTimeline();
+            renderRunResult();
             if (isTerminalEvent(item.type)) {
                 dom.cancel.disabled = true;
                 refresh();
@@ -247,6 +271,7 @@ window.RunWorkbench = (() => {
             if (Array.isArray(body.events) && body.events.length > state.events.length) {
                 state.events = body.events;
                 renderTimeline();
+                renderRunResult();
             }
         } catch (error) {
             dom.status.textContent = `刷新失败: ${error.message}`;
@@ -256,11 +281,61 @@ window.RunWorkbench = (() => {
     function renderTimeline() {
         if (!dom.timeline) return;
         if (!state.events.length) {
-            dom.timeline.innerHTML = '<div class="empty-list">暂无事件。提交后会显示节点、匹配、工具、审批和结束事件。</div>';
+            dom.timeline.innerHTML = [
+                '<div class="empty-list" role="status">',
+                '<div class="empty-state-icon" aria-hidden="true">',
+                '<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">',
+                '<path d="M8 8h24v24H8z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" opacity="0.2"/>',
+                '<path d="M12 16h8M12 20h16M12 24h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>',
+                '</svg></div>',
+                '<p class="empty-state-title">时间线里还没有事件</p>',
+                '<p class="empty-state-hint">提交运行后，会按顺序显示节点、匹配、工具、审批与结束等事件。</p>',
+                '</div>',
+            ].join('');
             return;
         }
-        dom.timeline.innerHTML = state.events.map(renderEvent).join('');
-        dom.timeline.scrollTop = dom.timeline.scrollHeight;
+        dom.timeline.innerHTML = [...state.events].reverse().map(renderEvent).join('');
+    }
+
+    function renderRunResult() {
+        if (!dom.resultList || !dom.resultEmpty) return;
+        if (!state.events.length) {
+            dom.resultList.innerHTML = '';
+            dom.resultList.hidden = true;
+            dom.resultEmpty.hidden = false;
+            if (dom.resultMeta) {
+                dom.resultMeta.textContent = '提交运行后，这里展示最终输出与当前事件详情。';
+            }
+            return;
+        }
+        dom.resultEmpty.hidden = true;
+        dom.resultList.hidden = false;
+        dom.resultList.innerHTML = [...state.events].reverse().map(renderResultEvent).join('');
+        if (dom.resultMeta) {
+            const latest = state.events[state.events.length - 1];
+            dom.resultMeta.textContent = `共 ${state.events.length} 个事件 · 最新: ${latest.type} · ${formatTime(latest.at)}`;
+        }
+    }
+
+    function renderResultEvent(event) {
+        const type = escapeHtml(event.type || 'event');
+        const node = escapeHtml(event.node || '-');
+        const message = escapeHtml(event.message || '');
+        const at = escapeHtml(formatTime(event.at));
+        const hasData = event.data && Object.keys(event.data).length > 0;
+        return `
+            <article class="timeline-item result-item ${escapeAttr(event.type || '')}">
+                <div class="timeline-main">
+                    <div>
+                        <div class="timeline-title">${node}</div>
+                        <div class="timeline-message">${message}</div>
+                    </div>
+                    <span class="status">${type}</span>
+                </div>
+                <div class="timeline-time">${at}</div>
+                ${hasData ? renderJsonBlock(event.data) : ''}
+            </article>
+        `;
     }
 
     function renderEvent(event) {
@@ -268,9 +343,6 @@ window.RunWorkbench = (() => {
         const node = escapeHtml(event.node || '-');
         const message = escapeHtml(event.message || '');
         const at = escapeHtml(formatTime(event.at));
-        const data = event.data && Object.keys(event.data).length
-            ? `<pre>${escapeHtml(JSON.stringify(event.data, null, 2))}</pre>`
-            : '';
         return `
             <article class="timeline-item ${escapeAttr(event.type || '')}">
                 <div class="timeline-main">
@@ -281,7 +353,6 @@ window.RunWorkbench = (() => {
                     <span class="status">${type}</span>
                 </div>
                 <div class="timeline-time">${at}</div>
-                ${data}
             </article>
         `;
     }
@@ -351,6 +422,56 @@ window.RunWorkbench = (() => {
 
     function escapeAttr(value) {
         return String(value ?? '').replace(/[^a-zA-Z0-9_-]/g, '');
+    }
+
+    function renderJsonBlock(data) {
+        const summary = jsonInlineSummary(data);
+        return `
+            <div class="json-block collapsed">
+                <button type="button" class="json-toggle-btn">
+                    <span class="json-block-icon">▶</span>
+                    <span>查看数据</span>
+                    <span class="json-block-hint">${escapeHtml(summary)}</span>
+                </button>
+                <div class="json-tree">${buildJsonTreeHtml(data)}</div>
+            </div>`;
+    }
+
+    function buildJsonTreeHtml(value) {
+        if (value === null) return `<span class="json-null">null</span>`;
+        if (value === true) return `<span class="json-boolean">true</span>`;
+        if (value === false) return `<span class="json-boolean">false</span>`;
+        if (typeof value === 'number') return `<span class="json-number">${escapeHtml(String(value))}</span>`;
+        if (typeof value === 'string') return `<span class="json-string">"${escapeHtml(value)}"</span>`;
+
+        const isArr = Array.isArray(value);
+        const entries = isArr
+            ? value.map((v) => `<div class="json-row">${buildJsonTreeHtml(v)}</div>`)
+            : Object.keys(value).map((k) =>
+                `<div class="json-row"><span class="json-key">"${escapeHtml(k)}"</span>: ${buildJsonTreeHtml(value[k])}</div>`);
+
+        if (!entries.length) return isArr ? `<span>[]</span>` : `<span>{}</span>`;
+
+        const open = isArr ? '[' : '{';
+        const close = isArr ? ']' : '}';
+        const count = isArr ? `${entries.length} items` : `${entries.length} keys`;
+
+        return `<span class="json-node-wrap collapsed">
+            <span class="json-node-toggle" role="button">▶</span>
+            <span class="json-inline-summary">${open}${escapeHtml(count)}${close}</span>
+            <span class="json-expanded">
+                <span>${open}</span>
+                <div class="json-children">${entries.join('')}</div>
+                <span>${close}</span>
+            </span>
+        </span>`;
+    }
+
+    function jsonInlineSummary(value) {
+        if (value === null) return 'null';
+        if (Array.isArray(value)) return `[…] ${value.length} items`;
+        if (typeof value === 'object') return `{…} ${Object.keys(value).length} keys`;
+        return String(value).slice(0, 40);
     }
 
     return { init, refresh };
