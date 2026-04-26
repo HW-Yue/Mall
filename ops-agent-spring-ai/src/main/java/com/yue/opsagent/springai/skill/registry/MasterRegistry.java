@@ -1,29 +1,30 @@
 package com.yue.opsagent.springai.skill.registry;
 
+import cn.bugstack.wrench.design.framework.link.model2.chain.BusinessLinkedList;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunContextHolder;
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
+import org.apache.skywalking.apm.toolkit.trace.Trace;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Aggregates skill menus and routes tool execution (with approval gate).
+ * Aggregates skill menus and routes tool execution through the Wrench rule chain.
  */
 @Component
 public class MasterRegistry {
 
     private final Map<String, OpsSkillRegistry> skills;
-    private final List<ToolInvocationAdvisor> advisors;
+    private final BusinessLinkedList<ToolExecutionCommand, ToolExecutionContext, ToolResult> toolExecutionRuleFilter;
 
     public MasterRegistry(
             Collection<OpsSkillRegistry> registries,
-            List<ToolInvocationAdvisor> advisors) {
+            BusinessLinkedList<ToolExecutionCommand, ToolExecutionContext, ToolResult> toolExecutionRuleFilter) {
         this.skills = registries.stream().collect(Collectors.toMap(OpsSkillRegistry::name, r -> r));
-        this.advisors = List.copyOf(advisors);
+        this.toolExecutionRuleFilter = toolExecutionRuleFilter;
     }
 
     /** First-round menu for the model. */
@@ -41,27 +42,19 @@ public class MasterRegistry {
         return s.promptFragment();
     }
 
+    @Trace(operationName = "tool.execute")
     public ToolResult execute(String skillName, String toolName, Map<String, Object> args) {
         String runId = OpsRunContextHolder.get();
-        OpsSkillRegistry reg = skills.get(skillName);
-        if (reg == null) {
-            return ToolResult.error("unknown skill: " + skillName);
+        ToolExecutionCommand command = new ToolExecutionCommand(skillName, toolName, args);
+        ToolExecutionContext context = new ToolExecutionContext(runId, skills);
+        try {
+            return toolExecutionRuleFilter.apply(command, context);
+        } catch (Exception e) {
+            return ToolResult.error(e.getMessage() == null ? e.toString() : e.getMessage());
         }
-        if (!reg.toolNames().contains(toolName)) {
-            return ToolResult.error("unknown tool for skill " + skillName + ": " + toolName);
-        }
-        ToolInvocation invocation = new ToolInvocation(runId, skillName, toolName, args, reg);
-        return proceed(0, invocation);
     }
 
     public Map<String, OpsSkillRegistry> skills() {
         return Map.copyOf(skills);
-    }
-
-    private ToolResult proceed(int index, ToolInvocation invocation) {
-        if (index >= advisors.size()) {
-            return invocation.registry().execute(invocation.toolName(), invocation.args());
-        }
-        return advisors.get(index).invoke(invocation, next -> proceed(index + 1, next));
     }
 }
