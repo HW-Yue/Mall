@@ -43,6 +43,7 @@ public class TagNode extends AbstractGroupBuyMarketSupport {
         boolean isWithin = repository.isTagCrowdRange(tagId, requestParameter.getUserId());
         dynamicContext.setVisible(visible || isWithin);
         dynamicContext.setEnable(enable || isWithin);
+        // TODO tag: 待活动 tag_id/tag_scope 与折扣 tag_id 关系明确后，再决定是否在试算阶段重置价格。
 
         return router(requestParameter, dynamicContext);
     }

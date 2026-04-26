@@ -53,6 +53,7 @@ public class GroupBuyRepository implements IGroupBuyRepository {
 
         BigDecimal originalPrice = sku.getOriginalPrice();
         BigDecimal payPrice = computePayPrice(activity.getDiscountId(), originalPrice);
+        // TODO tag: 待活动 tag_id/tag_scope 与折扣 tag_id 关系明确后，再在锁单定价阶段做人群重算。
         BigDecimal deductionPrice = originalPrice.subtract(payPrice);
 
         return ActivityPricingEntity.builder()

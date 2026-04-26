@@ -90,7 +90,7 @@ public class ActivityRepository implements IActivityRepository {
 
     @Override
     public boolean isTagCrowdRange(String tagId, String userId) {
-        // 暂无人群标签 BitSet，默认全部通过
+        // TODO tag: 后续统一梳理活动标签、折扣标签、人群明细的关系后，再接入 crowd_tags_detail 查询。
         return true;
     }
 

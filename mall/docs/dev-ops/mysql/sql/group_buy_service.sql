@@ -364,4 +364,3 @@ VALUES
 --   ADD COLUMN IF NOT EXISTS `discount_type` tinyint(1) NOT NULL DEFAULT '0' COMMENT '折扣类型（0:base、1:tag）' AFTER `discount_desc`,
 --   MODIFY COLUMN `discount_type` tinyint(1) NOT NULL DEFAULT '0' COMMENT '折扣类型（0:base、1:tag）';
 
-
