@@ -2,14 +2,12 @@ package com.yue.opsagent.springai.agent.parent;
 
 import com.yue.opsagent.springai.agent.AgentContextHolder;
 import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
+import com.yue.opsagent.springai.agent.react.ReactAgentSpec;
+import com.yue.opsagent.springai.agent.react.ReactRunner;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
-import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
-import com.yue.opsagent.springai.infrastructure.observability.OpsLogFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -23,20 +21,20 @@ public class OpsAgent {
 
     private static final Logger log = LoggerFactory.getLogger(OpsAgent.class);
 
-    private final ChatClient chatClient;
+    private final AgentToolRegistry agentToolRegistry;
     private final AgentContextHolder contextHolder;
-    private final LlmCallTracer llmCallTracer;
+    private final ReactRunner reactRunner;
+    private final int maxParentIters;
 
     public OpsAgent(
-            ChatModel chatModel,
             AgentToolRegistry agentToolRegistry,
             AgentContextHolder contextHolder,
-            LlmCallTracer llmCallTracer) {
+            ReactRunner reactRunner,
+            OpsAiProperties props) {
+        this.agentToolRegistry = agentToolRegistry;
         this.contextHolder = contextHolder;
-        this.llmCallTracer = llmCallTracer;
-        this.chatClient = ChatClient.builder(chatModel)
-                .defaultToolCallbacks(agentToolRegistry.toolCallbacks(contextHolder::mutableCopyForSubAgent))
-                .build();
+        this.reactRunner = reactRunner;
+        this.maxParentIters = props.getReact().getMaxParentIters();
     }
 
     /**
@@ -70,17 +68,14 @@ public class OpsAgent {
 
                     """
                     + formatAlert(event);
-            String outbound = "[system]\n"
-                    + OpsLogFormatter.truncate(system, OpsLogFormatter.LLM_BODY_MAX) + "\n[user]\n"
-                    + OpsLogFormatter.truncate(user, OpsLogFormatter.LLM_BODY_MAX);
-            String out = llmCallTracer.chatText(
+            String out = reactRunner.run(new ReactAgentSpec(
+                    "OpsAgent",
                     "ops-agent-react",
-                    outbound,
-                    () -> chatClient.prompt()
-                            .system(system)
-                            .user(user)
-                            .call()
-                            .chatResponse());
+                    system,
+                    user,
+                    ctx,
+                    agentToolRegistry.reactTools(contextHolder::mutableCopyForSubAgent),
+                    maxParentIters));
             log.info("[OpsAgent] 父 Agent 本轮排查结束 alertname={} replyChars={}（完整回复见上方 [LLM] 大模型回复）",
                     event.alertname(), out == null ? 0 : out.length());
             return out;
@@ -93,12 +88,16 @@ public class OpsAgent {
         String sop = rule.getSopMarkdown() == null ? "" : rule.getSopMarkdown();
         return """
                 你是运维编排 Agent，负责按标准作业程序（SOP）处理告警。目标是尽快给出可执行结论，而不是把所有工具跑一遍。
+                你必须只输出一段合法 JSON（不要 markdown），格式二选一：
+                1) {"action":"CALL_TOOL","tool":"<子Agent工具名>","args":{"task":"<委派给子Agent的明确任务>"}}
+                2) {"action":"FINAL","answer":"<给用户的中文结论>"}
 
                 调度原则：
                 - 不要编造监控、日志、实例或配置内容；只使用工具返回的事实。
                 - 先查“服务是否存在”：Prometheus 指标、Nacos 实例、Docker 容器。服务不存在或名称不一致时，立即结束。
                 - 当证据已经足够支持结论时，必须 FINAL，不要继续查无关依赖。
                 - 对子域工具一次只委派一个清晰任务。例如“查询 application=order-service 是否有 up/http 指标”，不要说“全面排查”。
+                - CALL_TOOL 的 args 必须包含 task 字段。
                 - 写操作必须由审批流处理；没有明确修复依据时不要提出写配置。
 
                 快速终止规则：

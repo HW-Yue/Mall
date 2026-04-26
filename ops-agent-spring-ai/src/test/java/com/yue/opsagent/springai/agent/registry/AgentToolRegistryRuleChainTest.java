@@ -81,6 +81,24 @@ class AgentToolRegistryRuleChainTest {
         assertSubAgentEvent(opsRunService, runId, "resolve", "error", "unknown_skill");
     }
 
+    @Test
+    void exposesReactToolsThatDelegateToSubAgents() {
+        TestSubAgent agent = new TestSubAgent();
+        OpsRunService opsRunService = new OpsRunService(new ObjectMapper());
+        AgentToolRegistry registry = agentToolRegistry(opsRunService, agent);
+        String runId = opsRunService.create(RouteRequest.text("test")).runId();
+
+        String result = executeWithRun(runId, () -> registry.reactTools(() -> Map.of("service", "mall")).stream()
+                .filter(t -> "nacos_skill".equals(t.name()))
+                .findFirst()
+                .orElseThrow()
+                .execute(Map.of("task", "查询服务实例"), Map.of()));
+
+        assertThat(result).isEqualTo("summary:查询服务实例");
+        assertThat(agent.executions()).isEqualTo(1);
+        assertSubAgentEvent(opsRunService, runId, "execute", "success", "nacos_skill");
+    }
+
     private static AgentToolRegistry agentToolRegistry(OpsRunService opsRunService, ISubAgent agent) {
         AgentToolRuleFilterFactory factory = new AgentToolRuleFilterFactory();
         var chain = factory.agentToolRuleFilter(java.util.List.of(

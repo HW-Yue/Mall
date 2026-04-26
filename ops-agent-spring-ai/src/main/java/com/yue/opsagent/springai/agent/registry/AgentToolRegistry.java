@@ -1,11 +1,9 @@
 package com.yue.opsagent.springai.agent.registry;
 
 import cn.bugstack.wrench.design.framework.link.model2.chain.BusinessLinkedList;
-import com.yue.opsagent.springai.agent.parent.DelegateTask;
+import com.yue.opsagent.springai.agent.react.ReactTool;
 import com.yue.opsagent.springai.agent.sub.ISubAgent;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunContextHolder;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.stereotype.Component;
 
 import java.util.Collection;
@@ -40,18 +38,29 @@ public class AgentToolRegistry {
         }
     }
 
-    public List<ToolCallback> toolCallbacks(java.util.function.Supplier<Map<String, Object>> contextSupplier) {
+    public List<ReactTool> reactTools(java.util.function.Supplier<Map<String, Object>> contextSupplier) {
         return primaryAgents.stream()
-                .map(agent -> FunctionToolCallback.builder(
-                                agent.parentToolName(),
-                                (DelegateTask t) -> execute(
-                                        agent.parentToolName(),
-                                        t.task() == null ? "" : t.task(),
-                                        contextSupplier.get()))
-                        .description(agent.parentToolDescription())
-                        .inputType(DelegateTask.class)
-                        .build())
-                .map(ToolCallback.class::cast)
+                .<ReactTool>map(agent -> new ReactTool() {
+                    @Override
+                    public String name() {
+                        return agent.parentToolName();
+                    }
+
+                    @Override
+                    public String description() {
+                        return agent.parentToolDescription();
+                    }
+
+                    @Override
+                    public String execute(Map<String, Object> args, Map<String, Object> context) {
+                        String task = "";
+                        if (args != null && args.get("task") != null) {
+                            task = String.valueOf(args.get("task"));
+                        }
+                        Map<String, Object> inherited = contextSupplier.get();
+                        return AgentToolRegistry.this.execute(agent.parentToolName(), task, inherited);
+                    }
+                })
                 .toList();
     }
 

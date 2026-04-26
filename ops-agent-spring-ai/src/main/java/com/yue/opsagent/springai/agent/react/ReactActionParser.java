@@ -1,4 +1,4 @@
-package com.yue.opsagent.springai.agent.sub;
+package com.yue.opsagent.springai.agent.react;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -8,13 +8,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-final class SubAgentJsonActions {
+public final class ReactActionParser {
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    private SubAgentJsonActions() {}
+    private ReactActionParser() {}
 
-    static Optional<ParsedAction> parse(String raw) {
+    public static Optional<ParsedAction> parse(String raw) {
         if (raw == null || raw.isBlank()) {
             return Optional.empty();
         }
@@ -41,6 +41,10 @@ final class SubAgentJsonActions {
             return Optional.empty();
         }
         return Optional.empty();
+    }
+
+    public static String jsonFormatReminder() {
+        return "请只输出 JSON：{\"action\":\"CALL_TOOL\",\"tool\":\"...\",\"args\":{...}} 或 {\"action\":\"FINAL\",\"answer\":\"...\"}";
     }
 
     private static Object jsonNodeToValue(JsonNode n) {
@@ -79,7 +83,7 @@ final class SubAgentJsonActions {
         return s.trim();
     }
 
-    sealed interface ParsedAction permits ParsedAction.CallTool, ParsedAction.FinalAction {
+    public sealed interface ParsedAction permits ParsedAction.CallTool, ParsedAction.FinalAction {
 
         record CallTool(String tool, Map<String, Object> args) implements ParsedAction {}
 
