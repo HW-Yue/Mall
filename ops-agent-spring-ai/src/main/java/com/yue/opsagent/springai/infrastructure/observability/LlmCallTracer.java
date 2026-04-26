@@ -1,5 +1,8 @@
 package com.yue.opsagent.springai.infrastructure.observability;
 
+import org.apache.skywalking.apm.toolkit.trace.ActiveSpan;
+import org.apache.skywalking.apm.toolkit.trace.Trace;
+import org.apache.skywalking.apm.toolkit.trace.TraceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
@@ -40,26 +43,51 @@ public class LlmCallTracer {
      * @param outboundSummary 本次请求发往模型的内容摘要（system/user/多轮等），为 null 时仅打开始/结束行与字数
      */
     public String chatText(String logicalAgentKey, String outboundSummary, Supplier<ChatResponse> call) {
-        if (telemetry == null) {
-            logOutbound(logicalAgentKey, outboundSummary);
-            try {
-                ChatResponse r = call.get();
-                return logAndExtractText(logicalAgentKey, r, r.getMetadata());
-            } catch (RuntimeException e) {
-                log.warn("[LLM] 调用失败 key={} err={}", logicalAgentKey, e.toString());
-                throw e;
-            }
-        }
-        telemetry.startReasoning(logicalAgentKey, defaultModelName);
         logOutbound(logicalAgentKey, outboundSummary);
+        return doTracedChat(logicalAgentKey, call);
+    }
+
+    @Trace(operationName = "genai.chat")
+    private String doTracedChat(String logicalAgentKey, Supplier<ChatResponse> call) {
+        ActiveSpan.tag("gen_ai.agent", logicalAgentKey);
+        ActiveSpan.tag("gen_ai.operation", "chat.completion");
+        ActiveSpan.tag("gen_ai.system", "dashscope");
+        ActiveSpan.tag("gen_ai.request.model", defaultModelName);
+
+        // OTLP 双写（可选，保留 GenAI Dashboard 数据）
+        if (telemetry != null) {
+            telemetry.startReasoning(logicalAgentKey, defaultModelName);
+        }
+
         try {
             ChatResponse r = call.get();
             var meta = r.getMetadata();
             String model = meta != null && meta.getModel() != null ? meta.getModel() : defaultModelName;
-            telemetry.endReasoning(logicalAgentKey, model, meta != null ? meta.getUsage() : null);
+
+            ActiveSpan.tag("gen_ai.response.model", model);
+            if (meta != null && meta.getUsage() != null) {
+                var u = meta.getUsage();
+                if (u.getPromptTokens() != null) {
+                    ActiveSpan.tag("gen_ai.usage.input_tokens", String.valueOf(u.getPromptTokens()));
+                }
+                if (u.getCompletionTokens() != null) {
+                    ActiveSpan.tag("gen_ai.usage.output_tokens", String.valueOf(u.getCompletionTokens()));
+                }
+                if (u.getTotalTokens() != null) {
+                    ActiveSpan.tag("gen_ai.usage.total_tokens", String.valueOf(u.getTotalTokens()));
+                }
+            }
+            // 把 SkyWalking traceId 注入 OTLP span，让两边能关联
+            String swTraceId = TraceContext.traceId();
+            if (telemetry != null) {
+                telemetry.endReasoning(logicalAgentKey, model, meta != null ? meta.getUsage() : null, swTraceId);
+            }
             return logAndExtractText(logicalAgentKey, r, meta);
         } catch (RuntimeException e) {
-            telemetry.endWithError(logicalAgentKey, e);
+            ActiveSpan.error(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
+            if (telemetry != null) {
+                telemetry.endWithError(logicalAgentKey, e);
+            }
             log.warn("[LLM] 调用失败 key={} err={}", logicalAgentKey, e.toString());
             throw e;
         }

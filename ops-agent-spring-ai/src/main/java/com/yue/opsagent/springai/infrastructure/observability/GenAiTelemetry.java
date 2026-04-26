@@ -50,6 +50,10 @@ public class GenAiTelemetry {
     }
 
     public void endReasoning(String logicalAgentName, String modelName, Usage usage) {
+        endReasoning(logicalAgentName, modelName, usage, null);
+    }
+
+    public void endReasoning(String logicalAgentName, String modelName, Usage usage, String swTraceId) {
         String key = spanKey(logicalAgentName);
         SpanHolder holder = activeSpans.remove(key);
         if (holder == null) {
@@ -69,6 +73,9 @@ public class GenAiTelemetry {
                 if (usage.getTotalTokens() != null) {
                     holder.span.setAttribute(ATTR_TOTAL_TOKENS, usage.getTotalTokens().longValue());
                 }
+            }
+            if (swTraceId != null && !swTraceId.isBlank()) {
+                holder.span.setAttribute("skywalking.trace_id", swTraceId);
             }
             holder.span.setStatus(StatusCode.OK);
         } finally {

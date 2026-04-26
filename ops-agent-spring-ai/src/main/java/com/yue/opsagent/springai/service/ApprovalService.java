@@ -23,7 +23,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * In-memory approval queue with optional SSE subscribers for {@code dev-ops/frontend}.
+ * In-memory approval queue with optional SSE subscribers for the static web console.
  */
 @Service
 public class ApprovalService {
