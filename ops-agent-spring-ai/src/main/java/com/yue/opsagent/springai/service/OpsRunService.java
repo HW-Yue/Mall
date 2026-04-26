@@ -124,6 +124,11 @@ public class OpsRunService {
                 Map.of("skill", skill, "tool", tool, "result", result == null ? Map.of() : result));
     }
 
+    public void toolResult(String runId, String skill, String tool, Map<String, Object> event) {
+        addEvent(runId, "tool_result", skill, "工具调用结果 " + tool,
+                event == null ? Map.of() : event);
+    }
+
     public SseEmitter subscribe(String runId) {
         SseEmitter emitter = new SseEmitter(3_600_000L);
         subscribers.computeIfAbsent(runId, k -> new CopyOnWriteArrayList<>()).add(emitter);

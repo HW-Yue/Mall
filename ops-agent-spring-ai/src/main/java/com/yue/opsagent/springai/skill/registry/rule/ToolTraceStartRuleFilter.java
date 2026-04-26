@@ -21,6 +21,9 @@ public class ToolTraceStartRuleFilter implements ToolExecutionRuleFilter {
 
     @Override
     public ToolResult apply(ToolExecutionCommand command, ToolExecutionContext context) {
+        if (context.hasResult()) {
+            return next(command, context);
+        }
         ActiveSpan.tag("tool.skill", command.skillName());
         ActiveSpan.tag("tool.name", command.toolName());
         if (context.hasRunId()) {

@@ -13,9 +13,15 @@ public class ToolWhitelistRuleFilter implements ToolExecutionRuleFilter {
 
     @Override
     public ToolResult apply(ToolExecutionCommand command, ToolExecutionContext context) {
+        if (context.hasResult()) {
+            return next(command, context);
+        }
         if (!context.getRegistry().toolNames().contains(command.toolName())) {
-            return stop(command, context, ToolResult.error(
-                    "unknown tool for skill " + command.skillName() + ": " + command.toolName()));
+            String message = "unknown tool for skill " + command.skillName() + ": " + command.toolName();
+            context.setPhase("whitelist");
+            context.setOutcome("error");
+            context.setErrorMessage(message);
+            context.setResult(ToolResult.error(message));
         }
         return next(command, context);
     }

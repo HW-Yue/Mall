@@ -21,13 +21,16 @@ public class RunCancelRuleFilter implements ToolExecutionRuleFilter {
 
     @Override
     public ToolResult apply(ToolExecutionCommand command, ToolExecutionContext context) {
+        if (context.hasResult()) {
+            return next(command, context);
+        }
         if (context.hasRunId() && opsRunService.isCancelled(context.getRunId())) {
             ActiveSpan.tag("tool.cancelled", "true");
-            ToolResult result = ToolResult.error("run 已被用户暂停，跳过工具调用: "
-                    + command.skillName() + "." + command.toolName());
-            context.setResult(result);
-            opsRunService.toolEnd(context.getRunId(), command.skillName(), command.toolName(), result.toMap());
-            return stop(command, context, result);
+            String message = "run 已被用户暂停，跳过工具调用: " + command.skillName() + "." + command.toolName();
+            context.setPhase("cancel");
+            context.setOutcome("cancelled");
+            context.setErrorMessage(message);
+            context.setResult(ToolResult.error(message));
         }
         return next(command, context);
     }

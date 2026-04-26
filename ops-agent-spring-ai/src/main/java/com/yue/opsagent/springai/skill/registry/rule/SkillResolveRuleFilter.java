@@ -16,7 +16,12 @@ public class SkillResolveRuleFilter implements ToolExecutionRuleFilter {
     public ToolResult apply(ToolExecutionCommand command, ToolExecutionContext context) {
         OpsSkillRegistry registry = context.getSkills().get(command.skillName());
         if (registry == null) {
-            return stop(command, context, ToolResult.error("unknown skill: " + command.skillName()));
+            String message = "unknown skill: " + command.skillName();
+            context.setPhase("resolve");
+            context.setOutcome("error");
+            context.setErrorMessage(message);
+            context.setResult(ToolResult.error(message));
+            return next(command, context);
         }
         context.setRegistry(registry);
         return next(command, context);
