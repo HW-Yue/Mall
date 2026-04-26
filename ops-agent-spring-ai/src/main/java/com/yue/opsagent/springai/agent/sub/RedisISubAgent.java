@@ -26,6 +26,6 @@ public class RedisISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "委派 Redis 只读：INFO、慢日志、客户端、内存、GET/SCAN。传入 task 为自然语言任务说明。";
+        return "Redis Skill：只读 INFO、慢日志、客户端、内存、GET/SCAN。传入 task 为自然语言任务说明。";
     }
 }

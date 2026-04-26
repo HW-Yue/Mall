@@ -26,6 +26,6 @@ public class ElasticsearchISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "委派 Elasticsearch：索引、搜索、计数、聚合（应用日志 nexus-* 与 SkyWalking sw_*；args 可带 cluster=skywalking）。传入 task 为自然语言任务说明。";
+        return "Elasticsearch Skill：索引、搜索、计数、聚合（应用日志 nexus-* 与 SkyWalking sw_*；args 可带 cluster=skywalking）。传入 task 为自然语言任务说明。";
     }
 }

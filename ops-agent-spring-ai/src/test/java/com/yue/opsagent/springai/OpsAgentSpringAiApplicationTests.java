@@ -1,5 +1,6 @@
 package com.yue.opsagent.springai;
 
+import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
 import com.yue.opsagent.springai.agent.sub.ISubAgent;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.skill.registry.MasterRegistry;
@@ -23,6 +24,9 @@ class OpsAgentSpringAiApplicationTests {
     private MasterRegistry masterRegistry;
 
     @Autowired
+    private AgentToolRegistry agentToolRegistry;
+
+    @Autowired
     private OpsAiProperties opsAiProperties;
 
     @Autowired
@@ -39,6 +43,16 @@ class OpsAgentSpringAiApplicationTests {
         assertThat(menu).contains("elasticsearch_ops");
         assertThat(menu).contains("redis_inspect");
         assertThat(menu).contains("nacos_config");
+    }
+
+    @Test
+    void parentAgentMenuUsesSkillToolNames() {
+        String menu = agentToolRegistry.buildMenu();
+        assertThat(menu).contains("Docker Skill (tool: docker_skill)");
+        assertThat(menu).contains("Prometheus Skill (tool: prometheus_skill)");
+        assertThat(menu).contains("Nacos Skill (tool: nacos_skill)");
+        assertThat(menu).doesNotContain("tool: nacos_config");
+        assertThat(menu).doesNotContain("tool: mysql_inspect");
     }
 
     @Test

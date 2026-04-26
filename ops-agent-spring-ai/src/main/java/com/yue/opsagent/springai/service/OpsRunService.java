@@ -129,6 +129,11 @@ public class OpsRunService {
                 event == null ? Map.of() : event);
     }
 
+    public void subAgentResult(String runId, String agentTool, Map<String, Object> event) {
+        addEvent(runId, "sub_agent_result", agentTool, "子Agent调用结果 " + agentTool,
+                event == null ? Map.of() : event);
+    }
+
     public SseEmitter subscribe(String runId) {
         SseEmitter emitter = new SseEmitter(3_600_000L);
         subscribers.computeIfAbsent(runId, k -> new CopyOnWriteArrayList<>()).add(emitter);

@@ -26,6 +26,6 @@ public class RocketMqISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "委派 RocketMQ：Topic 路由、消费统计、死信线索。传入 task 为自然语言任务说明。";
+        return "RocketMQ Skill：Topic 路由、消费统计、死信线索。传入 task 为自然语言任务说明。";
     }
 }

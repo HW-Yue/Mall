@@ -26,6 +26,6 @@ public class DockerISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "委派 Docker：日志、stats、inspect、受控 exec。传入 task 为自然语言任务说明。";
+        return "Docker Skill：日志、stats、inspect、受控 exec。传入 task 为自然语言任务说明。";
     }
 }

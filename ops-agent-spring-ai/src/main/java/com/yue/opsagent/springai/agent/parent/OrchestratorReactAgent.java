@@ -1,7 +1,7 @@
 package com.yue.opsagent.springai.agent.parent;
 
 import com.yue.opsagent.springai.agent.OrchestrationContextHolder;
-import com.yue.opsagent.springai.agent.sub.ISubAgent;
+import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
@@ -10,13 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.model.ChatModel;
-import org.springframework.ai.tool.ToolCallback;
-import org.springframework.ai.tool.function.FunctionToolCallback;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,24 +29,13 @@ public class OrchestratorReactAgent {
 
     public OrchestratorReactAgent(
             ChatModel chatModel,
-            List<ISubAgent> agents,
+            AgentToolRegistry agentToolRegistry,
             OrchestrationContextHolder contextHolder,
             LlmCallTracer llmCallTracer) {
         this.contextHolder = contextHolder;
         this.llmCallTracer = llmCallTracer;
-        List<ToolCallback> callbacks = new ArrayList<>();
-        for (ISubAgent a : agents) {
-            callbacks.add(FunctionToolCallback.builder(
-                            a.parentToolName(),
-                            (DelegateTask t) -> a.runReact(
-                                    t.task() == null ? "" : t.task(),
-                                    contextHolder.mutableCopyForSubAgent()))
-                    .description(a.parentToolDescription())
-                    .inputType(DelegateTask.class)
-                    .build());
-        }
         this.chatClient = ChatClient.builder(chatModel)
-                .defaultToolCallbacks(callbacks)
+                .defaultToolCallbacks(agentToolRegistry.toolCallbacks(contextHolder::mutableCopyForSubAgent))
                 .build();
     }
 

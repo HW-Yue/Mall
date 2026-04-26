@@ -2,7 +2,7 @@ package com.yue.opsagent.springai.service;
 
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.domain.alert.AlertPlaceholderResolver;
-import com.yue.opsagent.springai.agent.sub.SubAgentRegistry;
+import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,15 +27,15 @@ public class SopOrchestrator {
     private static final Logger log = LoggerFactory.getLogger(SopOrchestrator.class);
 
     private final MasterRegistry masterRegistry;
-    private final SubAgentRegistry subAgentRegistry;
+    private final AgentToolRegistry agentToolRegistry;
     private final ObjectMapper objectMapper;
 
     public SopOrchestrator(
             MasterRegistry masterRegistry,
-            SubAgentRegistry subAgentRegistry,
+            AgentToolRegistry agentToolRegistry,
             ObjectMapper objectMapper) {
         this.masterRegistry = masterRegistry;
-        this.subAgentRegistry = subAgentRegistry;
+        this.agentToolRegistry = agentToolRegistry;
         this.objectMapper = objectMapper;
     }
 
@@ -83,7 +83,7 @@ public class SopOrchestrator {
                     "application", AlertPlaceholderResolver.nullToEmpty(event.application()),
                     "labels", event.labels() == null ? Map.of() : event.labels(),
                     "annotations", event.annotations() == null ? Map.of() : event.annotations()));
-            String summary = subAgentRegistry.require(step.getSubAgentId()).runReact(task, ctx);
+            String summary = agentToolRegistry.execute(step.getSubAgentId(), task, ctx);
             return Map.of(
                     "type", "delegate_subagent",
                     "subAgentId", step.getSubAgentId(),

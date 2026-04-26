@@ -26,6 +26,6 @@ public class MetricsISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "委派统一指标域（Prometheus）：Sentinel/DynamicTP/JVM/业务 PromQL。传入 task 为自然语言任务说明。";
+        return "Prometheus Skill：Sentinel/DynamicTP/JVM/业务 PromQL。传入 task 为自然语言任务说明。";
     }
 }
