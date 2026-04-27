@@ -141,7 +141,7 @@ public class OrderRepository implements IOrderRepository {
     @Override
     public OrderEntity queryOrderByOrderId(String orderId) {
         PayOrder payOrder = orderDao.queryOrderByOrderId(orderId);
-        if (null == orderId) return null;
+        if (null == payOrder) return null;
 
         return OrderEntity.builder()
                 .id(payOrder.getId())
@@ -151,6 +151,7 @@ public class OrderRepository implements IOrderRepository {
                 .orderId(payOrder.getOrderId())
                 .orderTime(payOrder.getOrderTime())
                 .totalAmount(payOrder.getTotalAmount())
+                .orderStatusVO(OrderStatusVO.valueOf(payOrder.getStatus()))
                 .payUrl(payOrder.getPayUrl())
                 .marketType(payOrder.getMarketType())
                 .marketDeductionAmount(payOrder.getMarketDeductionAmount())

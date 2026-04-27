@@ -4,12 +4,11 @@ import com.yue.seckill.domain.activity.adapter.repository.ISeckillActivityReposi
 import com.yue.seckill.domain.activity.model.entity.SeckillActivityEntity;
 import com.yue.seckill.domain.activity.model.valobj.SeckillActivityDiscountVO;
 import com.yue.seckill.domain.activity.model.valobj.SkuVO;
-import com.yue.seckill.domain.trade.adapter.port.ISeckillOrderTaskPort;
 import com.yue.seckill.domain.trade.adapter.port.ISeckillStockPort;
 import com.yue.seckill.domain.trade.adapter.port.IOrderServicePort;
+import com.yue.seckill.domain.trade.model.entity.SeckillOrderResultEntity;
 import com.yue.seckill.types.enums.ResponseCode;
 import com.yue.seckill.types.exception.AppException;
-import com.yue.seckill.types.model.SeckillOrderTaskMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -31,18 +30,15 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
     private IOrderServicePort orderServicePort;
     @Resource
     private ISeckillStockPort seckillStockPort;
-    @Resource
-    private ISeckillOrderTaskPort seckillOrderTaskPort;
-
     @Override
-    public String createSeckillOrder(String userId, String productId, Long activityId,
-                                     String source, String channel, String goodsName, String goodsImageUrl,
-                                     boolean isTest) {
+    public SeckillOrderResultEntity createSeckillOrder(String userId, String productId, Long activityId,
+                                                       String source, String channel, String goodsName, String goodsImageUrl,
+                                                       boolean isTest) {
         // 压测模式：跳过所有真实 IO，直接返回 mock token
         if (isTest) {
             String mockToken = "test-" + RandomStringUtils.randomAlphanumeric(28);
             log.info("[TEST] 秒杀下单压测模式 userId:{} mockToken:{}", userId, mockToken);
-            return mockToken;
+            return SeckillOrderResultEntity.builder().seckillToken(mockToken).build();
         }
 
         // 1. 查询活动
@@ -86,26 +82,30 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
 
         // 5. 生成秒杀令牌并写入 Redis
         String seckillToken = RandomStringUtils.randomAlphanumeric(32);
+        String outTradeNo = "SK" + RandomStringUtils.randomNumeric(18);
         seckillStockPort.saveSeckillToken(seckillToken, userId, productId, activityId);
 
-        // 6. 发 MQ 给订单服务
-        SeckillOrderTaskMessage taskMessage = SeckillOrderTaskMessage.builder()
-                .seckillToken(seckillToken)
-                .userId(userId)
-                .productId(productId)
-                .activityId(activityId)
-                .source(source)
-                .channel(channel)
-                .goodsName(StringUtils.defaultIfBlank(goodsName, "秒杀商品"))
-                .goodsImageUrl(StringUtils.defaultString(goodsImageUrl))
-                .originalPrice(originalPrice)
-                .deductionPrice(deductionPrice)
-                .payPrice(payPrice)
-                .build();
-        seckillOrderTaskPort.sendCreateOrderTask(taskMessage);
+        String orderId;
+        try {
+            orderId = orderServicePort.createOrder(
+                    userId, productId, StringUtils.defaultIfBlank(goodsName, "秒杀商品"), StringUtils.defaultString(goodsImageUrl),
+                    originalPrice, deductionPrice, payPrice, source, channel, outTradeNo);
+        } catch (Exception e) {
+            log.warn("秒杀同步建单异常，开始按 outTradeNo 确认 userId:{} outTradeNo:{}", userId, outTradeNo, e);
+            orderId = orderServicePort.queryOrderIdByOutTradeNo(userId, outTradeNo);
+            if (StringUtils.isBlank(orderId)) {
+                seckillStockPort.rollbackSeckillOrder(activityId, productId, userId, seckillToken);
+                throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
+            }
+        }
 
-        log.info("秒杀下单受理成功 userId:{} seckillToken:{} activityId:{}", userId, seckillToken, activityId);
-        return seckillToken;
+        log.info("秒杀下单成功 userId:{} seckillToken:{} orderId:{} outTradeNo:{} activityId:{}",
+                userId, seckillToken, orderId, outTradeNo, activityId);
+        return SeckillOrderResultEntity.builder()
+                .seckillToken(seckillToken)
+                .orderId(orderId)
+                .outTradeNo(outTradeNo)
+                .build();
     }
 
     @Override

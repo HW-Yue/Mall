@@ -6,6 +6,7 @@ import com.yue.seckill.api.ISeckillTradeController;
 import com.yue.seckill.api.dto.CreateSeckillOrderRequestDTO;
 import com.yue.seckill.api.dto.CreateSeckillOrderResponseDTO;
 import com.yue.seckill.api.response.Response;
+import com.yue.seckill.domain.trade.model.entity.SeckillOrderResultEntity;
 import com.yue.seckill.domain.trade.service.ISeckillTradeService;
 import com.yue.seckill.types.enums.ResponseCode;
 import com.yue.seckill.types.exception.AppException;
@@ -48,7 +49,7 @@ public class SeckillTradeController implements ISeckillTradeController {
             }
 
             // 调用秒杀交易服务创建订单
-            String seckillToken = seckillTradeService.createSeckillOrder(
+            SeckillOrderResultEntity result = seckillTradeService.createSeckillOrder(
                     request.getUserId(),
                     request.getProductId(),
                     request.getActivityId(),
@@ -62,7 +63,9 @@ public class SeckillTradeController implements ISeckillTradeController {
                     .code(ResponseCode.SUCCESS.getCode())
                     .info(ResponseCode.SUCCESS.getInfo())
                     .data(CreateSeckillOrderResponseDTO.builder()
-                            .seckillToken(seckillToken)
+                            .seckillToken(result.getSeckillToken())
+                            .orderId(result.getOrderId())
+                            .outTradeNo(result.getOutTradeNo())
                             .build())
                     .build();
         } catch (AppException e) {

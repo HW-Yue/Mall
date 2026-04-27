@@ -58,6 +58,14 @@ public class SeckillStockPort implements ISeckillStockPort {
             "redis.call('SADD', userKey, userId);" +
             "return 1;";
 
+    private static final String ROLLBACK_ORDER_LUA =
+            "local stockKey = KEYS[1];" +
+            "local userKey  = KEYS[2];" +
+            "local userId   = ARGV[1];" +
+            "local removed = redis.call('SREM', userKey, userId);" +
+            "if (removed == 1) then redis.call('INCR', stockKey); end;" +
+            "return removed;";
+
     // ── Lua：扣减真实库存（无需用户去重）─────────────────────────────────
     /**
      * 返回值：1=成功, 0=库存不足, -2=key 不存在（未预热）
@@ -72,12 +80,15 @@ public class SeckillStockPort implements ISeckillStockPort {
 
     private static final DefaultRedisScript<Long> AVAILABLE_DEDUCT_SCRIPT = new DefaultRedisScript<>();
     private static final DefaultRedisScript<Long> REAL_DEDUCT_SCRIPT      = new DefaultRedisScript<>();
+    private static final DefaultRedisScript<Long> ROLLBACK_ORDER_SCRIPT   = new DefaultRedisScript<>();
 
     static {
         AVAILABLE_DEDUCT_SCRIPT.setScriptText(AVAILABLE_DEDUCT_LUA);
         AVAILABLE_DEDUCT_SCRIPT.setResultType(Long.class);
         REAL_DEDUCT_SCRIPT.setScriptText(REAL_DEDUCT_LUA);
         REAL_DEDUCT_SCRIPT.setResultType(Long.class);
+        ROLLBACK_ORDER_SCRIPT.setScriptText(ROLLBACK_ORDER_LUA);
+        ROLLBACK_ORDER_SCRIPT.setResultType(Long.class);
     }
 
     @Resource
@@ -144,6 +155,19 @@ public class SeckillStockPort implements ISeckillStockPort {
     @Override
     public void recoverStock(Long activityId, String goodsId) {
         stringRedisTemplate.opsForValue().increment(buildAvailableKey(activityId, goodsId));
+    }
+
+    @Override
+    public void rollbackSeckillOrder(Long activityId, String goodsId, String userId, String seckillToken) {
+        Long removed = stringRedisTemplate.execute(
+                ROLLBACK_ORDER_SCRIPT,
+                Arrays.asList(buildAvailableKey(activityId, goodsId), buildUserKey(activityId, goodsId)),
+                userId
+        );
+        stringRedisTemplate.delete(TOKEN_KEY_PREFIX + seckillToken);
+        stringRedisTemplate.delete(TOKEN_STATUS_KEY_PREFIX + seckillToken);
+        log.info("[秒杀回滚] activityId:{} goodsId:{} userId:{} seckillToken:{} removed:{}",
+                activityId, goodsId, userId, seckillToken, removed);
     }
 
     // ── 令牌 ──────────────────────────────────────────────────────────

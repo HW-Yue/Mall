@@ -107,6 +107,9 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
                     payActivityEntity.getStartTime(), payActivityEntity.getEndTime());
         } catch (Exception e) {
             log.error("调 order-service 创建订单失败 userId:{}", userId, e);
+            if (e instanceof AppException) {
+                repository.compensateLockCount(marketPayOrderEntity.getTeamId(), newTeam);
+            }
             throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
         }
 

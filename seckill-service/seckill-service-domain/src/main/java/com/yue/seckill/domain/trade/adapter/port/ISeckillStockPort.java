@@ -35,6 +35,8 @@ public interface ISeckillStockPort {
 
     void recoverStock(Long activityId, String goodsId);
 
+    void rollbackSeckillOrder(Long activityId, String goodsId, String userId, String seckillToken);
+
     void saveSeckillToken(String seckillToken, String userId, String goodsId, Long activityId);
 
 }

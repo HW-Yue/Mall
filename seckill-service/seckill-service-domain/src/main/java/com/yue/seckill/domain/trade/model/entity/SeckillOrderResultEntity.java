@@ -1,4 +1,4 @@
-package com.yue.seckill.api.dto;
+package com.yue.seckill.domain.trade.model.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -7,9 +7,9 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class CreateSeckillOrderResponseDTO {
+@AllArgsConstructor
+public class SeckillOrderResultEntity {
 
     private String seckillToken;
     private String orderId;

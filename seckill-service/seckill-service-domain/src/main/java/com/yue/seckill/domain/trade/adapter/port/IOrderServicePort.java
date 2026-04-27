@@ -14,6 +14,8 @@ public interface IOrderServicePort {
                        BigDecimal originalPrice, BigDecimal deductionPrice, BigDecimal payPrice,
                        String source, String channel, String outTradeNo);
 
+    String queryOrderIdByOutTradeNo(String userId, String outTradeNo);
+
     /**
      * 执行退款
      */

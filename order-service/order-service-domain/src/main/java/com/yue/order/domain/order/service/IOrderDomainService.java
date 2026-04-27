@@ -17,6 +17,11 @@ public interface IOrderDomainService {
     String createOrder(CreateOrderCommand command);
 
     /**
+     * 按 userId + outTradeNo 查询已创建订单，用于服务间超时确认
+     */
+    OrderEntity queryByUserIdAndOutTradeNo(String userId, String outTradeNo);
+
+    /**
      * 普通商品：mall 已锁可售库存，生成本服务 orderId/outTradeNo，同步发 MQ 异步落单，不经过 mall 二次锁库
      */
     NormalOrderEnqueueResult submitNormalOrderFromMall(CreateOrderCommand command);

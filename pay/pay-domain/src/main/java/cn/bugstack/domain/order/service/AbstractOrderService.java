@@ -22,8 +22,19 @@ public abstract class AbstractOrderService implements IOrderService {
     @Override
     public PayOrderEntity createOrder(CreateOrderEntity createOrderEntity) throws Exception {
 
-        // 写入本地订单表
-        this.doSaveOrder(createOrderEntity);
+        OrderEntity existingOrder = repository.queryOrderByOrderId(createOrderEntity.getOrderId());
+        if (existingOrder != null && existingOrder.getPayUrl() != null && !existingOrder.getPayUrl().trim().isEmpty()) {
+            log.info("创建支付单-幂等返回 userId:{} orderId:{}", createOrderEntity.getUserId(), createOrderEntity.getOrderId());
+            return PayOrderEntity.builder()
+                    .orderId(existingOrder.getOrderId())
+                    .payUrl(existingOrder.getPayUrl())
+                    .build();
+        }
+
+        if (existingOrder == null) {
+            // 写入本地订单表
+            this.doSaveOrder(createOrderEntity);
+        }
 
         MarketPayDiscountEntity marketPayDiscountEntity =MarketPayDiscountEntity.builder()
                 .payPrice(createOrderEntity.getPayPrice())

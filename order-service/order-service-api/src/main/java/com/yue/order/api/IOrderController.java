@@ -5,6 +5,7 @@ import com.yue.order.api.dto.CreateOrderResponseDTO;
 import com.yue.order.api.dto.GetPayUrlRequestDTO;
 import com.yue.order.api.dto.QuerySeckillOrderRequestDTO;
 import com.yue.order.api.dto.QuerySeckillOrderResponseDTO;
+import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
 import com.yue.order.api.dto.QueryUserOrderListRequestDTO;
 import com.yue.order.api.dto.QueryUserOrderListResponseDTO;
 import com.yue.order.api.dto.RefundRequestDTO;
@@ -45,4 +46,8 @@ public interface IOrderController {
     /** 查询秒杀建单结果（前端用 seckillToken 轮询，status=1 时返回 orderId） */
     @PostMapping("query_seckill_order")
     Response<QuerySeckillOrderResponseDTO> querySeckillOrder(@RequestBody QuerySeckillOrderRequestDTO request);
+
+    /** 按 outTradeNo 查询订单，用于服务间超时确认和幂等补偿 */
+    @PostMapping("query_order_by_out_trade_no")
+    Response<CreateOrderResponseDTO> queryOrderByOutTradeNo(@RequestBody QueryOrderByOutTradeNoRequestDTO request);
 }

@@ -13,6 +13,8 @@ import com.yue.order.types.enums.ResponseCode;
 import com.yue.order.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,7 +68,17 @@ public class OrderRepository implements IOrderRepository {
                 .marketType(order.getMarketType().getCode())
                 .build();
 
-        orderDao.insert(po);
+        try {
+            orderDao.insert(po);
+        } catch (DuplicateKeyException e) {
+            OrderPO existing = orderDao.queryByOutTradeNo(order.getOutTradeNo());
+            if (existing != null && StringUtils.equals(existing.getUserId(), order.getUserId())) {
+                log.info("saveOrder 幂等返回已存在订单 userId:{} orderId:{} outTradeNo:{}",
+                        order.getUserId(), existing.getOrderId(), order.getOutTradeNo());
+                return existing.getOrderId();
+            }
+            throw e;
+        }
         order.setOrderId(orderId);
         return orderId;
     }

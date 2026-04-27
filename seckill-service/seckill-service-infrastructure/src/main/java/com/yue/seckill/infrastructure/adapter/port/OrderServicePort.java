@@ -5,6 +5,7 @@ import com.yue.seckill.infrastructure.gateway.IOrderService;
 import com.yue.seckill.infrastructure.gateway.dto.CreateOrderRequestDTO;
 import com.yue.seckill.infrastructure.gateway.dto.CreateOrderResponseDTO;
 import com.yue.seckill.infrastructure.gateway.dto.GatewayResponse;
+import com.yue.seckill.infrastructure.gateway.dto.QueryOrderByOutTradeNoRequestDTO;
 import com.yue.seckill.infrastructure.gateway.dto.RefundRequestDTO;
 import com.yue.seckill.types.enums.ResponseCode;
 import com.yue.seckill.types.exception.AppException;
@@ -49,6 +50,25 @@ public class OrderServicePort implements IOrderServicePort {
         }
 
         return response.getData().getOrderId();
+    }
+
+    @Override
+    public String queryOrderIdByOutTradeNo(String userId, String outTradeNo) {
+        QueryOrderByOutTradeNoRequestDTO request = new QueryOrderByOutTradeNoRequestDTO();
+        request.setUserId(userId);
+        request.setOutTradeNo(outTradeNo);
+        try {
+            GatewayResponse<CreateOrderResponseDTO> response = orderService.queryOrderByOutTradeNo(request);
+            if (response == null || !ResponseCode.SUCCESS.getCode().equals(response.getCode()) || response.getData() == null) {
+                log.warn("order-service queryOrderByOutTradeNo 未查到订单 userId:{} outTradeNo:{} resp:{}",
+                        userId, outTradeNo, response);
+                return null;
+            }
+            return response.getData().getOrderId();
+        } catch (Exception e) {
+            log.warn("order-service queryOrderByOutTradeNo 调用异常 userId:{} outTradeNo:{}", userId, outTradeNo, e);
+            return null;
+        }
     }
 
     @Override

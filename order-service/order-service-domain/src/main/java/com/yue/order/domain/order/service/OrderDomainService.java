@@ -68,6 +68,16 @@ public class OrderDomainService implements IOrderDomainService {
                 : RandomStringUtils.randomNumeric(12);
         command.setOutTradeNo(outTradeNo);
 
+        OrderEntity existing = orderRepository.queryByOutTradeNo(outTradeNo);
+        if (existing != null) {
+            if (!StringUtils.equals(existing.getUserId(), command.getUserId())) {
+                throw new AppException(ResponseCode.ORDER_STATUS_ERROR.getCode(), "outTradeNo 已被其他用户使用");
+            }
+            log.info("createOrder 幂等返回 userId:{} orderId:{} outTradeNo:{}",
+                    command.getUserId(), existing.getOrderId(), outTradeNo);
+            return existing.getOrderId();
+        }
+
         // 构建订单实体
         OrderEntity order = OrderEntity.builder()
                 .userId(command.getUserId())
@@ -89,6 +99,18 @@ public class OrderDomainService implements IOrderDomainService {
         String orderId = orderRepository.saveOrder(order);
         log.info("createOrder 完成 userId:{} orderId:{} marketType:{}", command.getUserId(), orderId, command.getMarketType());
         return orderId;
+    }
+
+    @Override
+    public OrderEntity queryByUserIdAndOutTradeNo(String userId, String outTradeNo) {
+        if (StringUtils.isAnyBlank(userId, outTradeNo)) {
+            return null;
+        }
+        OrderEntity order = orderRepository.queryByOutTradeNo(outTradeNo.trim());
+        if (order == null || !StringUtils.equals(order.getUserId(), userId)) {
+            return null;
+        }
+        return order;
     }
 
     @Override
