@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: yue-ops-agent
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8848
+        ip: 127.0.0.1
+      config:
+        server-addr: 127.0.0.1:8848
+
+ops-ai:
+  otlp:
+    enabled: false
+    endpoint: http://127.0.0.1:11800
+    service-name: yue-ops-agent
+  elasticsearch:
+    base-url: http://127.0.0.1:9200
+  prometheus:
+    base-url: http://127.0.0.1:9090
+  nacos:
+    server-addr: 127.0.0.1:8848
+  mysql:
+    jdbc-url: jdbc:mysql://127.0.0.1:3306/mysql?useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: ""
+  rocketmq:
+    name-server: 127.0.0.1:9876
+    enabled: false
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: ""

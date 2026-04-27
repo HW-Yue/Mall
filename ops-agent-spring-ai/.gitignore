@@ -1,0 +1,10 @@
+/target/
+/.idea/
+/.classpath
+/.project
+/.settings/
+/.codex/
+/data/
+*.log
+/application-local.yml
+/docs/assets/*.tmp

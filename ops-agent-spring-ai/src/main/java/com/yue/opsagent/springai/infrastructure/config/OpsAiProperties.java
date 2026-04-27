@@ -78,7 +78,7 @@ public class OpsAiProperties {
         private boolean enabled = true;
         /** gRPC OTLP，与 Java Agent 共用 OAP 11800 */
         private String endpoint = "http://127.0.0.1:11800";
-        private String serviceName = "ops-agent-spring-ai";
+        private String serviceName = "yue-ops-agent";
         private int timeoutSeconds = 10;
 
         public boolean isEnabled() {

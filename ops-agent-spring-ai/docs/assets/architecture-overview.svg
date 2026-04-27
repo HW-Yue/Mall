@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="720" viewBox="0 0 1400 720" role="img" aria-label="总体架构图">
+  <defs>
+    <style>
+      .bg { fill: #0f172a; }
+      .card { fill: #111827; stroke: #334155; stroke-width: 2; rx: 18; }
+      .title { fill: #e2e8f0; font: 700 24px sans-serif; }
+      .text { fill: #cbd5e1; font: 500 18px sans-serif; }
+      .small { fill: #94a3b8; font: 500 15px sans-serif; }
+      .line { stroke: #60a5fa; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+      .accent { fill: #2563eb; }
+      .accent2 { fill: #0ea5e9; }
+      .accent3 { fill: #14b8a6; }
+      .accent4 { fill: #f59e0b; }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#60a5fa"/>
+    </marker>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1400" height="720" rx="0"/>
+
+  <rect class="card" x="60" y="70" width="260" height="120"/>
+  <text class="title" x="90" y="115">用户与控制台</text>
+  <text class="text" x="90" y="150">Web UI / API 客户端</text>
+
+  <rect class="card" x="380" y="50" width="320" height="160"/>
+  <text class="title" x="410" y="95">HTTP 入口层</text>
+  <text class="text" x="410" y="130">Chat / Tools / Alert / Approval</text>
+  <text class="small" x="410" y="165">统一暴露 /api/v1/*</text>
+
+  <rect class="card" x="780" y="50" width="320" height="160"/>
+  <text class="title" x="810" y="95">编排与路由</text>
+  <text class="text" x="810" y="130">OpsRouteService / Agent</text>
+  <text class="small" x="810" y="165">SOP 匹配、ReAct、运行状态</text>
+
+  <rect class="card" x="1140" y="50" width="200" height="160"/>
+  <text class="title" x="1168" y="95">工具域</text>
+  <text class="text" x="1168" y="130">Skills / Toolkits</text>
+  <text class="small" x="1168" y="165">Docker / MySQL / Redis / ...</text>
+
+  <rect class="card" x="380" y="290" width="280" height="150"/>
+  <text class="title" x="410" y="335">运行态</text>
+  <text class="text" x="410" y="370">Run Session / Events</text>
+  <text class="small" x="410" y="405">可回放、可取消、可追踪</text>
+
+  <rect class="card" x="720" y="290" width="280" height="150"/>
+  <text class="title" x="750" y="335">审批队列</text>
+  <text class="text" x="750" y="370">受控写操作</text>
+  <text class="small" x="750" y="405">批准后再执行</text>
+
+  <rect class="card" x="1080" y="290" width="260" height="150"/>
+  <text class="title" x="1110" y="335">可观测性</text>
+  <text class="text" x="1110" y="370">Logs / Metrics / OTLP</text>
+  <text class="small" x="1110" y="405">Prometheus / SkyWalking</text>
+
+  <path class="line" d="M320 130 C350 130, 350 130, 380 130"/>
+  <path class="line" d="M700 130 C740 130, 740 130, 780 130"/>
+  <path class="line" d="M1100 130 C1120 130, 1120 130, 1140 130"/>
+  <path class="line" d="M540 210 C540 240, 540 250, 520 290"/>
+  <path class="line" d="M940 210 C940 240, 940 250, 860 290"/>
+  <path class="line" d="M1240 210 C1240 240, 1240 250, 1210 290"/>
+
+  <circle class="accent" cx="120" cy="250" r="8"/>
+  <circle class="accent2" cx="170" cy="250" r="8"/>
+  <circle class="accent3" cx="220" cy="250" r="8"/>
+  <circle class="accent4" cx="270" cy="250" r="8"/>
+  <text class="small" x="90" y="290">公开仓库默认值可本地启动</text>
+</svg>

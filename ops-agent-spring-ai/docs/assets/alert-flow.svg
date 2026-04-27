@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="640" viewBox="0 0 1400 640" role="img" aria-label="告警处理流程图">
+  <defs>
+    <style>
+      .bg { fill: #fff7ed; }
+      .box { fill: #ffffff; stroke: #fb923c; stroke-width: 2; rx: 18; }
+      .title { fill: #9a3412; font: 700 24px sans-serif; }
+      .text { fill: #7c2d12; font: 500 17px sans-serif; }
+      .line { stroke: #f97316; stroke-width: 4; fill: none; marker-end: url(#arrow); }
+    </style>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#f97316"/>
+    </marker>
+  </defs>
+  <rect class="bg" width="1400" height="640"/>
+
+  <rect class="box" x="70" y="220" width="180" height="100"/>
+  <text class="title" x="112" y="264">Alertmanager</text>
+  <text class="text" x="104" y="294">Webhook POST</text>
+
+  <rect class="box" x="300" y="220" width="220" height="100"/>
+  <text class="title" x="327" y="264">AlertReceive</text>
+  <text class="text" x="337" y="294">解析 payload</text>
+
+  <rect class="box" x="580" y="220" width="240" height="100"/>
+  <text class="title" x="605" y="264">OpsRouteService</text>
+  <text class="text" x="620" y="294">异步路由与状态机</text>
+
+  <rect class="box" x="880" y="140" width="210" height="100"/>
+  <text class="title" x="912" y="184">SOP 匹配</text>
+  <text class="text" x="907" y="214">硬匹配 + AI 选择</text>
+
+  <rect class="box" x="1120" y="140" width="210" height="100"/>
+  <text class="title" x="1148" y="184">OpsAgent</text>
+  <text class="text" x="1144" y="214">ReAct 编排</text>
+
+  <rect class="box" x="1120" y="300" width="210" height="100"/>
+  <text class="title" x="1148" y="344">Skills</text>
+  <text class="text" x="1134" y="374">工具 / 子 Agent</text>
+
+  <rect class="box" x="880" y="420" width="210" height="100"/>
+  <text class="title" x="920" y="464">结果回写</text>
+  <text class="text" x="906" y="494">summary / events</text>
+
+  <rect class="box" x="580" y="420" width="240" height="100"/>
+  <text class="title" x="615" y="464">运行结果</text>
+  <text class="text" x="603" y="494">前端时间线与状态</text>
+
+  <path class="line" d="M250 270 L300 270"/>
+  <path class="line" d="M520 270 L580 270"/>
+  <path class="line" d="M820 270 L880 190"/>
+  <path class="line" d="M1090 190 L1120 190"/>
+  <path class="line" d="M1225 240 L1225 300"/>
+  <path class="line" d="M1120 350 L1090 470"/>
+  <path class="line" d="M880 470 L820 470"/>
+  <path class="line" d="M580 470 L520 470"/>
+</svg>

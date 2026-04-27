@@ -42,7 +42,7 @@ window.RunWorkbench = (() => {
                 key: 'NacosConfigDrill',
                 group: 'drill',
                 severity: 'warning',
-                application: 'ops-agent-spring-ai',
+                application: 'yue-ops-agent',
                 annotations: {
                     summary: 'Nacos 配置发布审批演练',
                     description: '触发含 nacos_publish_config 的 SOP，用于确认前端审批暂停与恢复',

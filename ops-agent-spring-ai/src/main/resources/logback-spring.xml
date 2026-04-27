@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  与 mall-app 一致：common-log-starter 的 base（控制台/文件 + MDC trace-id）；
-  Logstash TCP 由 starter 的 LogstashAutoConfiguration 在 logstash.enabled=true 时挂到 Root，无需在此重复定义 LOGSTASH。
+  公开版日志配置：复用 common-log-starter 的 base（控制台/文件 + MDC trace-id）；
+  Logstash TCP 由 starter 的 LogstashAutoConfiguration 在 logstash.enabled=true 时挂到 Root，无需在此重复定义。
 -->
 <configuration scan="true" scanPeriod="10 seconds">
 
