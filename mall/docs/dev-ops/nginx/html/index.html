@@ -3,609 +3,232 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> 商品商城</title>
+    <title>AI Resource Mall - 智能资源商城</title>
+    <!-- 引入 Tailwind CSS 进行现代化布局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide 图标 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="css/index.css">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        :root {
+            --brand-primary: #2563eb;
+            --brand-secondary: #0ea5e9;
+            --bg-main: #f8fafc;
+        }
+
         body {
-            background-color: #f1f5f9;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background-color: var(--bg-main);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #1e293b;
         }
-        .mall-container {
-            max-width: 960px;
-            margin: 0 auto;
-            padding: 12px 12px 80px;
+
+        /* 毛玻璃导航 */
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
         }
-        .mall-nav {
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid #e5e7eb;
+
+        /* 渐变卡片悬停 */
+        .hover-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .mall-logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
+        .hover-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
         }
-        .mall-logo-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #2563eb, #22c55e);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 16px;
-            font-weight: 800;
+
+        /* 隐藏滚动条但保留功能 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 按钮渐变动画 */
+        .btn-gradient {
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            transition: opacity 0.2s;
         }
-        .mall-logo-text {
-            font-weight: 800;
-            color: #0f172a;
-            letter-spacing: 0.04em;
-            font-size: 14px;
-        }
-        .mall-categories {
-            display: flex;
-            overflow-x: auto;
-            gap: 8px;
-            margin: 12px 0 8px;
-            padding-bottom: 4px;
-        }
-        .mall-category-tab {
-            flex-shrink: 0;
-            padding: 6px 12px;
-            border-radius: 999px;
-            border: 1px solid #e5e7eb;
-            background: #fff;
-            font-size: 12px;
-            color: #4b5563;
-            cursor: pointer;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .mall-category-tab.active {
-            background: #2563eb;
-            border-color: #2563eb;
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.22);
-        }
-        .mall-section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 8px;
-            margin-bottom: 8px;
-        }
-        .mall-section-title {
-            font-size: 16px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .mall-section-subtitle {
-            font-size: 11px;
-            color: #9ca3af;
-            text-transform: uppercase;
-            letter-spacing: 0.12em;
-        }
-        .mall-section-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .mall-section-icon {
-            width: 28px;
-            height: 28px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, #2563eb, #0ea5e9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 16px;
-        }
-        .mall-products-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 12px;
-        }
-        @media (min-width: 768px) {
-            .mall-products-grid {
-                grid-template-columns: repeat(3, minmax(0, 1fr));
-            }
-        }
-        .mall-card {
-            background: #fff;
-            border-radius: 16px;
-            border: 1px solid #e5e7eb;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.18s ease-out;
-        }
-        .mall-card:hover {
-            border-color: #bfdbfe;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-            transform: translateY(-2px);
-        }
-        .mall-card-image {
-            position: relative;
-            padding-top: 65%;
-            overflow: hidden;
-        }
-        .mall-card-image img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.35s ease-out;
-        }
-        .mall-card:hover .mall-card-image img {
-            transform: scale(1.05);
-        }
-        .mall-card-body {
-            padding: 8px 10px 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            flex: 1;
-        }
-        .mall-card-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #0f172a;
-            line-height: 1.3;
-            max-height: 2.6em;
-            overflow: hidden;
-        }
-        .mall-card-meta {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 10px;
-            color: #9ca3af;
-        }
-        .mall-card-price {
-            margin-top: 4px;
-            display: flex;
-            align-items: baseline;
-            gap: 4px;
-        }
-        .mall-card-price-main {
-            font-size: 15px;
-            font-weight: 800;
-            color: #dc2626;
-        }
-        .mall-card-price-sub {
-            font-size: 11px;
-            color: #9ca3af;
-        }
-        .mall-card-footer {
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-top: 1px solid #f3f4f6;
-            padding-top: 6px;
-        }
-        .mall-card-buy-btn {
-            font-size: 11px;
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: none;
-            cursor: pointer;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: #fff;
-            font-weight: 600;
-            box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
-        }
-        .mall-empty {
-            padding: 32px 16px;
-            text-align: center;
-            color: #9ca3af;
-            font-size: 13px;
-        }
-        .mall-pagination {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-top: 16px;
-        }
-        .mall-page-btn {
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: 1px solid #e5e7eb;
-            background: #fff;
-            font-size: 12px;
-            cursor: pointer;
-            color: #374151;
-        }
-        .mall-page-btn[disabled] {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .mall-page-info {
-            font-size: 12px;
-            color: #6b7280;
-        }
-        /* 活动横滑模块 */
-        .mall-activity-section {
-            margin-top: 12px;
-            margin-bottom: 4px;
-        }
-        .mall-activity-scroll {
-            display: flex;
-            gap: 10px;
-            overflow-x: auto;
-            padding: 6px 2px 2px;
-            scrollbar-width: thin;
-        }
-        .mall-activity-scroll::-webkit-scrollbar {
-            height: 4px;
-        }
-        .mall-activity-scroll::-webkit-scrollbar-thumb {
-            background-color: rgba(148, 163, 184, 0.7);
-            border-radius: 999px;
-        }
-        .mall-activity-card {
-            flex: 0 0 190px;
-            background: #fff;
-            border-radius: 14px;
-            border: 1px solid #e5e7eb;
-            overflow: hidden;
-            cursor: pointer;
-            transition: all 0.18s ease-out;
-        }
-        .mall-activity-card:hover {
-            border-color: #bfdbfe;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-            transform: translateY(-2px);
-        }
-        .mall-activity-card-image {
-            position: relative;
-            padding-top: 60%;
-            overflow: hidden;
-        }
-        .mall-activity-card-image img {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .mall-activity-card-body {
-            padding: 8px 9px 9px;
-        }
-        .mall-activity-card-title {
-            font-size: 13px;
-            font-weight: 600;
-            color: #0f172a;
-            line-height: 1.3;
-            max-height: 2.6em;
-            overflow: hidden;
-        }
-        .mall-activity-card-meta {
-            margin-top: 4px;
-            display: flex;
-            justify-content: space-between;
-            font-size: 10px;
-            color: #9ca3af;
-        }
-        .mall-activity-card-price {
-            margin-top: 4px;
-            font-size: 13px;
-            font-weight: 700;
-            color: #dc2626;
-        }
-        .mall-activity-tag {
-            display: inline-flex;
-            align-items: center;
-            padding: 2px 6px;
-            border-radius: 999px;
-            font-size: 10px;
-            font-weight: 600;
-            color: #fff;
-        }
-        .mall-activity-tag.group {
-            background: linear-gradient(135deg, #22c55e, #16a34a);
-        }
-        .mall-activity-tag.seckill {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-        }
-        /* 详情弹窗 */
-        .mall-modal-mask {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.55);
-            backdrop-filter: blur(6px);
-            display: none;
-            align-items: flex-end;
-            justify-content: center;
-            padding: 0 0 12px;
-            z-index: 50;
-        }
-        @media (min-width: 768px) {
-            .mall-modal-mask {
-                align-items: center;
-                padding: 16px;
-            }
-        }
-        .mall-modal {
-            width: 100%;
-            max-width: 780px;
-            max-height: 92vh;
-            background: #fff;
-            border-radius: 24px 24px 16px 16px;
-            overflow: hidden;
-            box-shadow: 0 24px 80px rgba(15, 23, 42, 0.45);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            transform: translateY(40px);
+        .btn-gradient:hover { opacity: 0.9; }
+
+        /* 弹窗动画 */
+        .modal-animate {
+            transition: all 0.3s ease-out;
+            transform: scale(0.95);
             opacity: 0;
-            transition: all 0.20s ease-out;
         }
-        .mall-modal-mask.show .mall-modal {
-            transform: translateY(0);
+        .show .modal-animate {
+            transform: scale(1);
             opacity: 1;
-        }
-        .mall-modal-close {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            width: 28px;
-            height: 28px;
-            border-radius: 999px;
-            border: none;
-            background: #f3f4f6;
-            color: #6b7280;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        .mall-modal-body {
-            display: flex;
-            flex-direction: column;
-        }
-        @media (min-width: 768px) {
-            .mall-modal-body {
-                flex-direction: row;
-            }
-        }
-        .mall-modal-image {
-            padding: 12px;
-        }
-        .mall-modal-image img {
-            width: 100%;
-            max-width: 320px;
-            border-radius: 18px;
-            object-fit: cover;
-        }
-        .mall-modal-content {
-            padding: 16px 18px 18px;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            gap: 10px;
-        }
-        .mall-modal-title {
-            font-size: 18px;
-            font-weight: 800;
-            color: #0f172a;
-        }
-        .mall-modal-desc {
-            font-size: 13px;
-            color: #6b7280;
-            line-height: 1.5;
-        }
-        .mall-modal-specs {
-            margin-top: 4px;
-            padding: 10px 10px 8px;
-            border-radius: 14px;
-            background: #f9fafb;
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 8px;
-            font-size: 11px;
-        }
-        .mall-modal-spec-key {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #9ca3af;
-        }
-        .mall-modal-spec-value {
-            font-weight: 600;
-            color: #374151;
-        }
-        .mall-modal-footer {
-            margin-top: 6px;
-            padding-top: 10px;
-            border-top: 1px solid #e5e7eb;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-        }
-        .mall-modal-price-wrap {
-            font-size: 11px;
-            color: #9ca3af;
-        }
-        .mall-modal-price-main {
-            font-size: 20px;
-            font-weight: 900;
-            color: #dc2626;
-        }
-        .mall-modal-buy-btn {
-            padding: 10px 22px;
-            border-radius: 999px;
-            border: none;
-            cursor: pointer;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: #fff;
-            font-weight: 700;
-            font-size: 14px;
-            box-shadow: 0 14px 30px rgba(37, 99, 235, 0.4);
-        }
-        /* 支付确认弹窗 */
-        .payment-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.55);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 60;
-        }
-        .payment-modal {
-            width: 90%;
-            max-width: 360px;
-            background: #fff;
-            border-radius: 18px;
-            padding: 18px 16px 14px;
-            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.4);
-            font-size: 13px;
-            color: #111827;
-        }
-        .payment-modal h3 {
-            margin: 0 0 8px;
-            font-size: 15px;
-            font-weight: 700;
-        }
-        .payment-modal p {
-            margin: 4px 0;
-        }
-        .payment-modal .copyable {
-            color: #2563eb;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        .payment-modal .modal-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 8px;
-            margin-top: 10px;
-        }
-        .payment-modal .confirm-btn,
-        .payment-modal .cancel-btn {
-            padding: 4px 10px;
-            border-radius: 999px;
-            border: none;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .payment-modal .confirm-btn {
-            background: #16a34a;
-            color: #fff;
-        }
-        .payment-modal .cancel-btn {
-            background: #e5e7eb;
-            color: #374151;
         }
     </style>
 </head>
-<body>
-<div class="mall-nav">
-    <div class="mall-logo">
-        <div class="mall-logo-icon">AI</div>
-        <div class="mall-logo-text">RESOURCE MALL</div>
-    </div>
-    <button class="action-btn order-list-btn" onclick="window.location.href='order-list.html'">我的订单</button>
-</div>
+<body class="pb-24">
 
-<div class="mall-container">
-    <!-- 活动区：超值拼团 -->
-    <div id="groupBuySection" class="mall-activity-section" style="display: none;">
-        <div class="mall-section-header">
-            <div class="mall-section-left">
-                <div class="mall-section-icon">团</div>
-                <div>
-                    <div class="mall-section-title">超值拼团</div>
-                    <div class="mall-section-subtitle">GROUP BUY DEALS</div>
+<!-- 顶部导航 -->
+<nav class="glass-nav sticky top-0 z-50 px-4 py-3">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                <i data-lucide="sparkles" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-slate-900 leading-none">NEXUS MALL</h1>
+                <p class="text-[10px] text-slate-400 font-medium tracking-widest uppercase mt-1">AI Resource Engine</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <button onclick="window.location.href='order-list.html'" class="flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+                我的订单
+            </button>
+        </div>
+    </div>
+</nav>
+
+<main class="max-w-6xl mx-auto px-4 pt-6">
+    
+    <!-- Hero Banner -->
+    <div class="relative overflow-hidden rounded-3xl bg-slate-900 p-8 md:p-12 mb-8 shadow-2xl shadow-blue-100">
+        <div class="relative z-10 max-w-2xl">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 text-xs font-bold mb-4 border border-blue-500/30 uppercase tracking-wider">
+                Limited Time Offers
+            </span>
+            <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-4 leading-tight">探索 AI 驱动的<br><span class="text-blue-500">数字资源</span>新世界</h2>
+            <p class="text-slate-400 text-sm md:text-lg mb-8 max-w-md">获取最前沿的 AI 模型接口、数据集及自动化工具，助力你的开发效率飞跃。</p>
+            <div class="flex flex-wrap gap-4">
+                <a href="#goodsList" class="px-6 py-3 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-900/20">立即探索</a>
+                <div class="flex items-center gap-2 text-slate-400 text-sm font-medium border-l border-slate-700 pl-4 ml-2">
+                    <div class="flex -space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-900 flex items-center justify-center text-[10px]">9k+</div>
+                    </div>
+                    <span>Active Users</span>
                 </div>
             </div>
         </div>
-        <div id="groupBuyList" class="mall-activity-scroll"></div>
+        <!-- 背景装饰 -->
+        <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]"></div>
+        <div class="absolute bottom-0 right-0 mr-10 mb-10 opacity-20 hidden md:block">
+            <i data-lucide="cpu" class="w-64 h-64 text-blue-500"></i>
+        </div>
     </div>
 
-    <!-- 活动区：整点秒杀 -->
-    <div id="seckillSection" class="mall-activity-section" style="display: none;">
-        <div class="mall-section-header">
-            <div class="mall-section-left">
-                <div class="mall-section-icon">秒</div>
+    <!-- 活动区块：超值拼团 -->
+    <section id="groupBuySection" class="mb-10 hidden">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-green-100 rounded-lg text-green-600">
+                    <i data-lucide="users" class="w-5 h-5"></i>
+                </div>
                 <div>
-                    <div class="mall-section-title">整点秒杀</div>
-                    <div class="mall-section-subtitle">FLASH SALE</div>
+                    <h3 class="font-bold text-xl text-slate-900">超值拼团</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">Group Buy Deals</p>
                 </div>
             </div>
+            <a href="#" class="text-sm font-bold text-blue-600 hover:underline">查看更多</a>
         </div>
-        <div id="seckillList" class="mall-activity-scroll"></div>
-    </div>
+        <div id="groupBuyList" class="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+            <!-- 动态渲染 -->
+        </div>
+    </section>
 
-    <!-- 分类 Tabs -->
-    <div class="mall-categories" id="categoryTabs">
+    <!-- 活动区块：整点秒杀 -->
+    <section id="seckillSection" class="mb-10 hidden">
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-orange-100 rounded-lg text-orange-600">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xl text-slate-900">整点秒杀</h3>
+                    <p class="text-xs text-slate-400 uppercase tracking-widest font-bold">Flash Sale</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 px-3 py-1 bg-slate-900 text-white rounded-lg text-xs font-mono">
+                <span>ENDING IN</span>
+                <span class="text-orange-400 font-bold">12:45:09</span>
+            </div>
+        </div>
+        <div id="seckillList" class="flex gap-4 overflow-x-auto pb-4 hide-scrollbar">
+            <!-- 动态渲染 -->
+        </div>
+    </section>
+
+    <!-- 分类筛选 -->
+    <div class="flex items-center gap-4 mb-6 overflow-x-auto pb-2 hide-scrollbar" id="categoryTabs">
         <!-- 动态渲染 -->
     </div>
 
-    <!-- 标题 -->
-    <div class="mall-section-header">
-        <div class="mall-section-left">
-            <div class="mall-section-icon">★</div>
-            <div>
-                <div class="mall-section-title">全部商品</div>
-                <div class="mall-section-subtitle">GENERAL GOODS</div>
-            </div>
-        </div>
-        <div class="mall-section-right">
-            <span class="mall-page-info" id="goodsSummary"></span>
-        </div>
-    </div>
-
     <!-- 商品列表 -->
-    <div id="goodsList" class="mall-products-grid"></div>
+    <section>
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="font-bold text-xl text-slate-900 flex items-center gap-2">
+                <i data-lucide="grid-3x3" class="w-5 h-5 text-blue-600"></i>
+                全部商品
+            </h3>
+            <span class="text-sm text-slate-400 font-medium" id="goodsSummary"></span>
+        </div>
+        
+        <div id="goodsList" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- 动态渲染 -->
+        </div>
 
-    <!-- 空状态 -->
-    <div id="emptyState" class="mall-empty" style="display: none;">
-        暂无商品，请稍后再试～
-    </div>
-
-    <!-- 分页 -->
-    <div class="mall-pagination">
-        <button id="prevPage" class="mall-page-btn">上一页</button>
-        <span id="pageInfo" class="mall-page-info"></span>
-        <button id="nextPage" class="mall-page-btn">下一页</button>
-    </div>
-</div>
-
-<!-- 商品详情弹窗 -->
-<div id="goodsModalMask" class="mall-modal-mask">
-    <div class="mall-modal">
-        <button class="mall-modal-close" id="goodsModalClose">✕</button>
-        <div class="mall-modal-body">
-            <div class="mall-modal-image">
-                <img id="modalImage" src="" alt="">
+        <!-- 空状态 -->
+        <div id="emptyState" class="hidden py-20 text-center">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-slate-100 mb-4 text-slate-400">
+                <i data-lucide="package-search" class="w-10 h-10"></i>
             </div>
-            <div class="mall-modal-content">
+            <p class="text-slate-500 font-medium text-lg">暂无商品，请稍后再试～</p>
+        </div>
+
+        <!-- 分页 -->
+        <div class="flex items-center justify-center gap-4 mt-12">
+            <button id="prevPage" class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                <i data-lucide="chevron-left" class="w-5 h-5"></i>
+            </button>
+            <div class="px-4 py-2 bg-white rounded-xl border border-slate-200 text-sm font-bold text-slate-600 shadow-sm" id="pageInfo">
+                Page 1
+            </div>
+            <button id="nextPage" class="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </section>
+</main>
+
+<!-- 通用模态框基础结构 (通过 JS 操作显示隐藏) -->
+<!-- 商品详情弹窗 -->
+<div id="goodsModalMask" class="fixed inset-0 z-[100] hidden items-end md:items-center justify-center p-0 md:p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+    <div class="modal-animate w-full max-w-3xl bg-white rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden relative">
+        <button id="goodsModalClose" class="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+        
+        <div class="flex flex-col md:flex-row h-full">
+            <div class="w-full md:w-1/2 bg-slate-50 p-6 flex items-center justify-center">
+                <img id="modalImage" class="w-full h-64 md:h-auto object-cover rounded-2xl shadow-lg" src="" alt="">
+            </div>
+            <div class="w-full md:w-1/2 p-8 flex flex-col justify-between">
                 <div>
-                    <div class="mall-modal-title" id="modalTitle"></div>
-                    <div class="mall-modal-desc" id="modalDesc"></div>
-                    <div class="mall-modal-specs" id="modalSpecs"></div>
-                </div>
-                <div class="mall-modal-footer">
-                    <div class="mall-modal-price-wrap">
-                        <div>当前售价</div>
-                        <div class="mall-modal-price-main" id="modalPrice"></div>
+                    <span class="inline-block px-2 py-1 bg-blue-100 text-blue-600 text-[10px] font-bold rounded uppercase mb-2">Featured Item</span>
+                    <h3 id="modalTitle" class="text-2xl font-extrabold text-slate-900 mb-3"></h3>
+                    <p id="modalDesc" class="text-slate-500 text-sm leading-relaxed mb-6"></p>
+                    
+                    <div id="modalSpecs" class="grid grid-cols-2 gap-3 mb-8">
+                        <!-- 动态渲染 -->
                     </div>
-                    <button class="mall-modal-buy-btn" id="modalBuyBtn">立即购买</button>
+                </div>
+                
+                <div class="pt-6 border-t border-slate-100 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-slate-400 font-bold uppercase mb-1">Current Price</p>
+                        <p id="modalPrice" class="text-3xl font-black text-red-600"></p>
+                    </div>
+                    <button id="modalBuyBtn" class="px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200 active:scale-95">
+                        立即购买
+                    </button>
                 </div>
             </div>
         </div>
@@ -613,60 +236,70 @@
 </div>
 
 <!-- 拼团详情弹窗 -->
-<div id="groupBuyModalMask" class="mall-modal-mask">
-    <div class="mall-modal">
-        <button class="mall-modal-close" id="groupBuyModalClose">✕</button>
-        <div class="mall-modal-body">
-            <div class="mall-modal-content">
-                <div>
-                    <div class="mall-modal-title" id="groupBuyGoodsTitle"></div>
-                    <div class="mall-modal-desc" id="groupBuyGoodsSummary"></div>
-                    <div class="mall-modal-specs">
-                        <div>
-                            <div class="mall-modal-spec-key">拼团数据</div>
-                            <div class="mall-modal-spec-value" id="groupBuyTeamStatistic"></div>
-                        </div>
-                    </div>
-                </div>
-                <div style="margin-top: 8px;">
-                    <div style="font-size: 12px;color: #6b7280;margin-bottom: 4px;">进行中团（最多展示 2 个）</div>
-                    <div id="groupBuyTeamList"></div>
-                </div>
-                <div class="mall-modal-footer">
-                    <div class="mall-modal-price-wrap">
-                        <div>拼团价</div>
-                        <div class="mall-modal-price-main" id="groupBuyPayPrice"></div>
-                    </div>
-                    <button class="mall-modal-buy-btn" id="groupBuyOpenBtn">自己开团</button>
-                </div>
+<div id="groupBuyModalMask" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+    <div class="modal-animate w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden relative p-8">
+        <button id="groupBuyModalClose" class="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+        
+        <div class="mb-6">
+            <h3 id="groupBuyGoodsTitle" class="text-xl font-bold text-slate-900 mb-2"></h3>
+            <p id="groupBuyGoodsSummary" class="text-sm text-slate-500"></p>
+        </div>
+
+        <div class="bg-green-50 rounded-2xl p-4 mb-6 border border-green-100">
+            <p class="text-[10px] font-bold text-green-600 uppercase mb-2 flex items-center gap-1">
+                <i data-lucide="users" class="w-3 h-3"></i> 拼团数据
+            </p>
+            <div id="groupBuyTeamStatistic" class="text-sm font-semibold text-green-800"></div>
+        </div>
+
+        <div class="mb-8">
+            <h4 class="text-xs font-bold text-slate-400 uppercase mb-4">进行中的拼团</h4>
+            <div id="groupBuyTeamList" class="space-y-3">
+                <!-- 动态列表 -->
             </div>
+        </div>
+
+        <div class="flex items-center justify-between pt-6 border-t border-slate-100">
+            <div>
+                <p class="text-xs text-slate-400 font-bold uppercase mb-1">拼团价格</p>
+                <p id="groupBuyPayPrice" class="text-2xl font-black text-green-600"></p>
+            </div>
+            <button id="groupBuyOpenBtn" class="px-6 py-3 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-all shadow-lg shadow-green-100">
+                发起拼团
+            </button>
         </div>
     </div>
 </div>
 
-<div id="seckillModalMask" class="mall-modal-mask">
-    <div class="mall-modal">
-        <button class="mall-modal-close" id="seckillModalClose">✕</button>
-        <div class="mall-modal-body">
-            <div class="mall-modal-content">
-                <div>
-                    <div class="mall-modal-title" id="seckillGoodsTitle"></div>
-                    <div class="mall-modal-desc" id="seckillGoodsSummary"></div>
-                    <div class="mall-modal-specs">
-                        <div>
-                            <div class="mall-modal-spec-key">限时秒杀</div>
-                            <div class="mall-modal-spec-value" id="seckillActivityInfo"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="mall-modal-footer">
-                    <div class="mall-modal-price-wrap">
-                        <div>秒杀价</div>
-                        <div class="mall-modal-price-main" id="seckillPayPrice"></div>
-                    </div>
-                    <button class="mall-modal-buy-btn" id="seckillBuyBtn">立即秒杀</button>
-                </div>
+<!-- 秒杀详情弹窗 -->
+<div id="seckillModalMask" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+    <div class="modal-animate w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden relative p-8 border-t-8 border-orange-500">
+        <button id="seckillModalClose" class="absolute top-4 right-4 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+        
+        <div class="mb-6 text-center">
+            <div class="inline-flex p-3 bg-orange-100 text-orange-600 rounded-2xl mb-4">
+                <i data-lucide="zap" class="w-8 h-8"></i>
             </div>
+            <h3 id="seckillGoodsTitle" class="text-2xl font-extrabold text-slate-900 mb-2"></h3>
+            <p id="seckillGoodsSummary" class="text-sm text-slate-500"></p>
+        </div>
+
+        <div id="seckillActivityInfo" class="bg-slate-50 rounded-2xl p-4 mb-8 text-center border border-slate-100">
+            <!-- 动态渲染 -->
+        </div>
+
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center justify-between">
+                <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">FLASH PRICE</p>
+                <p id="seckillPayPrice" class="text-4xl font-black text-orange-600"></p>
+            </div>
+            <button id="seckillBuyBtn" class="w-full py-4 rounded-2xl bg-orange-600 text-white font-bold text-lg hover:bg-orange-700 transition-all shadow-xl shadow-orange-200">
+                立即秒杀
+            </button>
         </div>
     </div>
 </div>
@@ -674,48 +307,103 @@
 <script src="js/common.js"></script>
 <script src="js/api-config.js"></script>
 <script>
-// 支付确认弹窗
-function showPaymentConfirm(price) {
-    const overlay = document.createElement('div');
-    overlay.className = 'payment-overlay';
+    // 初始化 Lucide 图标
+    lucide.createIcons();
 
-    const modal = document.createElement('div');
-    modal.className = 'payment-modal';
-    modal.innerHTML = `
-        <h3>支付确认</h3>
-        <p>商品金额：￥${price}</p>
-        <p>买家账号：<span class="copyable" data-copy="kvhmoj3832@sandbox.com">cakpap0977@sandbox.com</span></p>
-        <p>登录密码：111111</p>
-        <p>支付密码：111111</p>
-        <div class="modal-buttons">
-            <button class="confirm-btn">确认支付</button>
-            <button class="cancel-btn">取消支付</button>
-        </div>
-    `;
-
-    modal.querySelector('.confirm-btn').addEventListener('click', function() {
-        const form = document.querySelector('form');
-        if (form) form.submit();
-        overlay.remove();
-    });
-
-    modal.querySelector('.cancel-btn').addEventListener('click', function() {
-        document.querySelectorAll('form').forEach(form => form.remove());
-        overlay.remove();
-    });
-
-    modal.querySelector('.copyable').addEventListener('click', function() {
-        const textToCopy = this.getAttribute('data-copy');
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            alert('买家账号已复制到剪贴板');
-        }).catch(err => {
-            console.error('无法复制文本: ', err);
+    // 修改现有的 UI 显示逻辑，适配新布局
+    // 监听模态框显示隐藏，添加动画类
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'style') {
+                const target = mutation.target;
+                if (target.style.display === 'flex') {
+                    setTimeout(() => target.classList.add('show'), 10);
+                } else {
+                    target.classList.remove('show');
+                }
+            }
         });
     });
 
-    overlay.appendChild(modal);
-    document.body.appendChild(overlay);
-}
+    ['goodsModalMask', 'groupBuyModalMask', 'seckillModalMask'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) observer.observe(el, { attributes: true });
+    });
+
+    // 支付确认弹窗美化版
+    function showPaymentConfirm(price) {
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md transition-opacity duration-300';
+        
+        const modal = document.createElement('div');
+        modal.className = 'w-full max-w-sm bg-white rounded-[32px] overflow-hidden shadow-2xl p-8 transform transition-transform duration-300 scale-90 opacity-0';
+        
+        modal.innerHTML = `
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="shield-check" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-2xl font-extrabold text-slate-900">支付确认</h3>
+                <p class="text-slate-500 text-sm mt-1 font-medium">请确认以下支付详情</p>
+            </div>
+            
+            <div class="bg-slate-50 rounded-2xl p-4 mb-6 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">支付金额</span>
+                    <span class="text-xl font-black text-red-600">￥${price}</span>
+                </div>
+                <div class="pt-3 border-t border-slate-200">
+                    <div class="flex justify-between text-sm py-1">
+                        <span class="text-slate-400">买家账号</span>
+                        <span class="text-blue-600 font-bold cursor-pointer hover:underline" id="copyAcc">cakpap0977@sandbox.com</span>
+                    </div>
+                    <div class="flex justify-between text-sm py-1">
+                        <span class="text-slate-400">登录密码</span>
+                        <span class="text-slate-900 font-mono font-bold">111111</span>
+                    </div>
+                    <div class="flex justify-between text-sm py-1">
+                        <span class="text-slate-400">支付密码</span>
+                        <span class="text-slate-900 font-mono font-bold">111111</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <button id="cancelPay" class="py-4 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors">取消</button>
+                <button id="confirmPay" class="py-4 rounded-2xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">确认支付</button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        lucide.createIcons({ props: { "stroke-width": 2.5 }, nameAttr: 'data-lucide', root: modal });
+        
+        setTimeout(() => {
+            modal.classList.add('scale-100', 'opacity-100');
+        }, 10);
+
+        const close = () => {
+            modal.classList.remove('scale-100', 'opacity-100');
+            modal.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => overlay.remove(), 300);
+        };
+
+        modal.querySelector('#confirmPay').addEventListener('click', () => {
+            const form = document.querySelector('form');
+            if (form) form.submit();
+            close();
+        });
+
+        modal.querySelector('#cancelPay').addEventListener('click', () => {
+            document.querySelectorAll('form').forEach(form => form.remove());
+            close();
+        });
+
+        modal.querySelector('#copyAcc').addEventListener('click', () => {
+            navigator.clipboard.writeText('cakpap0977@sandbox.com').then(() => {
+                alert('账号已复制');
+            });
+        });
+    }
 </script>
 <script src="js/mall.js"></script>
 </body>

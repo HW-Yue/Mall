@@ -44,7 +44,7 @@ class OrderListManager {
     displayUserId() {
         const userIdElement = document.getElementById('userIdDisplay');
         if (userIdElement && this.userId) {
-            userIdElement.textContent = `用户ID: ${AppUtils.obfuscateUserId(this.userId)}`;
+            userIdElement.textContent = AppUtils.obfuscateUserId(this.userId);
         }
     }
     
@@ -75,9 +75,8 @@ class OrderListManager {
                 this.renderOrderList(result.data.orderList, this.lastId === null);
                 this.hasMore = result.data.hasMore;
                 this.lastId = result.data.lastId;
-                
-                // 更新加载更多按钮状态
                 this.updateLoadMoreButton();
+                this.updateStatistics(result.data.orderList, this.lastId === null);
             } else {
                 this.showError('加载订单列表失败: ' + (result.info || '未知错误'));
             }
@@ -89,6 +88,26 @@ class OrderListManager {
             this.hideLoading();
         }
     }
+
+    updateStatistics(orders, isFirstLoad) {
+        if (!isFirstLoad) return; // 仅在首次加载时估算统计（或根据全量数据统计）
+        
+        // 注意：由于是分页加载，这里的统计仅作为演示或针对当前页。
+        // 在真实项目中，后端应返回各状态的总数。
+        const counts = {
+            total: orders.length,
+            completed: orders.filter(o => o.status === 'PAY_SUCCESS' || o.status === 'DEAL_DONE').length,
+            pending: orders.filter(o => o.status === 'PAY_WAIT' || o.status === 'CREATE').length
+        };
+
+        const totalEl = document.getElementById('totalOrderCount');
+        const completedEl = document.getElementById('completedOrderCount');
+        const pendingEl = document.getElementById('pendingOrderCount');
+
+        if (totalEl) totalEl.textContent = counts.total || '0';
+        if (completedEl) completedEl.textContent = counts.completed || '0';
+        if (pendingEl) pendingEl.textContent = counts.pending || '0';
+    }
     
     renderOrderList(orders, isFirstLoad = false) {
         const orderListElement = document.getElementById('orderList');
@@ -99,45 +118,83 @@ class OrderListManager {
         }
         
         if (orders && orders.length > 0) {
-            emptyStateElement.style.display = 'none';
+            emptyStateElement.classList.add('hidden');
             
             orders.forEach(order => {
                 const orderElement = this.createOrderElement(order);
                 orderListElement.appendChild(orderElement);
             });
+            if (window.lucide) window.lucide.createIcons();
         } else if (isFirstLoad) {
-            emptyStateElement.style.display = 'block';
+            emptyStateElement.classList.remove('hidden');
         }
+    }
+
+    getStatusConfig(status) {
+        const configs = {
+            'CREATE': { text: '新创建', class: 'bg-blue-50 text-blue-600', icon: 'plus-circle' },
+            'PAY_WAIT': { text: '等待支付', class: 'bg-orange-50 text-orange-600', icon: 'credit-card' },
+            'PAY_SUCCESS': { text: '支付成功', class: 'bg-green-50 text-green-600', icon: 'check-circle' },
+            'DEAL_DONE': { text: '交易完成', class: 'bg-indigo-50 text-indigo-600', icon: 'package' },
+            'CLOSE': { text: '已关闭', class: 'bg-slate-100 text-slate-400', icon: 'x-circle' },
+            'WAIT_REFUND': { text: '退款中', class: 'bg-red-50 text-red-600', icon: 'refresh-ccw' },
+        };
+        return configs[status] || { text: status, class: 'bg-slate-100 text-slate-500', icon: 'help-circle' };
     }
     
     createOrderElement(order) {
+        const config = this.getStatusConfig(order.status);
         const orderDiv = document.createElement('div');
-        orderDiv.className = 'order-item';
+        orderDiv.className = 'order-card bg-white rounded-[32px] border border-slate-100 p-6 shadow-sm';
+        
         orderDiv.innerHTML = `
-            <div class="order-header">
-                <div class="order-id" onclick="orderManager.copyOrderId('${order.orderId}')" title="点击复制订单号">
-                    订单号: <span class="order-id-text">${order.orderId}</span>
-                    <span class="copy-icon">📋</span>
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 rounded-2xl ${config.class.split(' ')[0]}">
+                        <i data-lucide="${config.icon}" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Order ID</span>
+                            <button onclick="orderManager.copyOrderId('${order.orderId}')" class="p-1 hover:bg-slate-100 rounded-md transition-colors">
+                                <i data-lucide="copy" class="w-3 h-3 text-slate-400"></i>
+                            </button>
+                        </div>
+                        <p class="text-sm font-bold text-slate-900 font-mono">${order.orderId}</p>
+                    </div>
                 </div>
-                <div class="order-status status-${order.status}">${this.getStatusText(order.status)}</div>
-            </div>
-            <div class="order-content">
-                <div class="product-name">${order.productName || '商品名称'}</div>
-                <div class="order-details">
-                    <div class="order-time">${this.formatTime(order.orderTime)}</div>
-                    <div class="pay-amount">¥${order.payAmount || order.totalAmount}</div>
+                <div class="flex items-center gap-3">
+                    <span class="px-4 py-1.5 rounded-full text-xs font-bold ${config.class}">${config.text}</span>
                 </div>
             </div>
-            <div class="order-actions">
+
+            <div class="flex items-start gap-4 mb-6 pb-6 border-b border-slate-50">
+                <div class="w-16 h-16 rounded-2xl bg-slate-50 flex-shrink-0 flex items-center justify-center">
+                    <i data-lucide="shopping-bag" class="w-8 h-8 text-slate-200"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-base font-extrabold text-slate-900 mb-1">${order.productName || 'AI 数字资源商品'}</h4>
+                    <div class="flex items-center gap-3 text-xs font-medium text-slate-400">
+                        <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${this.formatTime(order.orderTime)}</span>
+                        <span class="flex items-center gap-1"><i data-lucide="tag" class="w-3 h-3"></i> ${order.marketType === 'group_buy' ? '拼团' : (order.marketType === 'seckill' ? '秒杀' : '普通')}</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs font-bold text-slate-400 uppercase mb-1 leading-none">Amount</p>
+                    <p class="text-xl font-black text-slate-900 tracking-tight">￥${(order.payAmount || order.totalAmount || 0).toFixed(2)}</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3">
                 ${order.status === 'PAY_WAIT' ? `
-                <button class="pay-btn" onclick="orderManager.goPay('${order.orderId}')">
+                <button class="px-6 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 active:scale-95" onclick="orderManager.goPay('${order.orderId}')">
                     立即支付
                 </button>
                 ` : ''}
-                <button class="refund-btn"
+                <button class="px-6 py-2.5 rounded-xl bg-slate-50 text-slate-600 text-sm font-bold hover:bg-slate-100 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                         onclick="orderManager.showRefundModal('${order.orderId}', '${order.marketType || 'normal'}')"
                         ${order.status === 'CLOSE' ? 'disabled' : ''}>
-                    ${order.status === 'CLOSE' ? '已关闭' : '申请退单'}
+                    ${order.status === 'CLOSE' ? '已关闭' : '退款/取消'}
                 </button>
             </div>
         `;

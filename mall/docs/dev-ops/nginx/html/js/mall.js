@@ -162,75 +162,65 @@
       return;
     }
 
-    sectionEl.style.display = "block";
+    sectionEl.style.display = "flex";
 
     list.forEach((item) => {
       const card = document.createElement("div");
-      card.className = "mall-activity-card";
+      // 适配新样式：固定宽度，圆角，白底，投影
+      card.className = "flex-shrink-0 w-48 bg-white rounded-2xl border border-slate-100 overflow-hidden hover-card cursor-pointer shadow-sm";
 
       const imgBox = document.createElement("div");
-      imgBox.className = "mall-activity-card-image";
+      imgBox.className = "relative h-32 overflow-hidden bg-slate-50";
       const img = document.createElement("img");
+      img.className = "w-full h-full object-cover";
       img.src = item.imageUrl || "./images/sku-13811216-04.png";
       img.alt = item.goodsName || "";
       imgBox.appendChild(img);
+      
+      // 浮动标签
+      const tag = document.createElement("span");
+      tag.className = "absolute top-2 right-2 px-2 py-1 rounded-lg text-[10px] font-bold text-white shadow-lg " + 
+                     (type === "group_buy" ? "bg-green-500" : "bg-orange-500");
+      tag.textContent = type === "group_buy" ? "拼团" : "秒杀";
+      imgBox.appendChild(tag);
 
       const body = document.createElement("div");
-      body.className = "mall-activity-card-body";
+      body.className = "p-3";
 
-      const titleRow = document.createElement("div");
       const title = document.createElement("div");
-      title.className = "mall-activity-card-title";
+      title.className = "text-sm font-bold text-slate-800 line-clamp-1 mb-1";
       title.textContent = item.goodsName || "";
 
-      const tag = document.createElement("span");
-      tag.className =
-        "mall-activity-tag " + (type === "group_buy" ? "group" : "seckill");
-      tag.textContent = type === "group_buy" ? "拼团中" : "限时秒杀";
-
-      titleRow.style.display = "flex";
-      titleRow.style.justifyContent = "space-between";
-      titleRow.style.alignItems = "center";
-      titleRow.style.gap = "6px";
-      titleRow.appendChild(title);
-      titleRow.appendChild(tag);
-
       const metaRow = document.createElement("div");
-      metaRow.className = "mall-activity-card-meta";
-      const sourceSpan = document.createElement("span");
-      sourceSpan.textContent = item.source ? "来源 " + item.source : "标准商品";
-      const channelSpan = document.createElement("span");
-      channelSpan.textContent = item.channel ? "渠道 " + item.channel : "";
-      metaRow.appendChild(sourceSpan);
-      metaRow.appendChild(channelSpan);
+      metaRow.className = "flex items-center justify-between text-[10px] text-slate-400 mb-2";
+      metaRow.innerHTML = `<span>${item.source || 'S01'}</span><span>${item.channel || 'C01'}</span>`;
 
-      const priceEl = document.createElement("div");
-      priceEl.className = "mall-activity-card-price";
-      if (item.originalPrice != null) {
-        priceEl.textContent =
-          "￥" + Number(item.originalPrice || 0).toFixed(2);
-      } else {
-        priceEl.textContent = "活动价";
+      const priceRow = document.createElement("div");
+      priceRow.className = "flex items-baseline gap-1";
+      const priceVal = document.createElement("span");
+      priceVal.className = "text-sm font-black " + (type === "group_buy" ? "text-green-600" : "text-orange-600");
+      priceVal.textContent = "￥" + Number(item.payPrice || item.originalPrice || 0).toFixed(2);
+      
+      const oldPrice = document.createElement("span");
+      oldPrice.className = "text-[10px] text-slate-300 line-through";
+      oldPrice.textContent = "￥" + Number(item.originalPrice || 0).toFixed(2);
+      
+      priceRow.appendChild(priceVal);
+      if (item.payPrice && item.originalPrice && item.payPrice < item.originalPrice) {
+          priceRow.appendChild(oldPrice);
       }
 
-      body.appendChild(titleRow);
+      body.appendChild(title);
       body.appendChild(metaRow);
-      body.appendChild(priceEl);
+      body.appendChild(priceRow);
 
       card.appendChild(imgBox);
       card.appendChild(body);
 
-      if (type === "group_buy") {
-        card.style.cursor = "pointer";
-        card.addEventListener("click", function () {
-          openGroupBuyModal(item);
-        });
-      } else if (type === "seckill") {
-        card.style.cursor = "pointer";
-        card.addEventListener("click", function () {
-          openSeckillModal(item);
-        });
-      }
+      card.addEventListener("click", function () {
+        if (type === "group_buy") openGroupBuyModal(item);
+        else openSeckillModal(item);
+      });
 
       listEl.appendChild(card);
     });
@@ -239,29 +229,38 @@
   function renderCategories(categories) {
     categoryTabsEl.innerHTML = "";
 
-    const allTab = document.createElement("button");
-    allTab.className = "mall-category-tab active";
-    allTab.dataset.id = "";
-    allTab.textContent = "全部";
-    categoryTabsEl.appendChild(allTab);
+    function createTab(id, name, isActive) {
+      const btn = document.createElement("button");
+      btn.className = `flex-shrink-0 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+        isActive 
+        ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
+        : "bg-white text-slate-500 border border-slate-200 hover:border-blue-300 hover:text-blue-600 shadow-sm"
+      }`;
+      btn.dataset.id = id;
+      btn.textContent = name;
+      return btn;
+    }
+
+    categoryTabsEl.appendChild(createTab("", "全部", true));
 
     categories.forEach((c) => {
-      const btn = document.createElement("button");
-      btn.className = "mall-category-tab";
-      btn.dataset.id = c.id;
-      btn.textContent = c.name || ("类型" + c.id);
-      categoryTabsEl.appendChild(btn);
+      categoryTabsEl.appendChild(createTab(c.id, c.name || ("类型" + c.id), false));
     });
 
     categoryTabsEl.addEventListener("click", function (e) {
-      const target = e.target.closest(".mall-category-tab");
+      const target = e.target.closest("button");
       if (!target) return;
       const id = target.dataset.id;
       currentCategoryId = id === "" ? null : id;
       pageNum = 1;
 
-      categoryTabsEl.querySelectorAll(".mall-category-tab").forEach((el) => {
-        el.classList.toggle("active", el === target);
+      categoryTabsEl.querySelectorAll("button").forEach((btn) => {
+        const isCurrent = btn === target;
+        btn.className = `flex-shrink-0 px-6 py-2.5 rounded-xl text-sm font-bold transition-all ${
+          isCurrent 
+          ? "bg-blue-600 text-white shadow-lg shadow-blue-200" 
+          : "bg-white text-slate-500 border border-slate-200 hover:border-blue-300 hover:text-blue-600 shadow-sm"
+        }`;
       });
 
       loadGoods();
@@ -305,66 +304,62 @@
     goodsListEl.innerHTML = "";
 
     if (!list.length) {
-      goodsListEl.style.display = "none";
-      emptyStateEl.style.display = "block";
+      goodsListEl.classList.add("hidden");
+      emptyStateEl.classList.remove("hidden");
     } else {
-      goodsListEl.style.display = "grid";
-      emptyStateEl.style.display = "none";
+      goodsListEl.classList.remove("hidden");
+      emptyStateEl.classList.add("hidden");
 
       list.forEach((g) => {
         const card = document.createElement("div");
-        card.className = "mall-card";
+        card.className = "bg-white rounded-3xl border border-slate-100 overflow-hidden hover-card cursor-pointer shadow-sm flex flex-col group";
 
         const imgBox = document.createElement("div");
-        imgBox.className = "mall-card-image";
+        imgBox.className = "relative h-48 overflow-hidden bg-slate-50";
 
         const img = document.createElement("img");
+        img.className = "w-full h-full object-cover transition-transform duration-500 group-hover:scale-110";
         img.src = g.imageUrl || "./images/sku-13811216-01.png";
         img.alt = g.name || "";
         imgBox.appendChild(img);
+        
+        // 装饰性渐变
+        const overlay = document.createElement("div");
+        overlay.className = "absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity";
+        imgBox.appendChild(overlay);
 
         const body = document.createElement("div");
-        body.className = "mall-card-body";
+        body.className = "p-5 flex-1 flex flex-col";
 
         const title = document.createElement("div");
-        title.className = "mall-card-title";
+        title.className = "text-base font-extrabold text-slate-800 line-clamp-2 mb-2 leading-tight h-10";
         title.textContent = g.name || "";
 
         const meta = document.createElement("div");
-        meta.className = "mall-card-meta";
-        const sourceSpan = document.createElement("span");
-        sourceSpan.textContent = g.source ? "来源 " + g.source : "标准商品";
-        const channelSpan = document.createElement("span");
-        channelSpan.textContent = g.channel ? "渠道 " + g.channel : "";
-        meta.appendChild(sourceSpan);
-        meta.appendChild(channelSpan);
-
-        const priceRow = document.createElement("div");
-        priceRow.className = "mall-card-price";
-        const priceMain = document.createElement("span");
-        priceMain.className = "mall-card-price-main";
-        priceMain.textContent = "￥" + Number(g.price || 0).toFixed(2);
-        const priceSub = document.createElement("span");
-        priceSub.className = "mall-card-price-sub";
-        priceSub.textContent = "含税 / 立即到账";
-        priceRow.appendChild(priceMain);
-        priceRow.appendChild(priceSub);
+        meta.className = "flex items-center gap-2 mb-4";
+        meta.innerHTML = `
+            <span class="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">${g.source || 'S01'}</span>
+            <span class="px-2 py-0.5 rounded-md bg-blue-50 text-[10px] font-bold text-blue-400 uppercase tracking-wider">${g.channel || 'C01'}</span>
+        `;
 
         const footer = document.createElement("div");
-        footer.className = "mall-card-footer";
-        const detailSpan = document.createElement("span");
-        detailSpan.style.fontSize = "11px";
-        detailSpan.style.color = "#3b82f6";
-        detailSpan.textContent = "查看详情";
+        footer.className = "mt-auto pt-4 border-t border-slate-50 flex items-center justify-between";
+        
+        const priceInfo = document.createElement("div");
+        priceInfo.innerHTML = `
+            <p class="text-[10px] font-bold text-slate-300 uppercase leading-none mb-1">Starting at</p>
+            <p class="text-xl font-black text-slate-900">￥${Number(g.price || 0).toFixed(2)}</p>
+        `;
+
         const buyBtn = document.createElement("button");
-        buyBtn.className = "mall-card-buy-btn";
-        buyBtn.textContent = "立即购买";
-        footer.appendChild(detailSpan);
+        buyBtn.className = "w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center hover:bg-blue-600 transition-colors shadow-lg shadow-slate-200";
+        buyBtn.innerHTML = '<i data-lucide="plus" class="w-5 h-5"></i>';
+        
+        footer.appendChild(priceInfo);
         footer.appendChild(buyBtn);
 
         body.appendChild(title);
         body.appendChild(meta);
-        body.appendChild(priceRow);
         body.appendChild(footer);
 
         card.appendChild(imgBox);
@@ -378,6 +373,8 @@
 
         goodsListEl.appendChild(card);
       });
+      // 重新渲染图标
+      if (window.lucide) window.lucide.createIcons();
     }
 
     const pageCount = total > 0 ? Math.ceil(total / pageSize) : 1;
@@ -386,14 +383,14 @@
       pageNum = safePageNum;
     }
 
-    pageInfoEl.textContent = pageNum + " / " + pageCount;
+    pageInfoEl.textContent = "Page " + pageNum + " of " + pageCount;
     prevPageBtn.disabled = pageNum <= 1;
     nextPageBtn.disabled = pageNum >= pageCount;
 
     if (goodsSummaryEl) {
       goodsSummaryEl.textContent = total
-        ? "共 " + total + " 件商品"
-        : "暂无商品";
+        ? "Showing " + total + " products"
+        : "No products found";
     }
   }
 

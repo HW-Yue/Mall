@@ -3,301 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - 小傅哥拼团</title>
+    <title>登录 - AI Resource Mall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="js/common.js"></script>
     <script src="js/api-config.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-            background: #f0f2f5;
+            background: radial-gradient(circle at top right, #eff6ff, #f8fafc);
+            font-family: 'Plus Jakarta Sans', sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 24px;
         }
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 360px;
-            padding: 32px 28px;
-            text-align: center;
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.05);
         }
-        .card .logo {
-            width: 56px;
-            height: 56px;
-            margin-bottom: 16px;
+
+        .qr-pulse {
+            animation: pulse-border 2s infinite;
         }
-        .card h1 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1a1a1a;
-            margin-bottom: 24px;
+
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
         }
-        .qr-block {
-            margin-bottom: 20px;
+
+        .animated-gradient {
+            background: linear-gradient(-45deg, #2563eb, #0ea5e9, #6366f1, #3b82f6);
+            background-size: 400% 400%;
+            animation: gradient-flow 15s ease infinite;
         }
-        .qr-block img {
-            width: 180px;
-            height: 180px;
-            border-radius: 8px;
-            display: block;
-            margin: 0 auto;
-            background: #f5f5f5;
+
+        @keyframes gradient-flow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
-        .qr-block img.pulse {
-            animation: pulse 2s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.75; }
-        }
-        .btn-primary {
-            display: block;
-            width: 100%;
-            max-width: 200px;
-            margin: 16px auto 0;
-            padding: 12px 20px;
-            font-size: 15px;
-            color: #fff;
-            background: #07c160;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .btn-primary:hover:not(:disabled) { background: #06ad56; }
-        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
-        .qr-block.loaded .btn-primary { display: none; }
-        .qr-loading {
-            font-size: 13px;
-            color: #8c8c8c;
-            margin-top: 8px;
-        }
-        .hint {
-            font-size: 13px;
-            color: #8c8c8c;
-            line-height: 1.5;
-            margin-bottom: 20px;
-        }
-        .divider {
-            height: 1px;
-            background: #eee;
-            margin: 20px 0;
-        }
-        .btn-ghost {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            color: #595959;
-            background: transparent;
-            border: 1px solid #d9d9d9;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .btn-ghost:hover { border-color: #07c160; color: #07c160; }
-        .bind-box {
-            display: none;
-            text-align: left;
-            padding-top: 8px;
-        }
-        .bind-box.show { display: block; }
-        .bind-box h2 { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
-        .bind-box .hint { margin-bottom: 16px; }
-        .bind-box input {
-            width: 100%;
-            padding: 10px 12px;
-            margin-bottom: 12px;
-            border: 1px solid #d9d9d9;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        .bind-box input:focus { outline: none; border-color: #07c160; }
-        .bind-box .submit-btn {
-            width: 100%;
-            padding: 12px;
-            font-size: 15px;
-            color: #fff;
-            background: #07c160;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-        .bind-box .submit-btn:hover:not(:disabled) { background: #06ad56; }
-        .bind-box .submit-btn:disabled { opacity: 0.7; }
-        .bind-box .err-msg { font-size: 12px; color: #ff4d4f; margin-top: 8px; }
     </style>
 </head>
 <body>
-<div class="card">
-    <img src="./images/logo.png" alt="Logo" class="logo">
-    <h1>小傅哥拼团</h1>
 
-    <div id="qr-area">
-        <div id="qr-block" class="qr-block">
-            <img id="qr-code-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Crect fill='%23f0f0f0' width='180' height='180' rx='8'/%3E%3Crect x='65' y='65' width='50' height='50' rx='4' fill='%23ddd'/%3E%3Ctext x='90' y='138' text-anchor='middle' fill='%23999' font-size='13' font-family='sans-serif'%3E点击下方按钮显示%3C/text%3E%3C/svg%3E" alt="微信二维码" class="pulse">
-            <button type="button" id="btn-show-qr" class="btn-primary">显示微信二维码</button>
-            <p id="qr-loading-hint" class="qr-loading" style="display:none;">正在加载…</p>
+<div class="w-full max-w-md">
+    <div class="login-card rounded-[40px] p-8 md:p-12">
+        <!-- Logo & Title -->
+        <div class="text-center mb-10">
+            <div class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white mx-auto mb-6 shadow-xl shadow-blue-200">
+                <i data-lucide="sparkles" class="w-8 h-8"></i>
+            </div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-2">欢迎回来</h1>
+            <p class="text-slate-400 text-sm font-medium">扫码快速进入 AI 资源商城</p>
         </div>
-        <p class="hint">打开微信扫一扫，扫码后即可登录</p>
-        <div class="divider"></div>
-        <button type="button" id="stealth-login-btn" class="btn-ghost">暂不扫码，游客进入</button>
-    </div>
 
-    <div id="bind-register-box" class="bind-box">
-        <h2>绑定账号</h2>
-        <p class="hint">您尚未绑定账号，请设置用户名和密码完成绑定。</p>
-        <input type="text" id="bind-username" placeholder="用户名" autocomplete="username">
-        <input type="password" id="bind-password" placeholder="密码" autocomplete="new-password">
-        <button type="button" id="bind-submit-btn" class="submit-btn">注册并绑定</button>
-        <p id="bind-err-msg" class="err-msg"></p>
+        <!-- 扫码区域 -->
+        <div id="qr-area" class="space-y-8">
+            <div id="qr-block" class="relative group">
+                <div class="w-56 h-56 mx-auto rounded-3xl bg-white p-4 border border-slate-100 shadow-inner relative overflow-hidden">
+                    <img id="qr-code-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Crect fill='%23f8fafc' width='180' height='180'/%3E%3Cpath d='M70 70h40v40H70z' fill='%23e2e8f0'/%3E%3C/svg%3E" 
+                         class="w-full h-full rounded-2xl transition-all group-[.loaded]:scale-100 scale-90 opacity-50 group-[.loaded]:opacity-100" alt="WeChat QR">
+                    
+                    <!-- 覆盖按钮层 -->
+                    <div id="qr-overlay" class="absolute inset-0 flex items-center justify-center p-4">
+                        <button id="btn-show-qr" class="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold text-sm hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 active:scale-95">
+                            点击获取登录二维码
+                        </button>
+                    </div>
+                </div>
+                <!-- 加载状态 -->
+                <div id="qr-loading-hint" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                    <div class="w-8 h-8 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mx-auto mb-2"></div>
+                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Generating...</span>
+                </div>
+            </div>
+
+            <div class="text-center space-y-4">
+                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em]">Scan with WeChat</p>
+                <div class="flex items-center gap-4 py-4">
+                    <div class="h-px flex-1 bg-slate-100"></div>
+                    <span class="text-xs text-slate-300 font-medium">OR</span>
+                    <div class="h-px flex-1 bg-slate-100"></div>
+                </div>
+                <button id="stealth-login-btn" class="w-full py-4 rounded-2xl bg-white border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors">
+                    以游客身份进入
+                </button>
+            </div>
+        </div>
+
+        <!-- 绑定注册区域 -->
+        <div id="bind-register-box" class="hidden space-y-6">
+            <div class="bg-blue-50 rounded-2xl p-4 mb-6 border border-blue-100">
+                <p class="text-xs font-bold text-blue-600 uppercase mb-1">Step 2: Account Setup</p>
+                <p class="text-sm text-blue-800">您已成功扫码，请设置账号和密码以完成绑定。</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="relative">
+                    <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300"></i>
+                    <input type="text" id="bind-username" placeholder="设置用户名" 
+                           class="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all">
+                </div>
+                <div class="relative">
+                    <i data-lucide="lock" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300"></i>
+                    <input type="password" id="bind-password" placeholder="设置登录密码" 
+                           class="w-full pl-12 pr-4 py-4 bg-white border border-slate-100 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all">
+                </div>
+            </div>
+
+            <button id="bind-submit-btn" class="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold hover:bg-blue-700 transition-all shadow-xl shadow-blue-200 active:scale-95">
+                完成注册并绑定
+            </button>
+            <p id="bind-err-msg" class="text-center text-xs text-red-500 font-medium"></p>
+        </div>
     </div>
+    
+    <p class="text-center mt-8 text-slate-400 text-xs font-medium uppercase tracking-widest">
+        Powered by AI Resource Engine &bull; Nexus Mall
+    </p>
 </div>
 
 <script>
-(function() {
-    var NEED_REGISTER = '__need_register__';
-    var LOGO_CENTER_RATIO = 0.28;
+    lucide.createIcons();
+    
+    // 逻辑部分 (保留原有功能，适配新 UI 元素)
+    (function() {
+        var NEED_REGISTER = '__need_register__';
+        var LOGO_CENTER_RATIO = 0.28;
 
-    function setCookie(name, value, days) {
-        var d = new Date();
-        d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-        document.cookie = name + '=' + value + ';expires=' + d.toUTCString() + ';path=/';
-    }
-
-    function drawQrWithLogo(wechatQrUrl, logoUrl, size, callback) {
-        var canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        var ctx = canvas.getContext('2d');
-        var qrImg = new Image();
-        qrImg.crossOrigin = 'anonymous';
-        qrImg.onload = function() {
-            ctx.drawImage(qrImg, 0, 0, size, size);
-            var logoImg = new Image();
-            logoImg.crossOrigin = 'anonymous';
-            logoImg.onload = function() {
-                var w = Math.round(size * LOGO_CENTER_RATIO);
-                var h = Math.round(size * LOGO_CENTER_RATIO);
-                var x = (size - w) / 2;
-                var y = (size - h) / 2;
-                ctx.drawImage(logoImg, x, y, w, h);
-                try {
-                    callback(canvas.toDataURL('image/png'));
-                } catch (e) {
-                    callback(wechatQrUrl);
-                }
-            };
-            logoImg.onerror = function() { callback(wechatQrUrl); };
-            logoImg.src = logoUrl;
-        };
-        qrImg.onerror = function() { callback(wechatQrUrl); };
-        qrImg.src = wechatQrUrl;
-    }
-
-    function startQrAndPoll(ticket) {
-        var wechatQrUrl = 'https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=' + encodeURIComponent(ticket);
-        var logoUrl = (window.location.pathname.replace(/\/[^/]*$/, '') || '') + '/images/QR.png';
-        if (logoUrl.indexOf('/') !== 0) logoUrl = 'images/QR.png';
-        var block = document.getElementById('qr-block');
-        var img = document.getElementById('qr-code-img');
-        var loadingHint = document.getElementById('qr-loading-hint');
-        var btn = document.getElementById('btn-show-qr');
-        if (loadingHint) loadingHint.style.display = 'none';
-        if (btn) btn.style.display = 'none';
-        if (block) block.classList.add('loaded');
-        if (img) {
-            img.classList.remove('pulse');
-            img.alt = '微信二维码';
-            drawQrWithLogo(wechatQrUrl, logoUrl, 400, function(dataUrl) {
-                img.src = dataUrl;
-            });
+        function setCookie(name, value, days) {
+            var d = new Date();
+            d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+            document.cookie = name + '=' + value + ';expires=' + d.toUTCString() + ';path=/';
         }
-        var intervalId = setInterval(function() {
-            fetch(AppApi.login(AppApiPaths.login.checkLogin) + '?ticket=' + encodeURIComponent(ticket))
+
+        // 二维码绘制 (保持原逻辑)
+        function drawQrWithLogo(wechatQrUrl, logoUrl, size, callback) {
+            var canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            var ctx = canvas.getContext('2d');
+            var qrImg = new Image();
+            qrImg.crossOrigin = 'anonymous';
+            qrImg.onload = function() {
+                ctx.drawImage(qrImg, 0, 0, size, size);
+                var logoImg = new Image();
+                logoImg.crossOrigin = 'anonymous';
+                logoImg.onload = function() {
+                    var w = Math.round(size * LOGO_CENTER_RATIO);
+                    var h = Math.round(size * LOGO_CENTER_RATIO);
+                    var x = (size - w) / 2;
+                    var y = (size - h) / 2;
+                    ctx.drawImage(logoImg, x, y, w, h);
+                    try {
+                        callback(canvas.toDataURL('image/png'));
+                    } catch (e) {
+                        callback(wechatQrUrl);
+                    }
+                };
+                logoImg.onerror = function() { callback(wechatQrUrl); };
+                logoImg.src = logoUrl;
+            };
+            qrImg.onerror = function() { callback(wechatQrUrl); };
+            qrImg.src = wechatQrUrl;
+        }
+
+        function startQrAndPoll(ticket) {
+            var wechatQrUrl = 'https://mp.weixin.qq.com/cgi-bin/showqrcode?ticket=' + encodeURIComponent(ticket);
+            var logoUrl = (window.location.pathname.replace(/\/[^/]*$/, '') || '') + '/images/QR.png';
+            if (logoUrl.indexOf('/') !== 0) logoUrl = 'images/QR.png';
+            
+            var block = document.getElementById('qr-block');
+            var img = document.getElementById('qr-code-img');
+            var loadingHint = document.getElementById('qr-loading-hint');
+            var overlay = document.getElementById('qr-overlay');
+            
+            if (loadingHint) loadingHint.style.display = 'none';
+            if (overlay) overlay.style.display = 'none';
+            if (block) {
+                block.classList.add('loaded');
+                block.querySelector('.w-56').classList.add('qr-pulse');
+            }
+            
+            if (img) {
+                drawQrWithLogo(wechatQrUrl, logoUrl, 400, function(dataUrl) {
+                    img.src = dataUrl;
+                });
+            }
+
+            var intervalId = setInterval(function() {
+                fetch(AppApi.login(AppApiPaths.login.checkLogin) + '?ticket=' + encodeURIComponent(ticket))
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.code !== '0000') return;
+                        clearInterval(intervalId);
+                        if (data.data === NEED_REGISTER) {
+                            document.getElementById('qr-area').classList.add('hidden');
+                            document.getElementById('bind-register-box').classList.remove('hidden');
+                            document.getElementById('bind-submit-btn').onclick = function() { doBindRegister(ticket); };
+                        } else {
+                            setCookie('loginToken', data.data, 30);
+                            window.location.href = 'index.html';
+                        }
+                    })
+                    .catch(function() {});
+            }, 3000);
+        }
+
+        function doBindRegister(ticket) {
+            var username = (document.getElementById('bind-username').value || '').trim();
+            var password = (document.getElementById('bind-password').value || '');
+            var errEl = document.getElementById('bind-err-msg');
+            if (!username || !password) {
+                errEl.textContent = '请填写用户名和密码';
+                return;
+            }
+            errEl.textContent = '';
+            document.getElementById('bind-submit-btn').disabled = true;
+            fetch(AppApi.login(AppApiPaths.login.register), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ticket: ticket, username: username, password: password })
+            })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    if (data.code !== '0000') return;
-                    clearInterval(intervalId);
-                    if (data.data === NEED_REGISTER) {
-                        document.getElementById('qr-area').style.display = 'none';
-                        document.getElementById('bind-register-box').classList.add('show');
-                        document.getElementById('bind-err-msg').textContent = '';
-                        document.getElementById('bind-submit-btn').onclick = function() { doBindRegister(ticket); };
-                    } else {
+                    if (data.code === '0000' && data.data) {
                         setCookie('loginToken', data.data, 30);
                         window.location.href = 'index.html';
+                    } else {
+                        errEl.textContent = data.info || '绑定失败，请重试';
+                        document.getElementById('bind-submit-btn').disabled = false;
                     }
                 })
-                .catch(function() {});
-        }, 3000);
-    }
-
-    function doBindRegister(ticket) {
-        var username = (document.getElementById('bind-username').value || '').trim();
-        var password = (document.getElementById('bind-password').value || '');
-        var errEl = document.getElementById('bind-err-msg');
-        if (!username || !password) {
-            errEl.textContent = '请填写用户名和密码';
-            return;
-        }
-        errEl.textContent = '';
-        document.getElementById('bind-submit-btn').disabled = true;
-        fetch(AppApi.login(AppApiPaths.login.register), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ticket: ticket, username: username, password: password })
-        })
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.code === '0000' && data.data) {
-                    setCookie('loginToken', data.data, 30);
-                    window.location.href = 'index.html';
-                } else {
-                    errEl.textContent = data.info || '绑定失败，请重试';
+                .catch(function() {
+                    errEl.textContent = '请求失败，请重试';
                     document.getElementById('bind-submit-btn').disabled = false;
-                }
-            })
-            .catch(function() {
-                errEl.textContent = '请求失败，请重试';
-                document.getElementById('bind-submit-btn').disabled = false;
-            });
-    }
+                });
+        }
 
-    function onShowQrClick() {
-        var btn = document.getElementById('btn-show-qr');
-        var loadingHint = document.getElementById('qr-loading-hint');
-        if (btn && btn.disabled) return;
-        if (btn) { btn.disabled = true; btn.textContent = '加载中…'; }
-        if (loadingHint) loadingHint.style.display = 'block';
+        function onShowQrClick() {
+            var btn = document.getElementById('btn-show-qr');
+            var loadingHint = document.getElementById('qr-loading-hint');
+            if (btn && btn.disabled) return;
+            if (btn) btn.style.display = 'none';
+            if (loadingHint) loadingHint.style.display = 'block';
 
-        fetch(AppApi.login(AppApiPaths.login.weixinQrcodeTicket))
-            .then(function(r) { return r.json(); })
-            .then(function(data) {
-                if (data.code === '0000' && data.data) {
-                    startQrAndPoll(data.data);
-                } else {
-                    if (btn) { btn.disabled = false; btn.textContent = '获取失败，点击重试'; }
-                    if (loadingHint) { loadingHint.style.display = 'none'; loadingHint.textContent = data.info || '请重试'; }
-                }
-            })
-            .catch(function() {
-                if (btn) { btn.disabled = false; btn.textContent = '网络错误，点击重试'; }
-                if (loadingHint) { loadingHint.style.display = 'none'; loadingHint.textContent = '请确认后端 100.86.250.112:8090 已启动'; }
-            });
-    }
+            fetch(AppApi.login(AppApiPaths.login.weixinQrcodeTicket))
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.code === '0000' && data.data) {
+                        startQrAndPoll(data.data);
+                    } else {
+                        if (btn) { btn.style.display = 'block'; btn.textContent = '重试获取'; }
+                        if (loadingHint) { loadingHint.style.display = 'none'; }
+                        alert(data.info || '二维码获取失败');
+                    }
+                })
+                .catch(function() {
+                    if (btn) { btn.style.display = 'block'; btn.textContent = '重试获取'; }
+                    if (loadingHint) { loadingHint.style.display = 'none'; }
+                    alert('网络连接失败');
+                });
+        }
 
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('btn-show-qr').onclick = onShowQrClick;
-        document.getElementById('stealth-login-btn').onclick = function() {
-            setCookie('loginToken', 'guest_' + Date.now(), 30);
-            window.location.href = 'index.html';
-        };
-    });
-})();
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('btn-show-qr').onclick = onShowQrClick;
+            document.getElementById('stealth-login-btn').onclick = function() {
+                setCookie('loginToken', 'guest_' + Date.now(), 30);
+                window.location.href = 'index.html';
+            };
+        });
+    })();
 </script>
 </body>
 </html>

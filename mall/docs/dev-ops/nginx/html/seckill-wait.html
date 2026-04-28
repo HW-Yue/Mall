@@ -3,59 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>抢购成功</title>
+    <title>排队抢购中 - AI Resource Mall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="js/common.js"></script>
     <script src="js/api-config.js"></script>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f3f4f6; min-height: 100vh; }
-        .container { max-width: 520px; margin: 40px auto; padding: 0 16px; }
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        
+        body {
+            background-color: #f8fafc;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 24px;
+            overflow: hidden;
         }
-        .title { font-size: 22px; font-weight: 700; color: #111827; margin-bottom: 12px; }
-        .desc { font-size: 14px; color: #4b5563; margin-bottom: 20px; line-height: 1.7; }
-        .token {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 8px;
-            padding: 12px;
-            font-size: 13px;
-            color: #111827;
-            word-break: break-all;
-            margin-bottom: 16px;
+
+        /* 雷达扫描动画 */
+        .radar-box {
+            position: relative;
+            width: 240px;
+            height: 240px;
         }
-        .status { font-size: 14px; color: #2563eb; margin-bottom: 14px; }
-        .actions { display: flex; gap: 10px; }
-        .btn {
-            border: none;
-            border-radius: 8px;
-            padding: 10px 14px;
-            cursor: pointer;
-            font-size: 14px;
+        .radar-circle {
+            position: absolute;
+            inset: 0;
+            border: 2px solid rgba(37, 99, 235, 0.1);
+            border-radius: 50%;
         }
-        .btn-primary { background: #3b82f6; color: #fff; }
-        .btn-secondary { background: #e5e7eb; color: #111827; }
-        #errorMsg { color: #dc2626; margin-top: 12px; display: none; font-size: 13px; }
+        .radar-scan {
+            position: absolute;
+            inset: 0;
+            background: conic-gradient(from 0deg at 50% 50%, rgba(37, 99, 235, 0.3) 0deg, transparent 90deg);
+            border-radius: 50%;
+            animation: rotate-radar 2s linear infinite;
+        }
+        @keyframes rotate-radar {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 核心呼吸灯效果 */
+        .pulse-core {
+            animation: pulse-core 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-core {
+            0%, 100% { transform: scale(1); opacity: 1; box-shadow: 0 0 20px rgba(37, 99, 235, 0.2); }
+            50% { transform: scale(1.1); opacity: 0.8; box-shadow: 0 0 40px rgba(37, 99, 235, 0.4); }
+        }
+
+        .dot-flashing {
+            position: relative;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #2563eb;
+            color: #2563eb;
+            animation: dot-flashing 1s infinite linear alternate;
+            animation-delay: .5s;
+        }
+        .dot-flashing::before, .dot-flashing::after {
+            content: '';
+            display: inline-block;
+            position: absolute;
+            top: 0;
+        }
+        .dot-flashing::before {
+            left: -15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #2563eb;
+            color: #2563eb;
+            animation: dot-flashing 1s infinite alternate;
+            animation-delay: 0s;
+        }
+        .dot-flashing::after {
+            left: 15px;
+            width: 10px;
+            height: 10px;
+            border-radius: 5px;
+            background-color: #2563eb;
+            color: #2563eb;
+            animation: dot-flashing 1s infinite alternate;
+            animation-delay: 1s;
+        }
+        @keyframes dot-flashing {
+            0% { background-color: #2563eb; }
+            50%, 100% { background-color: rgba(37, 99, 235, 0.2); }
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="card">
-        <div class="title">抢购成功，正在生成订单</div>
-        <div class="desc">系统正在为你创建订单，请稍候。创建成功后会自动跳转到支付页。</div>
-        <div class="token">seckillToken：<span id="tokenText">-</span></div>
-        <div class="status" id="statusText">正在轮询订单状态...</div>
-        <div class="actions">
-            <button class="btn btn-primary" id="retryBtn">立即重试</button>
-            <button class="btn btn-secondary" onclick="window.location.href='order-list.html'">去订单列表</button>
+
+<div class="max-w-md w-full text-center">
+    <!-- 核心动画 -->
+    <div class="flex justify-center mb-12">
+        <div class="radar-box">
+            <div class="radar-circle"></div>
+            <div class="radar-circle scale-75"></div>
+            <div class="radar-circle scale-50"></div>
+            <div class="radar-scan"></div>
+            <!-- 中心图标 -->
+            <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white pulse-core shadow-2xl">
+                    <i data-lucide="zap" class="w-10 h-10 fill-white"></i>
+                </div>
+            </div>
         </div>
-        <div id="errorMsg"></div>
     </div>
+
+    <!-- 文字提示 -->
+    <div class="space-y-4 px-6">
+        <h1 class="text-3xl font-black text-slate-900 tracking-tight">正在排队抢购中</h1>
+        <p class="text-slate-500 text-sm leading-relaxed font-medium">
+            系统正在为您预留库存并创建订单，由于请求较多，请耐心等待，<span class="text-blue-600 font-bold">请勿刷新或关闭页面</span>。
+        </p>
+    </div>
+
+    <!-- 动态状态条 -->
+    <div class="mt-12 bg-white rounded-[32px] p-6 border border-slate-100 shadow-sm mx-6">
+        <div class="flex items-center justify-between mb-4">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Seckill Status</span>
+            <span id="statusText" class="text-xs font-bold text-blue-600">正在同步订单信息...</span>
+        </div>
+        <div class="w-full h-2 bg-slate-50 rounded-full overflow-hidden">
+            <div class="h-full bg-blue-600 w-1/3 animate-[progress_3s_infinite_linear]"></div>
+        </div>
+        <style>
+            @keyframes progress {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(200%); }
+            }
+        </style>
+        
+        <div class="mt-6 pt-6 border-t border-slate-50">
+            <div class="flex items-center justify-center gap-8">
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] font-bold text-slate-300 uppercase mb-1">Queue ID</span>
+                    <span id="tokenText" class="text-[11px] font-mono text-slate-400">--</span>
+                </div>
+                <div class="w-px h-8 bg-slate-100"></div>
+                <div class="flex flex-col items-center">
+                    <span class="text-[10px] font-bold text-slate-300 uppercase mb-1">Time</span>
+                    <span id="timer" class="text-[11px] font-mono text-slate-900 font-bold">00:00</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 操作区 (默认隐藏，仅在出错或长时间无响应时显示) -->
+    <div id="actionArea" class="mt-10 px-6 space-y-3 opacity-0 transition-opacity duration-500 pointer-events-none">
+        <button id="retryBtn" class="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-blue-600 transition-all shadow-xl shadow-slate-200">
+            立即重试
+        </button>
+        <button onclick="window.location.href='order-list.html'" class="w-full py-4 rounded-2xl bg-white border border-slate-200 text-slate-500 font-bold text-sm hover:bg-slate-50 transition-colors">
+            返回订单中心
+        </button>
+    </div>
+    
+    <div id="errorMsg" class="mt-4 px-6 text-red-500 text-xs font-medium hidden"></div>
 </div>
+
+<script>
+    lucide.createIcons();
+
+    // 动态状态文案库
+    const statusMessages = [
+        "正在同步订单信息...",
+        "正在为您核对库存...",
+        "正在锁定秒杀份额...",
+        "正在请求网关校验...",
+        "正在与订单中心握手...",
+        "请耐心等待，即将进入支付页..."
+    ];
+
+    let msgIndex = 0;
+    setInterval(() => {
+        msgIndex = (msgIndex + 1) % statusMessages.length;
+        const el = document.getElementById('statusText');
+        if (el) el.textContent = statusMessages[msgIndex];
+    }, 2500);
+
+    // 简单计时器
+    let seconds = 0;
+    setInterval(() => {
+        seconds++;
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        const timer = document.getElementById('timer');
+        if (timer) timer.textContent = `${m}:${s}`;
+        
+        // 如果超过 10 秒还没结果，显示操作区域
+        if (seconds > 10) {
+            const area = document.getElementById('actionArea');
+            area.classList.remove('opacity-0', 'pointer-events-none');
+        }
+    }, 1000);
+</script>
 <script src="js/seckill-wait.js"></script>
 </body>
 </html>
