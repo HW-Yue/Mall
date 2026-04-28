@@ -19,7 +19,7 @@ public interface ISeckillAdminService {
      *
      * @param activityId    活动ID
      * @param goodsId       商品ID
-     * @param stock         预热库存数（null 则使用数据库 remainCount）
+     * @param stock         预热库存数（null 则使用数据库 stock_count）
      * @param expireSeconds 过期时间（秒）
      */
     void preheatStock(Long activityId, String goodsId, Integer stock, long expireSeconds);

@@ -18,4 +18,8 @@ public interface IScSkuActivityDao {
 
     List<ScSkuActivity> queryByActivityId(Long activityId);
 
+    int deductStock(@Param("activityId") Long activityId, @Param("goodsId") String goodsId);
+
+    int recoverStock(@Param("activityId") Long activityId, @Param("goodsId") String goodsId);
+
 }

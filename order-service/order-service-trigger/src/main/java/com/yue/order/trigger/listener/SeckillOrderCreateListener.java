@@ -55,6 +55,7 @@ public class SeckillOrderCreateListener implements RocketMQListener<String> {
             String channel = dto.getString("channel");
             String goodsName = dto.getString("goodsName");
             String goodsImageUrl = dto.getString("goodsImageUrl");
+            String outTradeNo = dto.getString("outTradeNo");
             BigDecimal originalPrice = parseBigDecimal(dto.getString("originalPrice"));
             BigDecimal deductionPrice = parseBigDecimal(dto.getString("deductionPrice"));
             BigDecimal payPrice = parseBigDecimal(dto.getString("payPrice"));
@@ -77,6 +78,7 @@ public class SeckillOrderCreateListener implements RocketMQListener<String> {
                     .payPrice(payPrice)
                     .source(source)
                     .channel(channel)
+                    .outTradeNo(StringUtils.isNotBlank(outTradeNo) ? outTradeNo : null)
                     .goodsName(goodsName)
                     .goodsImageUrl(goodsImageUrl)
                     .build();

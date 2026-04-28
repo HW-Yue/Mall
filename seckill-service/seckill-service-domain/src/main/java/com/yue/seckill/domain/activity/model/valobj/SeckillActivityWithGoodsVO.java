@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -18,6 +19,7 @@ public class SeckillActivityWithGoodsVO {
 
     private Long activityId;
     private String activityName;
+    private BigDecimal seckillPrice;
     private Integer remainCount;
     private List<GoodsItem> goodsList;
 

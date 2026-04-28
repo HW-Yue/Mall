@@ -6,6 +6,12 @@
     var userId = params.get("userId") || (window.AppUtils && window.AppUtils.getCurrentUserId()) || "";
     var payAmountParam = params.get("payAmount") || "";
 
+    function normalizePayAmount(value) {
+        var num = Number(value);
+        if (isNaN(num)) return null;
+        return Math.max(0, num);
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         if (!orderId) {
             showError("缺少订单号，请重新下单");
@@ -14,8 +20,9 @@
         }
         document.getElementById("orderIdDisplay").textContent = orderId;
         var amtEl = document.getElementById("amountDisplay");
-        if (payAmountParam && !isNaN(Number(payAmountParam))) {
-            amtEl.textContent = "￥" + Number(payAmountParam).toFixed(2);
+        var amount = normalizePayAmount(payAmountParam);
+        if (amount != null) {
+            amtEl.textContent = "￥" + amount.toFixed(2);
         } else {
             amtEl.textContent = "待确认";
         }

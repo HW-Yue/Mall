@@ -184,17 +184,16 @@
 - **说明**: 表 `seckill_activity` 在 2-29 中存在，2-26 无此表时返回空数组。
 - **响应 data**: 数组
 
-| 字段          | 类型    | 说明           |
-|---------------|---------|----------------|
-| id            | Long    | 主键           |
-| activityId    | Long    | 活动ID         |
-| activityName  | String  | 活动名称       |
-| discountId    | String  | 折扣ID（关联 discount，获取秒杀价） |
-| goodsId       | String  | 商品ID         |
-| status        | Integer | 状态           |
-| startTime     | DateTime| 开始时间       |
-| endTime       | DateTime| 结束时间       |
-| tagId / tagScope | String | 人群标签相关   |
+| 字段            | 类型     | 说明                 |
+|-----------------|----------|----------------------|
+| id              | Long     | 主键                 |
+| activityId      | Long     | 活动ID               |
+| activityName    | String   | 活动名称             |
+| seckillPrice    | Decimal  | 秒杀一口价           |
+| status          | Integer  | 状态                 |
+| startTime       | DateTime | 开始时间             |
+| endTime         | DateTime | 结束时间             |
+| tagId / tagScope | String  | 人群标签相关         |
 
 ### 5.2 查询单个秒杀活动
 
@@ -203,7 +202,7 @@
 ### 5.3 新增/更新秒杀活动
 
 - **接口**: `POST /api/v1/gbm/config/seckill_activity`
-- **请求体**: `activityId`、`activityName`、`discountId`、`goodsId` 必填；存在则更新，否则新增。秒杀价通过 discountId 关联折扣配置获取，不直接传金额。
+- **请求体**: `activityId`、`activityName`、`seckillPrice` 必填；存在则更新，否则新增。秒杀价直接在活动中配置，不再通过 `discountId` 关联折扣。商品绑定与库存维护通过 `sc_sku_activity` 完成。
 
 ### 5.4 更新秒杀活动状态
 
@@ -270,13 +269,14 @@
 | activityId   | Long  | 活动ID         |
 | activityType | String| 活动类型编码   |
 | goodsId      | String| 商品ID         |
+| stockCount   | Integer | 活动库存     |
 
 ### 7.2 查询单条渠道商品活动
 - **接口**: `GET /api/v1/gbm/config/sc_sku_activity/{id}`
 
 ### 7.3 新增渠道商品活动
 - **接口**: `POST /api/v1/gbm/config/sc_sku_activity`
-- **请求体**: `source`、`channel`、`activityId`、`goodsId` 必填；`activityType` 选填。
+- **请求体**: `source`、`channel`、`activityId`、`goodsId` 必填；`activityType` 选填，秒杀默认 `seckill`。
 
 ### 7.4 更新渠道商品活动
 - **接口**: `PUT /api/v1/gbm/config/sc_sku_activity`

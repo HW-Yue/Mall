@@ -103,11 +103,15 @@
         const tbody = document.getElementById('tbody-skus');
         if (!tbody) return;
         tbody.innerHTML = (list || []).map(item =>
-            '<tr><td>' + (item.source ?? '') + '</td><td>' + (item.channel ?? '') + '</td><td>' + (item.goodsId ?? '') + '</td><td>' + (item.goodsName ?? '') + '</td><td>' + (item.originalPrice ?? '') + '</td><td><button type="button" class="btn btn-sm btn-edit" data-goodsId="' + (item.goodsId || '') + '">编辑</button> <button type="button" class="btn btn-sm btn-danger btn-delete-sku" data-goodsId="' + (item.goodsId || '') + '">删除</button></td></tr>'
+            '<tr><td>' + (item.source ?? '') + '</td><td>' + (item.channel ?? '') + '</td><td>' + (item.goodsId ?? '') + '</td><td>' + (item.goodsName ?? '') + '</td><td>' + _fmtMoney(item.originalPrice) + '</td><td><button type="button" class="btn btn-sm btn-edit" data-goodsId="' + (item.goodsId || '') + '">编辑</button> <button type="button" class="btn btn-sm btn-danger btn-delete-sku" data-goodsId="' + (item.goodsId || '') + '">删除</button></td></tr>'
         ).join('') || '<tr><td colspan="6">暂无数据</td></tr>';
     }
 
     function _fmtDt(d) { return d ? (d + '').slice(0, 19).replace('T', ' ') : ''; }
+    function _fmtMoney(v) {
+        var n = Number(v);
+        return isNaN(n) ? '' : Math.max(0, n).toFixed(2);
+    }
 
     function renderGroupBuyActivities(list) {
         const tbody = document.getElementById('tbody-group_buy_activities');
@@ -121,7 +125,7 @@
         const tbody = document.getElementById('tbody-seckill_activities');
         if (!tbody) return;
         tbody.innerHTML = (list || []).map(item =>
-            '<tr><td>' + (item.activityId ?? '') + '</td><td>' + (item.activityName ?? '') + '</td><td>' + (item.goodsId ?? '') + '</td><td>' + (item.seckillPrice ?? '') + '</td><td>' + (item.stock ?? '') + '</td><td>' + (item.status ?? '') + '</td><td>' + _fmtDt(item.startTime) + '</td><td>' + _fmtDt(item.endTime) + '</td><td>' + (item.tagId ?? '') + '</td><td>' + (item.tagScope ?? '') + '</td><td><button type="button" class="btn btn-sm btn-edit-seckill" data-activityId="' + (item.activityId ?? '') + '">编辑</button> <button type="button" class="btn btn-sm btn-danger btn-delete-seckill" data-activityId="' + (item.activityId ?? '') + '">删除</button></td></tr>'
+            '<tr><td>' + (item.activityId ?? '') + '</td><td>' + (item.activityName ?? '') + '</td><td>' + (item.goodsId ?? '') + '</td><td>' + _fmtMoney(item.seckillPrice) + '</td><td>' + (item.stockCount ?? item.stock ?? '') + '</td><td>' + (item.status ?? '') + '</td><td>' + _fmtDt(item.startTime) + '</td><td>' + _fmtDt(item.endTime) + '</td><td>' + (item.tagId ?? '') + '</td><td>' + (item.tagScope ?? '') + '</td><td><button type="button" class="btn btn-sm btn-edit-seckill" data-activityId="' + (item.activityId ?? '') + '">编辑</button> <button type="button" class="btn btn-sm btn-danger btn-delete-seckill" data-activityId="' + (item.activityId ?? '') + '">删除</button></td></tr>'
         ).join('') || '<tr><td colspan="11">暂无数据</td></tr>';
     }
 
@@ -241,7 +245,7 @@
             '<label>来源 channel <input type="text" id="f-channel" value="' + (editItem ? (editItem.channel || 'c01') : 'c01') + '" placeholder="如 c01"></label>' +
             '<label>商品ID goods_id <input type="text" id="f-goodsId" value="' + (editItem ? (editItem.goodsId || '') : '') + '" ' + (editItem ? 'readonly' : '') + ' placeholder="唯一"></label>' +
             '<label>商品名称 goods_name <input type="text" id="f-goodsName" value="' + (editItem ? (editItem.goodsName || '') : '') + '"></label>' +
-            '<label>原价 original_price <input type="number" step="0.01" id="f-originalPrice" value="' + (editItem ? (editItem.originalPrice ?? '') : '') + '"></label>' +
+            '<label>原价 original_price <input type="number" step="0.01" min="0" id="f-originalPrice" value="' + (editItem ? (editItem.originalPrice ?? '') : '') + '"></label>' +
             '</div>';
     }
 
@@ -267,8 +271,8 @@
             '<label>活动ID <input type="number" id="f-activityId" value="' + (editItem ? (editItem.activityId ?? '') : '') + '" ' + (editItem ? 'readonly' : '') + '></label>' +
             '<label>活动名称 <input type="text" id="f-activityName" value="' + (editItem ? (editItem.activityName || '') : '') + '"></label>' +
             '<label>商品ID <input type="text" id="f-goodsId" value="' + (editItem ? (editItem.goodsId || '') : '') + '"></label>' +
-            '<label>秒杀价 <input type="number" step="0.01" id="f-seckillPrice" value="' + (editItem ? (editItem.seckillPrice ?? '') : '') + '"></label>' +
-            '<label>库存 <input type="number" id="f-stock" value="' + (editItem ? (editItem.stock ?? 0) : '0') + '"></label>' +
+            '<label>秒杀价 <input type="number" step="0.01" min="0" id="f-seckillPrice" value="' + (editItem ? (editItem.seckillPrice ?? '') : '') + '"></label>' +
+            '<label>库存 <input type="number" id="f-stock" value="' + (editItem ? (editItem.stockCount ?? editItem.stock ?? 0) : '0') + '"></label>' +
             '<label>状态 <select id="f-status"><option value="0">创建</option><option value="1">生效</option><option value="2">过期</option><option value="3">废弃</option></select></label>' +
             '<label>开始时间 <input type="datetime-local" id="f-startTime" value="' + (editItem && editItem.startTime ? editItem.startTime.slice(0, 16) : '') + '"></label>' +
             '<label>结束时间 <input type="datetime-local" id="f-endTime" value="' + (editItem && editItem.endTime ? editItem.endTime.slice(0, 16) : '') + '"></label>' +
@@ -349,14 +353,15 @@
         var goodsId = document.getElementById('f-goodsId') && document.getElementById('f-goodsId').value.trim();
         var goodsName = document.getElementById('f-goodsName') && document.getElementById('f-goodsName').value.trim();
         var originalPrice = document.getElementById('f-originalPrice') && document.getElementById('f-originalPrice').value;
-        if (!goodsId || !goodsName || originalPrice === '' || isNaN(parseFloat(originalPrice))) {
-            alert('请填写商品ID、名称和原价');
+        var originalPriceNum = parseFloat(originalPrice);
+        if (!goodsId || !goodsName || originalPrice === '' || isNaN(originalPriceNum) || originalPriceNum < 0) {
+            alert('请填写商品ID、名称和不小于 0 的原价');
             return;
         }
         ConfigAPI.saveSku({
             goodsId: goodsId,
             goodsName: goodsName,
-            originalPrice: parseFloat(originalPrice),
+            originalPrice: originalPriceNum,
             source: (document.getElementById('f-source') && document.getElementById('f-source').value) || 's01',
             channel: (document.getElementById('f-channel') && document.getElementById('f-channel').value) || 'c01'
         }).then(function (res) {
@@ -399,8 +404,9 @@
         var activityName = document.getElementById('f-activityName') && document.getElementById('f-activityName').value.trim();
         var goodsId = document.getElementById('f-goodsId') && document.getElementById('f-goodsId').value.trim();
         var seckillPrice = document.getElementById('f-seckillPrice') && document.getElementById('f-seckillPrice').value;
-        if (!activityId || !activityName || !goodsId || seckillPrice === '' || isNaN(parseFloat(seckillPrice))) {
-            alert('请填写活动ID、活动名称、商品ID、秒杀价');
+        var seckillPriceNum = parseFloat(seckillPrice);
+        if (!activityId || !activityName || !goodsId || seckillPrice === '' || isNaN(seckillPriceNum) || seckillPriceNum < 0) {
+            alert('请填写活动ID、活动名称、商品ID和不小于 0 的秒杀价');
             return;
         }
         var startTime = document.getElementById('f-startTime') && document.getElementById('f-startTime').value;
@@ -411,7 +417,8 @@
             activityId: parseInt(activityId, 10),
             activityName: activityName,
             goodsId: goodsId,
-            seckillPrice: parseFloat(seckillPrice),
+            seckillPrice: seckillPriceNum,
+            stockCount: parseInt((document.getElementById('f-stock') && document.getElementById('f-stock').value) || '0', 10),
             stock: parseInt((document.getElementById('f-stock') && document.getElementById('f-stock').value) || '0', 10),
             status: parseInt((document.getElementById('f-status') && document.getElementById('f-status').value) || '0', 10),
             startTime: startTime || null,

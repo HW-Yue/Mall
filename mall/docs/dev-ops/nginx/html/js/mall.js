@@ -64,6 +64,14 @@
     return window.AppUtils.getCurrentUserId();
   }
 
+  function normalizePrice(value) {
+    const num = Number(value);
+    if (Number.isNaN(num)) {
+      return null;
+    }
+    return Math.max(0, num);
+  }
+
   /** 确认支付页 URL，可带 payAmount 供展示（与 payment.js 读取一致） */
   function buildPaymentPageUrl(orderId, userId, payAmount) {
     var base =
@@ -71,10 +79,11 @@
       encodeURIComponent(orderId) +
       "&userId=" +
       encodeURIComponent(userId);
-    if (payAmount != null && payAmount !== "" && !isNaN(Number(payAmount))) {
+    var amount = normalizePrice(payAmount);
+    if (amount != null) {
       base +=
         "&payAmount=" +
-        encodeURIComponent(Number(payAmount).toFixed(2));
+        encodeURIComponent(amount.toFixed(2));
     }
     return base;
   }
@@ -199,14 +208,16 @@
       priceRow.className = "flex items-baseline gap-1";
       const priceVal = document.createElement("span");
       priceVal.className = "text-sm font-black " + (type === "group_buy" ? "text-green-600" : "text-orange-600");
-      priceVal.textContent = "￥" + Number(item.payPrice || item.originalPrice || 0).toFixed(2);
+      const payPrice = normalizePrice(item.payPrice != null ? item.payPrice : item.originalPrice);
+      const originalPrice = normalizePrice(item.originalPrice);
+      priceVal.textContent = "￥" + (payPrice != null ? payPrice : 0).toFixed(2);
       
       const oldPrice = document.createElement("span");
       oldPrice.className = "text-[10px] text-slate-300 line-through";
-      oldPrice.textContent = "￥" + Number(item.originalPrice || 0).toFixed(2);
+      oldPrice.textContent = "￥" + (originalPrice != null ? originalPrice : 0).toFixed(2);
       
       priceRow.appendChild(priceVal);
-      if (item.payPrice && item.originalPrice && item.payPrice < item.originalPrice) {
+      if (payPrice != null && originalPrice != null && payPrice < originalPrice) {
           priceRow.appendChild(oldPrice);
       }
 
@@ -538,8 +549,8 @@
     if (seckillGoodsSummaryEl) seckillGoodsSummaryEl.textContent = item.goodsName || "";
     if (seckillActivityInfoEl) seckillActivityInfoEl.textContent = "活动ID：" + (item.activityId || "-");
     if (seckillPayPriceEl) {
-      const price = item.payPrice != null ? item.payPrice : item.originalPrice;
-      seckillPayPriceEl.textContent = "￥" + Number(price || 0).toFixed(2);
+      const price = normalizePrice(item.payPrice != null ? item.payPrice : item.originalPrice);
+      seckillPayPriceEl.textContent = "￥" + (price != null ? price : 0).toFixed(2);
     }
 
     seckillModalMaskEl.style.display = "flex";
@@ -579,16 +590,17 @@
           const seckillToken = json.data.seckillToken;
           if (seckillToken) {
             window.localStorage.setItem("lastSeckillToken", seckillToken);
-            var est =
+            var est = normalizePrice(
               currentSeckillItem.payPrice != null
                 ? currentSeckillItem.payPrice
-                : currentSeckillItem.originalPrice;
+                : currentSeckillItem.originalPrice
+            );
             var waitUrl =
               "seckill-wait.html?seckillToken=" +
               encodeURIComponent(seckillToken) +
               "&userId=" +
               encodeURIComponent(userId);
-            if (est != null && !isNaN(Number(est))) {
+            if (est != null) {
               waitUrl +=
                 "&payAmount=" + encodeURIComponent(Number(est).toFixed(2));
             }
@@ -683,7 +695,7 @@
       }
 
       if (groupBuyPayPriceEl) {
-        const pay = goods.payPrice != null ? Number(goods.payPrice) : null;
+        const pay = normalizePrice(goods.payPrice != null ? goods.payPrice : goods.originalPrice);
         const basePrice =
           pay != null
             ? pay
@@ -761,12 +773,13 @@
       };
     } else {
       url = window.AppApi.market(P.mallTrade.createNormalOrder);
+      const normalPrice = normalizePrice(selectedGoods.price);
       body = {
         userId: userId,
         productId: String(selectedGoods.id),
-        originalPrice: selectedGoods.price || 0,
+        originalPrice: normalPrice != null ? normalPrice : 0,
         deductionPrice: 0,
-        payPrice: selectedGoods.price || 0,
+        payPrice: normalPrice != null ? normalPrice : 0,
         source: selectedGoods.source || "s01",
         channel: selectedGoods.channel || "c01",
         goodsName: selectedGoods.goodsName || "",
@@ -788,16 +801,17 @@
             const seckillToken = json.data.seckillToken;
             if (seckillToken) {
               window.localStorage.setItem("lastSeckillToken", seckillToken);
-              var est2 =
+              var est2 = normalizePrice(
                 selectedGoods.payPrice != null
                   ? selectedGoods.payPrice
-                  : selectedGoods.originalPrice;
+                  : selectedGoods.originalPrice
+              );
               var waitUrl2 =
                 "seckill-wait.html?seckillToken=" +
                 encodeURIComponent(seckillToken) +
                 "&userId=" +
                 encodeURIComponent(userId);
-              if (est2 != null && !isNaN(Number(est2))) {
+              if (est2 != null) {
                 waitUrl2 +=
                   "&payAmount=" +
                   encodeURIComponent(Number(est2).toFixed(2));
@@ -811,9 +825,7 @@
             window.location.href = buildPaymentPageUrl(
               orderId,
               userId,
-              selectedGoods.price != null
-                ? selectedGoods.price
-                : body.payPrice
+              normalizePrice(selectedGoods.price != null ? selectedGoods.price : body.payPrice)
             );
           }
         } else {
@@ -967,4 +979,3 @@
     }
   });
 })();
-

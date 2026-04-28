@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -25,6 +26,7 @@ public class QueryActivitiesResponseDTO {
     public static class ActivityWithGoodsDTO {
         private Long activityId;
         private String activityName;
+        private BigDecimal seckillPrice;
         private Integer remainCount;
         private List<GoodsItemDTO> goodsList;
     }

@@ -40,7 +40,7 @@ public class SeckillAdminServiceImpl implements ISeckillAdminService {
     }
 
     /**
-     * 从数据库查询 remainCount 作为预热库存兜底值
+     * 从数据库查询 sc_sku_activity.stock_count 作为预热库存兜底值
      */
     private int resolveStockFromDb(Long activityId, String goodsId) {
         List<SeckillStockVO> stockList = seckillActivityRepository.querySeckillStockList();

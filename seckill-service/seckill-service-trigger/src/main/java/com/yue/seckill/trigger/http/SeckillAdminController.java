@@ -49,6 +49,7 @@ public class SeckillAdminController implements ISeckillAdminController {
                 activities.add(QueryActivitiesResponseDTO.ActivityWithGoodsDTO.builder()
                         .activityId(vo.getActivityId())
                         .activityName(vo.getActivityName())
+                        .seckillPrice(vo.getSeckillPrice())
                         .remainCount(vo.getRemainCount())
                         .goodsList(goodsItems)
                         .build());

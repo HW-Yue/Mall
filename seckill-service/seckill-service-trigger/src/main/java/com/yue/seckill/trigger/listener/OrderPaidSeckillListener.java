@@ -21,7 +21,7 @@ import jakarta.annotation.Resource;
  * 1. 通过 outTradeNo 从 Redis 反向查出 seckillToken
  * 2. 通过 seckillToken 解析出 activityId 和 productId
  * 3. Lua 原子扣减 Redis 真实库存（seckill:stock:real:...）
- * 4. 扣减成功后发 seckill-stock-deduct MQ，异步更新 MySQL remain_count
+ * 4. 扣减成功后发 seckill-stock-deduct MQ，异步更新 MySQL sc_sku_activity.stock_count
  */
 @Slf4j
 @Component
@@ -68,7 +68,7 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
             // 3. Lua 原子扣减 Redis 真实库存
             int realResult = seckillStockPort.deductRealStockByLua(stockContext.getActivityId(), stockContext.getProductId());
             if (realResult == 1) {
-                // 4. 扣减成功 → 发 MQ 异步更新 MySQL remain_count
+                // 4. 扣减成功 → 发 MQ 异步更新 MySQL stock_count
                 seckillStockDeductPort.sendDeductStockTask(stockContext.getActivityId(), stockContext.getProductId());
                 log.info("[真实库存] 扣减成功，已发 MySQL 更新 MQ outTradeNo:{} activityId:{} productId:{}",
                         outTradeNo, stockContext.getActivityId(), stockContext.getProductId());

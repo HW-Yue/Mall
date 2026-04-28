@@ -24,6 +24,7 @@ public class SeckillOrderTaskMessage {
     private String channel;
     private String goodsName;
     private String goodsImageUrl;
+    private String outTradeNo;
     private BigDecimal originalPrice;
     private BigDecimal deductionPrice;
     private BigDecimal payPrice;

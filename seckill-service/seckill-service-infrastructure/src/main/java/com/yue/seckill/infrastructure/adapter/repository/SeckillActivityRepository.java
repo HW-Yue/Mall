@@ -3,12 +3,15 @@ package com.yue.seckill.infrastructure.adapter.repository;
 import com.yue.seckill.domain.activity.adapter.repository.ISeckillActivityRepository;
 import com.yue.seckill.domain.activity.model.entity.SeckillActivityEntity;
 import com.yue.seckill.domain.activity.model.entity.SeckillGoodsEntity;
-import com.yue.seckill.domain.activity.model.valobj.SeckillActivityDiscountVO;
 import com.yue.seckill.domain.activity.model.valobj.SeckillActivityWithGoodsVO;
 import com.yue.seckill.domain.activity.model.valobj.SeckillStockVO;
 import com.yue.seckill.domain.activity.model.valobj.SkuVO;
-import com.yue.seckill.infrastructure.dao.*;
-import com.yue.seckill.infrastructure.dao.po.*;
+import com.yue.seckill.infrastructure.dao.IScSkuActivityDao;
+import com.yue.seckill.infrastructure.dao.ISeckillActivityDao;
+import com.yue.seckill.infrastructure.dao.ISkuDao;
+import com.yue.seckill.infrastructure.dao.po.ScSkuActivity;
+import com.yue.seckill.infrastructure.dao.po.SeckillActivity;
+import com.yue.seckill.infrastructure.dao.po.Sku;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
@@ -27,33 +30,23 @@ public class SeckillActivityRepository implements ISeckillActivityRepository {
     @Resource
     private ISeckillActivityDao seckillActivityDao;
     @Resource
-    private IDiscountDao discountDao;
-    @Resource
     private ISkuDao skuDao;
     @Resource
     private IScSkuActivityDao scSkuActivityDao;
 
     @Override
-    public SeckillActivityDiscountVO querySeckillActivityDiscountVO(Long activityId) {
+    public SeckillActivityEntity querySeckillActivity(Long activityId) {
         SeckillActivity activity = seckillActivityDao.queryByActivityId(activityId);
-        if (null == activity || activity.getStatus() != 1) return null;
-
-        Discount discount = discountDao.queryByDiscountId(activity.getDiscountId());
-        if (null == discount) return null;
-
-        return SeckillActivityDiscountVO.builder()
+        if (activity == null) {
+            return null;
+        }
+        Integer totalStock = sumActivityStock(activityId);
+        return SeckillActivityEntity.builder()
                 .activityId(activity.getActivityId())
                 .activityName(activity.getActivityName())
-                .seckillDiscount(SeckillActivityDiscountVO.SeckillDiscount.builder()
-                        .discountName(discount.getDiscountName())
-                        .discountDesc(discount.getDiscountDesc())
-                        .discountType(discount.getDiscountType())
-                        .marketPlan(discount.getMarketPlan())
-                        .marketExpr(discount.getMarketExpr())
-                        .tagId(discount.getTagId())
-                        .build())
-                .stockCount(activity.getStockCount())
-                .remainCount(activity.getRemainCount())
+                .seckillPrice(activity.getSeckillPrice())
+                .stockCount(totalStock)
+                .remainCount(totalStock)
                 .takeLimitCount(activity.getTakeLimitCount())
                 .status(activity.getStatus())
                 .startTime(activity.getStartTime())
@@ -66,7 +59,9 @@ public class SeckillActivityRepository implements ISeckillActivityRepository {
     @Override
     public SkuVO querySkuByGoodsId(String goodsId) {
         Sku sku = skuDao.queryByGoodsId(goodsId);
-        if (null == sku) return null;
+        if (sku == null) {
+            return null;
+        }
         return SkuVO.builder()
                 .goodsId(sku.getGoodsId())
                 .goodsName(sku.getGoodsName())
@@ -80,15 +75,18 @@ public class SeckillActivityRepository implements ISeckillActivityRepository {
     public List<SeckillActivityEntity> queryEffectiveActivities() {
         List<SeckillActivity> activities = seckillActivityDao.queryEffectiveActivities();
         List<SeckillActivityEntity> result = new ArrayList<>();
-        if (activities == null || activities.isEmpty()) return result;
+        if (activities == null || activities.isEmpty()) {
+            return result;
+        }
 
         for (SeckillActivity activity : activities) {
+            Integer totalStock = sumActivityStock(activity.getActivityId());
             result.add(SeckillActivityEntity.builder()
                     .activityId(activity.getActivityId())
                     .activityName(activity.getActivityName())
-                    .discountId(activity.getDiscountId())
-                    .stockCount(activity.getStockCount())
-                    .remainCount(activity.getRemainCount())
+                    .seckillPrice(activity.getSeckillPrice())
+                    .stockCount(totalStock)
+                    .remainCount(totalStock)
                     .takeLimitCount(activity.getTakeLimitCount())
                     .status(activity.getStatus())
                     .startTime(activity.getStartTime())
@@ -104,26 +102,28 @@ public class SeckillActivityRepository implements ISeckillActivityRepository {
     public List<SeckillGoodsEntity> querySeckillGoodsList() {
         List<SeckillActivity> activities = seckillActivityDao.queryEffectiveActivities();
         List<SeckillGoodsEntity> result = new ArrayList<>();
-        if (activities == null || activities.isEmpty()) return result;
+        if (activities == null || activities.isEmpty()) {
+            return result;
+        }
 
         for (SeckillActivity activity : activities) {
-            // 查询该活动下的商品
             List<ScSkuActivity> scList = scSkuActivityDao.queryByActivityId(activity.getActivityId());
-            if (scList == null || scList.isEmpty()) continue;
-
-            Discount discount = discountDao.queryByDiscountId(activity.getDiscountId());
-            BigDecimal deduction = calculateDeduction(discount);
+            if (scList == null || scList.isEmpty()) {
+                continue;
+            }
 
             for (ScSkuActivity sc : scList) {
                 Sku sku = skuDao.queryByGoodsId(sc.getGoodsId());
-                if (sku == null) continue;
+                if (sku == null) {
+                    continue;
+                }
 
                 result.add(SeckillGoodsEntity.builder()
                         .goodsId(sku.getGoodsId())
                         .goodsName(sku.getGoodsName())
                         .goodsImageUrl(sku.getGoodsImageUrl())
                         .originalPrice(sku.getOriginalPrice())
-                        .payPrice(sku.getOriginalPrice().subtract(deduction))
+                        .payPrice(activity.getSeckillPrice())
                         .source(sc.getSource())
                         .channel(sc.getChannel())
                         .activityId(activity.getActivityId())
@@ -146,12 +146,11 @@ public class SeckillActivityRepository implements ISeckillActivityRepository {
             if (scList == null || scList.isEmpty()) {
                 continue;
             }
-
             for (ScSkuActivity sc : scList) {
                 result.add(SeckillStockVO.builder()
                         .activityId(activity.getActivityId())
                         .goodsId(sc.getGoodsId())
-                        .remainCount(activity.getRemainCount())
+                        .remainCount(sc.getStockCount())
                         .build());
             }
         }
@@ -162,13 +161,18 @@ public class SeckillActivityRepository implements ISeckillActivityRepository {
     public List<SeckillActivityWithGoodsVO> querySeckillActivitiesWithGoods() {
         List<SeckillActivity> activities = seckillActivityDao.queryEffectiveActivities();
         List<SeckillActivityWithGoodsVO> result = new ArrayList<>();
-        if (activities == null || activities.isEmpty()) return result;
+        if (activities == null || activities.isEmpty()) {
+            return result;
+        }
 
         for (SeckillActivity activity : activities) {
             List<ScSkuActivity> scList = scSkuActivityDao.queryByActivityId(activity.getActivityId());
-            if (scList == null || scList.isEmpty()) continue;
+            if (scList == null || scList.isEmpty()) {
+                continue;
+            }
 
             List<SeckillActivityWithGoodsVO.GoodsItem> goodsItems = new ArrayList<>();
+            int totalStock = 0;
             for (ScSkuActivity sc : scList) {
                 Sku sku = skuDao.queryByGoodsId(sc.getGoodsId());
                 String goodsName = sku != null ? sku.getGoodsName() : sc.getGoodsId();
@@ -176,47 +180,47 @@ public class SeckillActivityRepository implements ISeckillActivityRepository {
                         .goodsId(sc.getGoodsId())
                         .goodsName(goodsName)
                         .build());
+                totalStock += sc.getStockCount() != null ? sc.getStockCount() : 0;
             }
 
             result.add(SeckillActivityWithGoodsVO.builder()
                     .activityId(activity.getActivityId())
                     .activityName(activity.getActivityName())
-                    .remainCount(activity.getRemainCount())
+                    .seckillPrice(activity.getSeckillPrice())
+                    .remainCount(totalStock)
                     .goodsList(goodsItems)
                     .build());
         }
         return result;
     }
 
-    private BigDecimal calculateDeduction(Discount discount) {
-        if (discount == null || discount.getMarketExpr() == null) return BigDecimal.ZERO;
-        try {
-            return new BigDecimal(discount.getMarketExpr());
-        } catch (NumberFormatException e) {
-            return BigDecimal.ZERO;
-        }
-    }
-
     @Override
-    public boolean deductStock(Long activityId) {
-        int rows = seckillActivityDao.deductStock(activityId);
+    public boolean deductStock(Long activityId, String goodsId) {
+        int rows = scSkuActivityDao.deductStock(activityId, goodsId);
         return rows > 0;
     }
 
     @Override
-    public boolean recoverStock(Long activityId) {
-        int rows = seckillActivityDao.recoverStock(activityId);
-        if (rows > 0) {
-            log.info("恢复秒杀库存成功 activityId:{}", activityId);
-            return true;
-        }
-        return false;
+    public boolean recoverStock(Long activityId, String goodsId) {
+        int rows = scSkuActivityDao.recoverStock(activityId, goodsId);
+        return rows > 0;
     }
 
     @Override
     public boolean downgradeSwitch() {
-        // 暂无 DCC 配置，默认不降级
         return false;
+    }
+
+    private Integer sumActivityStock(Long activityId) {
+        List<ScSkuActivity> scList = scSkuActivityDao.queryByActivityId(activityId);
+        if (scList == null || scList.isEmpty()) {
+            return 0;
+        }
+        int total = 0;
+        for (ScSkuActivity sc : scList) {
+            total += sc.getStockCount() != null ? sc.getStockCount() : 0;
+        }
+        return total;
     }
 
 }

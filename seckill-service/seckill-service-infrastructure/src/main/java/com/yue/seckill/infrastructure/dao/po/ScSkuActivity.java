@@ -14,5 +14,6 @@ public class ScSkuActivity {
     private Long activityId;
     private String activityType;
     private String goodsId;
+    private Integer stockCount;
 
 }

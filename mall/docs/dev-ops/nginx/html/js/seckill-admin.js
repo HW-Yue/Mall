@@ -4,6 +4,14 @@
 
 let activitiesData = [];
 
+function fmtMoney(value) {
+    const num = Number(value);
+    if (Number.isNaN(num)) {
+        return '-';
+    }
+    return `￥${Math.max(0, num).toFixed(2)}`;
+}
+
 // 页面加载时拉取活动列表
 window.addEventListener('DOMContentLoaded', function () {
     loadActivities();
@@ -11,7 +19,7 @@ window.addEventListener('DOMContentLoaded', function () {
 
 async function loadActivities() {
     const tbody = document.getElementById('activitiesTableBody');
-    tbody.innerHTML = '<tr class="loading-row"><td colspan="7">加载中...</td></tr>';
+    tbody.innerHTML = '<tr class="loading-row"><td colspan="8">加载中...</td></tr>';
 
     try {
         const url = AppApi.seckill(AppApiPaths.seckill.admin.queryActivities);
@@ -19,7 +27,7 @@ async function loadActivities() {
         const json = await resp.json();
 
         if (json.code !== '0000') {
-            tbody.innerHTML = `<tr class="empty-row"><td colspan="7">加载失败：${json.info}</td></tr>`;
+            tbody.innerHTML = `<tr class="empty-row"><td colspan="8">加载失败：${json.info}</td></tr>`;
             return;
         }
 
@@ -28,7 +36,7 @@ async function loadActivities() {
         renderBatchSelect(activitiesData);
 
     } catch (e) {
-        tbody.innerHTML = `<tr class="empty-row"><td colspan="7">请求异常：${e.message}</td></tr>`;
+        tbody.innerHTML = `<tr class="empty-row"><td colspan="8">请求异常：${e.message}</td></tr>`;
     }
 }
 
@@ -36,7 +44,7 @@ function renderActivitiesTable(activities) {
     const tbody = document.getElementById('activitiesTableBody');
 
     if (!activities || activities.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="7">暂无有效秒杀活动</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="8">暂无有效秒杀活动</td></tr>';
         return;
     }
 
@@ -45,12 +53,13 @@ function renderActivitiesTable(activities) {
         // 活动行
         html += `<tr class="activity-row">
             <td colspan="3">活动：${escHtml(activity.activityName)}（ID: ${activity.activityId}）</td>
-            <td colspan="4" style="color:#64748b;font-weight:400">数据库库存：${activity.remainCount ?? '-'}</td>
+            <td colspan="2" style="color:#64748b;font-weight:400">一口价：${fmtMoney(activity.seckillPrice)}</td>
+            <td colspan="3" style="color:#64748b;font-weight:400">数据库库存：${activity.remainCount ?? '-'}</td>
         </tr>`;
 
         // 商品行
         if (!activity.goodsList || activity.goodsList.length === 0) {
-            html += `<tr><td colspan="7" class="indent text-muted">该活动下暂无商品</td></tr>`;
+            html += `<tr><td colspan="8" class="indent text-muted">该活动下暂无商品</td></tr>`;
         } else {
             activity.goodsList.forEach(function (goods) {
                 const isPreheated = goods.currentStock !== null && goods.currentStock !== undefined;
@@ -60,6 +69,7 @@ function renderActivitiesTable(activities) {
 
                 html += `<tr>
                     <td class="indent">${escHtml(goods.goodsName)} <span style="color:#94a3b8;font-size:11px">${goods.goodsId}</span></td>
+                    <td>${fmtMoney(activity.seckillPrice)}</td>
                     <td>${activity.remainCount ?? '-'}</td>
                     <td>${goods.currentStock ?? '<span class="text-muted">-</span>'}</td>
                     <td>${statusBadge}</td>

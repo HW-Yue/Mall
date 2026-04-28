@@ -9,6 +9,12 @@
     var retryCount = 0;
     var maxRetry = 60; // 约 5 分钟
 
+    function normalizePayAmount(value) {
+        var num = Number(value);
+        if (isNaN(num)) return null;
+        return Math.max(0, num);
+    }
+
     function setStatus(text) {
         if (statusTextEl) statusTextEl.textContent = text;
     }
@@ -65,8 +71,9 @@
                 var payQ =
                     "payment.html?orderId=" + encodeURIComponent(orderId) +
                     "&userId=" + encodeURIComponent(userId);
-                if (payAmountParam) {
-                    payQ += "&payAmount=" + encodeURIComponent(payAmountParam);
+                var amount = normalizePayAmount(payAmountParam);
+                if (amount != null) {
+                    payQ += "&payAmount=" + encodeURIComponent(amount.toFixed(2));
                 }
                 // 延迟 1s 跳转，让用户看清状态
                 setTimeout(function() {

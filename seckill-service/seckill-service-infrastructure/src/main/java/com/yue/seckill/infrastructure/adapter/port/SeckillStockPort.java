@@ -1,7 +1,7 @@
 package com.yue.seckill.infrastructure.adapter.port;
 
 import com.yue.seckill.domain.activity.adapter.repository.ISeckillActivityRepository;
-import com.yue.seckill.domain.activity.model.valobj.SeckillActivityDiscountVO;
+import com.yue.seckill.domain.activity.model.valobj.SeckillStockVO;
 import com.yue.seckill.domain.trade.adapter.port.ISeckillStockPort;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.Resource;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,7 +24,7 @@ import java.util.concurrent.TimeUnit;
  *   <li><b>可售库存</b>（available）：下单时 Lua 原子扣减，订单取消/超时时恢复</li>
  *   <li><b>真实库存</b>（real）：支付成功后 Lua 原子扣减，随后异步更新 MySQL</li>
  * </ul>
- * 预热时两个 key 初始化为相同值（均来自 MySQL remain_count）。
+ * 预热时两个 key 初始化为相同值（均来自 sc_sku_activity.stock_count）。
  */
 @Slf4j
 @Service
@@ -194,12 +195,21 @@ public class SeckillStockPort implements ISeckillStockPort {
                     log.debug("[懒加载] double-check 命中 activityId:{} goodsId:{}", activityId, goodsId);
                     return;
                 }
-                SeckillActivityDiscountVO vo = seckillActivityRepository.querySeckillActivityDiscountVO(activityId);
-                if (vo == null || vo.getRemainCount() == null) {
-                    log.warn("[懒加载] DB 无活动数据 activityId:{}", activityId);
+                List<SeckillStockVO> stockList = seckillActivityRepository.querySeckillStockList();
+                Integer stockCount = null;
+                if (stockList != null) {
+                    for (SeckillStockVO vo : stockList) {
+                        if (activityId.equals(vo.getActivityId()) && goodsId.equals(vo.getGoodsId())) {
+                            stockCount = vo.getRemainCount();
+                            break;
+                        }
+                    }
+                }
+                if (stockCount == null) {
+                    log.warn("[懒加载] DB 无活动库存数据 activityId:{} goodsId:{}", activityId, goodsId);
                     return;
                 }
-                int remainCount = Math.max(vo.getRemainCount(), 0);
+                int remainCount = Math.max(stockCount, 0);
                 preloadStock(activityId, goodsId, remainCount, STOCK_EXPIRE_SECONDS);
                 log.info("[懒加载] 双层库存初始化完成 activityId:{} goodsId:{} remainCount:{}", activityId, goodsId, remainCount);
             } else {

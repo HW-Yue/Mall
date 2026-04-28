@@ -13,7 +13,7 @@ import java.util.Map;
 
 /**
  * 秒杀库存扣减 MQ 发送实现
- * 通过异步消息通知 MySQL 更新 remain_count，与 Redis 削峰解耦
+ * 通过异步消息通知 MySQL 更新 sc_sku_activity.stock_count，与 Redis 削峰解耦
  */
 @Slf4j
 @Service

@@ -8,10 +8,11 @@
         <result column="activity_id" property="activityId"/>
         <result column="activity_type" property="activityType"/>
         <result column="sku_id" property="goodsId"/>
+        <result column="stock_count" property="stockCount"/>
     </resultMap>
 
     <select id="queryByScGoodsId" parameterType="java.lang.String" resultMap="dataMap">
-        select source, channel, activity_id, activity_type, sku_id
+        select source, channel, activity_id, activity_type, sku_id, stock_count
         from sc_sku_activity
         where source = #{source}
           and channel = #{channel}
@@ -21,10 +22,27 @@
     </select>
 
     <select id="queryByActivityId" parameterType="java.lang.Long" resultMap="dataMap">
-        select source, channel, activity_id, activity_type, sku_id
+        select source, channel, activity_id, activity_type, sku_id, stock_count
         from sc_sku_activity
         where activity_id = #{activityId}
           and activity_type = 'seckill'
     </select>
+
+    <update id="deductStock">
+        update sc_sku_activity
+        set stock_count = stock_count - 1
+        where activity_id = #{activityId}
+          and sku_id = #{goodsId}
+          and activity_type = 'seckill'
+          and stock_count &gt; 0
+    </update>
+
+    <update id="recoverStock">
+        update sc_sku_activity
+        set stock_count = stock_count + 1
+        where activity_id = #{activityId}
+          and sku_id = #{goodsId}
+          and activity_type = 'seckill'
+    </update>
 
 </mapper>

@@ -2,7 +2,6 @@ package com.yue.seckill.domain.activity.adapter.repository;
 
 import com.yue.seckill.domain.activity.model.entity.SeckillActivityEntity;
 import com.yue.seckill.domain.activity.model.entity.SeckillGoodsEntity;
-import com.yue.seckill.domain.activity.model.valobj.SeckillActivityDiscountVO;
 import com.yue.seckill.domain.activity.model.valobj.SeckillActivityWithGoodsVO;
 import com.yue.seckill.domain.activity.model.valobj.SeckillStockVO;
 import com.yue.seckill.domain.activity.model.valobj.SkuVO;
@@ -15,9 +14,9 @@ import java.util.List;
 public interface ISeckillActivityRepository {
 
     /**
-     * 查询秒杀活动折扣信息
+     * 查询秒杀活动信息
      */
-    SeckillActivityDiscountVO querySeckillActivityDiscountVO(Long activityId);
+    SeckillActivityEntity querySeckillActivity(Long activityId);
 
     /**
      * 查询商品信息
@@ -47,12 +46,12 @@ public interface ISeckillActivityRepository {
     /**
      * 扣减库存
      */
-    boolean deductStock(Long activityId);
+    boolean deductStock(Long activityId, String goodsId);
 
     /**
      * 恢复库存
      */
-    boolean recoverStock(Long activityId);
+    boolean recoverStock(Long activityId, String goodsId);
 
     /**
      * 降级开关

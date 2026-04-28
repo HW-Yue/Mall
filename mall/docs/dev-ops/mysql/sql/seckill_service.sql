@@ -2,45 +2,18 @@
 -- seckill_service：秒杀营销服务独立库
 --
 -- 包含：
---   折扣配置（discount）
---   秒杀活动（seckill_activity）
---   渠道-商品-活动映射（sc_sku_activity，仅秒杀条目）
+--   秒杀活动（seckill_activity，一口价）
+--   渠道-商品-活动映射（sc_sku_activity，含库存）
+--   商品快照（sms_seckill_sku）
 --
 -- 运行期说明：
---   1. 秒杀下单先扣 Redis 可售库存，支付成功后再扣 Redis 真实库存并异步落 MySQL remain_count
+--   1. 秒杀下单先扣 Redis 可售库存，支付成功后再扣 Redis 真实库存并异步落 MySQL
 --   2. 超时关单 / 取消订单只恢复可售库存，不回滚真实库存
 --   3. seckillToken、orderId -> token / orderMeta 属于 Redis 运行态元数据，不落库
---
--- 注意：discount 每个营销服务各自维护，数据独立，不共享
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS `seckill_service` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE `seckill_service`;
-
--- ------------------------------------------------------------
--- discount：折扣配置（秒杀服务专属）
--- ------------------------------------------------------------
-DROP TABLE IF EXISTS `discount`;
-CREATE TABLE `discount` (
-  `id`            bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增ID',
-  `discount_id`   varchar(8)      NOT NULL COMMENT '折扣ID',
-  `discount_name` varchar(64)     NOT NULL COMMENT '折扣标题',
-  `discount_desc` varchar(256)    NOT NULL COMMENT '折扣描述',
-  `discount_type` tinyint(1)      NOT NULL DEFAULT 0 COMMENT '折扣类型（0:base、1:tag 人群专属）',
-  `market_plan`   varchar(4)      NOT NULL DEFAULT 'ZJ' COMMENT '优惠计划（ZJ直减、MJ满减、N元购、ZK折扣率）',
-  `market_expr`   varchar(32)     NOT NULL COMMENT '优惠表达式（ZJ:金额、MJ:满x减y、N:最终价、ZK:折扣率）',
-  `tag_id`        varchar(8)               DEFAULT NULL COMMENT '人群标签，人群专属优惠限定',
-  `create_time`   datetime        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
-  `update_time`   datetime        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_discount_id` (`discount_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='折扣配置';
-
-INSERT INTO `discount` (`discount_id`, `discount_name`, `discount_desc`, `discount_type`, `market_plan`, `market_expr`, `tag_id`)
-VALUES
-  ('SK202401', '秒杀直减50', 'AI模型秒杀立减50元',   0, 'ZJ', '50',  NULL),
-  ('SK202402', '秒杀直减100', '存储资源秒杀立减100元', 0, 'ZJ', '100', NULL);
-
 
 -- ------------------------------------------------------------
 -- seckill_activity：秒杀活动
@@ -50,9 +23,7 @@ CREATE TABLE `seckill_activity` (
   `id`               bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '自增',
   `activity_id`      bigint          NOT NULL COMMENT '活动ID',
   `activity_name`    varchar(128)    NOT NULL COMMENT '活动名称',
-  `discount_id`      varchar(8)      NOT NULL COMMENT '关联 discount.discount_id',
-  `stock_count`      int             NOT NULL DEFAULT 0 COMMENT '秒杀库存总量',
-  `remain_count`     int             NOT NULL DEFAULT 0 COMMENT '剩余库存',
+  `seckill_price`    decimal(10,2)   NOT NULL COMMENT '活动一口价',
   `take_limit_count` int             NOT NULL DEFAULT 1 COMMENT '每人秒杀次数上限',
   `status`           tinyint(1)      NOT NULL DEFAULT 0 COMMENT '状态：0创建、1生效、2过期、3废弃',
   `start_time`       datetime        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '活动开始时间',
@@ -62,13 +33,15 @@ CREATE TABLE `seckill_activity` (
   `create_time`      datetime        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time`      datetime        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_activity_id` (`activity_id`)
+  UNIQUE KEY `uq_activity_id` (`activity_id`),
+  CONSTRAINT `chk_seckill_price_non_negative` CHECK (`seckill_price` >= 0),
+  CONSTRAINT `chk_take_limit_count_positive` CHECK (`take_limit_count` > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='秒杀活动';
 
-INSERT INTO `seckill_activity` (`activity_id`, `activity_name`, `discount_id`, `stock_count`, `remain_count`, `take_limit_count`, `status`, `start_time`, `end_time`, `tag_id`, `tag_scope`)
+INSERT INTO `seckill_activity` (`activity_id`, `activity_name`, `seckill_price`, `take_limit_count`, `status`, `start_time`, `end_time`, `tag_id`, `tag_scope`)
 VALUES
-  (200001, 'AI模型整点秒杀',   'SK202401', 100, 100, 1, 1, '2024-12-07 10:00:00', '2029-12-07 10:00:00', NULL, NULL),
-  (200002, '存储资源限时秒杀', 'SK202402', 50,  50,  2, 1, NOW(), DATE_ADD(NOW(), INTERVAL 1 YEAR), NULL, NULL);
+  (200001, 'AI模型整点秒杀',   79.00, 1, 1, '2024-12-07 10:00:00', '2029-12-07 10:00:00', NULL, NULL),
+  (200002, '存储资源限时秒杀', 10.00, 2, 1, NOW(), DATE_ADD(NOW(), INTERVAL 1 YEAR), NULL, NULL);
 
 
 -- ------------------------------------------------------------
@@ -82,21 +55,24 @@ CREATE TABLE `sc_sku_activity` (
   `activity_id`   bigint       NOT NULL COMMENT '活动ID',
   `activity_type` varchar(32)  NOT NULL COMMENT '活动类型（固定为 seckill）',
   `sku_id`        varchar(16)  NOT NULL COMMENT 'SKU ID（关联 sms_seckill_sku.sku_id）',
+  `stock_count`   int          NOT NULL DEFAULT 0 COMMENT '活动商品库存',
   `create_time`   datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time`   datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_sc_sku` (`source`, `channel`, `sku_id`),
-  KEY `idx_activity_type` (`activity_type`)
+  KEY `idx_activity_id` (`activity_id`),
+  KEY `idx_activity_type` (`activity_type`),
+  CONSTRAINT `chk_stock_count_non_negative` CHECK (`stock_count` >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='渠道商品活动映射（秒杀）';
 
-INSERT INTO `sc_sku_activity` (`source`, `channel`, `activity_id`, `activity_type`, `sku_id`)
+INSERT INTO `sc_sku_activity` (`source`, `channel`, `activity_id`, `activity_type`, `sku_id`, `stock_count`)
 VALUES
-  ('s01', 'c01', 200001, 'seckill', '1001'),
-  ('s01', 'c01', 200001, 'seckill', '1003'),
-  ('s01', 'c01', 200001, 'seckill', '1005'),
-  ('s01', 'c01', 200002, 'seckill', '2002'),
-  ('s01', 'c01', 200002, 'seckill', '2004'),
-  ('s01', 'c01', 200002, 'seckill', '2005');
+  ('s01', 'c01', 200001, 'seckill', '1001', 100),
+  ('s01', 'c01', 200001, 'seckill', '1003', 100),
+  ('s01', 'c01', 200001, 'seckill', '1005', 100),
+  ('s01', 'c01', 200002, 'seckill', '2002', 50),
+  ('s01', 'c01', 200002, 'seckill', '2004', 50),
+  ('s01', 'c01', 200002, 'seckill', '2005', 50);
 
 -- ------------------------------------------------------------
 -- category：商品类目
@@ -154,9 +130,5 @@ VALUES
 
 
 -- ------------------------------------------------------------
--- ALTER TABLE：给已存在的 discount 表添加/修正 discount_type 字段
+-- 说明：旧 discount 表已移除
 -- ------------------------------------------------------------
--- ALTER TABLE `discount`
---   ADD COLUMN IF NOT EXISTS `discount_type` tinyint(1) NOT NULL DEFAULT '0' COMMENT '折扣类型（0:base、1:tag）' AFTER `discount_desc`,
---   MODIFY COLUMN `discount_type` tinyint(1) NOT NULL DEFAULT '0' COMMENT '折扣类型（0:base、1:tag）';
-

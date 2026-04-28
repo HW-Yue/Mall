@@ -14,7 +14,7 @@ import jakarta.annotation.Resource;
 /**
  * 秒杀库存扣减任务消费者（seckill-stock-deduct）
  *
- * <p>从 MQ 异步接收库存扣减指令，将 seckill_activity.remain_count--，
+ * <p>从 MQ 异步接收库存扣减指令，将 sc_sku_activity.stock_count--，
  * 与 Redis 削峰阶段的原子扣减解耦，避免支付高峰直接打穿 MySQL。
  */
 @Slf4j
@@ -42,7 +42,7 @@ public class SeckillStockDeductListener implements RocketMQListener<String> {
                 return;
             }
 
-            boolean success = seckillActivityRepository.deductStock(activityId);
+            boolean success = seckillActivityRepository.deductStock(activityId, productId);
             if (success) {
                 log.info("[MySQL库存扣减] 成功 activityId:{} productId:{}", activityId, productId);
             } else {

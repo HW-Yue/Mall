@@ -3,6 +3,7 @@ package com.yue.seckill.domain.activity.model.entity;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 /**
@@ -14,7 +15,7 @@ public class SeckillActivityEntity {
 
     private Long activityId;
     private String activityName;
-    private String discountId;
+    private BigDecimal seckillPrice;
     private Integer stockCount;
     private Integer remainCount;
     private Integer takeLimitCount;

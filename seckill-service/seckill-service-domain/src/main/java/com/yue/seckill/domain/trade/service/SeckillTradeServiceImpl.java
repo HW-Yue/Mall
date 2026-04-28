@@ -2,11 +2,12 @@ package com.yue.seckill.domain.trade.service;
 
 import com.yue.seckill.domain.activity.adapter.repository.ISeckillActivityRepository;
 import com.yue.seckill.domain.activity.model.entity.SeckillActivityEntity;
-import com.yue.seckill.domain.activity.model.valobj.SeckillActivityDiscountVO;
 import com.yue.seckill.domain.activity.model.valobj.SkuVO;
-import com.yue.seckill.domain.trade.adapter.port.ISeckillStockPort;
+import com.yue.seckill.domain.trade.adapter.port.ISeckillOrderTaskPort;
 import com.yue.seckill.domain.trade.adapter.port.IOrderServicePort;
+import com.yue.seckill.domain.trade.adapter.port.ISeckillStockPort;
 import com.yue.seckill.domain.trade.model.entity.SeckillOrderResultEntity;
+import com.yue.seckill.types.model.SeckillOrderTaskMessage;
 import com.yue.seckill.types.enums.ResponseCode;
 import com.yue.seckill.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,8 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
     @Resource
     private ISeckillActivityRepository seckillActivityRepository;
     @Resource
+    private ISeckillOrderTaskPort seckillOrderTaskPort;
+    @Resource
     private IOrderServicePort orderServicePort;
     @Resource
     private ISeckillStockPort seckillStockPort;
@@ -42,13 +45,13 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
         }
 
         // 1. 查询活动
-        SeckillActivityDiscountVO activityDiscount = seckillActivityRepository.querySeckillActivityDiscountVO(activityId);
-        if (activityDiscount == null) {
+        SeckillActivityEntity activity = seckillActivityRepository.querySeckillActivity(activityId);
+        if (activity == null) {
             throw new AppException(ResponseCode.ACTIVITY_NOT_FOUND);
         }
 
         // 2. 校验活动有效性
-        if (activityDiscount.getStatus() != 1) {
+        if (activity.getStatus() != 1) {
             throw new AppException(ResponseCode.ACTIVITY_NOT_EFFECTIVE);
         }
 
@@ -77,30 +80,43 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
         SkuVO skuVO = seckillActivityRepository.querySkuByGoodsId(productId);
         BigDecimal originalPrice = (skuVO != null && skuVO.getOriginalPrice() != null)
                 ? skuVO.getOriginalPrice() : BigDecimal.ZERO;
-        BigDecimal deductionPrice = parseDeduction(activityDiscount.getSeckillDiscount());
-        BigDecimal payPrice = originalPrice.subtract(deductionPrice).max(BigDecimal.ZERO);
+        BigDecimal payPrice = (activity.getSeckillPrice() != null ? activity.getSeckillPrice() : BigDecimal.ZERO)
+                .max(BigDecimal.ZERO);
+        BigDecimal deductionPrice = originalPrice.subtract(payPrice).max(BigDecimal.ZERO);
 
         // 5. 生成秒杀令牌并写入 Redis
         String seckillToken = RandomStringUtils.randomAlphanumeric(32);
         String outTradeNo = "SK" + RandomStringUtils.randomNumeric(18);
         seckillStockPort.saveSeckillToken(seckillToken, userId, productId, activityId);
 
-        String orderId;
+        String orderId = null;
         try {
-            orderId = orderServicePort.createOrder(
-                    userId, productId, StringUtils.defaultIfBlank(goodsName, "秒杀商品"), StringUtils.defaultString(goodsImageUrl),
-                    originalPrice, deductionPrice, payPrice, source, channel, outTradeNo);
+            SeckillOrderTaskMessage message = SeckillOrderTaskMessage.builder()
+                    .seckillToken(seckillToken)
+                    .userId(userId)
+                    .productId(productId)
+                    .activityId(activityId)
+                    .source(source)
+                    .channel(channel)
+                    .goodsName(StringUtils.defaultIfBlank(goodsName, "秒杀商品"))
+                    .goodsImageUrl(StringUtils.defaultString(goodsImageUrl))
+                    .outTradeNo(outTradeNo)
+                    .originalPrice(originalPrice)
+                    .deductionPrice(deductionPrice)
+                    .payPrice(payPrice)
+                    .build();
+            seckillOrderTaskPort.sendCreateOrderTask(message);
+            log.info("秒杀建单任务已发送 userId:{} seckillToken:{} outTradeNo:{} activityId:{}",
+                    userId, seckillToken, outTradeNo, activityId);
         } catch (Exception e) {
-            log.warn("秒杀同步建单异常，开始按 outTradeNo 确认 userId:{} outTradeNo:{}", userId, outTradeNo, e);
-            orderId = orderServicePort.queryOrderIdByOutTradeNo(userId, outTradeNo);
-            if (StringUtils.isBlank(orderId)) {
-                seckillStockPort.rollbackSeckillOrder(activityId, productId, userId, seckillToken);
-                throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
-            }
+            log.warn("秒杀建单任务发送失败，开始回滚 userId:{} seckillToken:{} outTradeNo:{} activityId:{}",
+                    userId, seckillToken, outTradeNo, activityId, e);
+            seckillStockPort.rollbackSeckillOrder(activityId, productId, userId, seckillToken);
+            throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
         }
 
-        log.info("秒杀下单成功 userId:{} seckillToken:{} orderId:{} outTradeNo:{} activityId:{}",
-                userId, seckillToken, orderId, outTradeNo, activityId);
+        log.info("秒杀下单成功 userId:{} seckillToken:{} outTradeNo:{} activityId:{}",
+                userId, seckillToken, outTradeNo, activityId);
         return SeckillOrderResultEntity.builder()
                 .seckillToken(seckillToken)
                 .orderId(orderId)
@@ -110,17 +126,20 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
 
     @Override
     public SeckillActivityEntity querySeckillActivity(Long activityId) {
-        SeckillActivityDiscountVO vo = seckillActivityRepository.querySeckillActivityDiscountVO(activityId);
+        SeckillActivityEntity vo = seckillActivityRepository.querySeckillActivity(activityId);
         if (vo == null) return null;
         return SeckillActivityEntity.builder()
                 .activityId(vo.getActivityId())
                 .activityName(vo.getActivityName())
+                .seckillPrice(vo.getSeckillPrice())
                 .stockCount(vo.getStockCount())
                 .remainCount(vo.getRemainCount())
                 .takeLimitCount(vo.getTakeLimitCount())
                 .status(vo.getStatus())
                 .startTime(vo.getStartTime())
                 .endTime(vo.getEndTime())
+                .tagId(vo.getTagId())
+                .tagScope(vo.getTagScope())
                 .build();
     }
 
@@ -133,17 +152,6 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
     public void refund(String userId, String orderId) {
         orderServicePort.refundExecute(userId, orderId);
         log.info("秒杀订单退款成功 userId:{} orderId:{}", userId, orderId);
-    }
-
-    private BigDecimal parseDeduction(SeckillActivityDiscountVO.SeckillDiscount discount) {
-        if (discount == null || StringUtils.isBlank(discount.getMarketExpr())) {
-            return BigDecimal.ZERO;
-        }
-        try {
-            return new BigDecimal(discount.getMarketExpr());
-        } catch (NumberFormatException e) {
-            return BigDecimal.ZERO;
-        }
     }
 
 }
