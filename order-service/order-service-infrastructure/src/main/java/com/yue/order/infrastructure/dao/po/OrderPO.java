@@ -28,7 +28,7 @@ public class OrderPO {
     private BigDecimal originalPrice;
     private BigDecimal deductionPrice;
     private BigDecimal payPrice;
-    /** 0=锁单, 1=支付成功, 2=退款/关闭 */
+    /** 0=锁单, 1=支付成功, 2=关闭, 3=待退款, 4=已退款, 5=待发货, 6=已发货, 7=已签收 */
     private Integer status;
     private String outTradeNo;
     private Date outTradeTime;

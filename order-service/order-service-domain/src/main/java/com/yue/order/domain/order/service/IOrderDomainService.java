@@ -41,6 +41,21 @@ public interface IOrderDomainService {
     void handlePaySuccess(String outTradeNo, String marketType, java.util.Date outTradeTime);
 
     /**
+     * 处理拼团成功通知（由 group-buy-service 发布的 group-buy-success-notify 消费）
+     */
+    void handleGroupBuySuccess(String message);
+
+    /**
+     * 处理订单服务内部发货任务（由订单服务自身消费者调用）
+     */
+    void handleShipTask(String outTradeNo);
+
+    /**
+     * 预留签收状态推进接口，当前不接外部回调
+     */
+    void handleDelivered(String outTradeNo);
+
+    /**
      * 普通订单退款（前端调用，含业务状态校验）
      */
     void refund(String userId, String orderId);

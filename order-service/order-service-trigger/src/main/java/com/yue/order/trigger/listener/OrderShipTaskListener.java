@@ -13,23 +13,23 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.Resource;
 
 /**
- * 拼团订单退款完成回执 MQ 消费者（pay-refund-group-buy-result）。
+ * 订单履约任务 MQ 消费者（order-ship-task）
  */
 @Slf4j
 @Component
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
 @RocketMQMessageListener(
-        topic = "${app.rocketmq.topic.payRefundGroupBuyResult:pay-refund-group-buy-result}",
-        consumerGroup = "${app.rocketmq.consumerGroup.payRefundGroupBuyResult:CG_PAY_REFUND_GROUP_BUY_RESULT}"
+        topic = "${app.rocketmq.topic.orderShipTask:order-ship-task}",
+        consumerGroup = "${app.rocketmq.consumerGroup.orderShipTask:CG_ORDER_SHIP_TASK}"
 )
-public class PayRefundGroupBuyListener implements RocketMQListener<String> {
+public class OrderShipTaskListener implements RocketMQListener<String> {
 
     @Resource
     private IOrderDomainService orderDomainService;
 
     @Override
     public void onMessage(String message) {
-        log.info("pay-refund-group-buy 收到消息: {}", message);
+        log.info("order-ship-task 收到消息: {}", message);
         try {
             JSONObject dto = JSON.parseObject(message);
             String outTradeNo = dto.getString("outTradeNo");
@@ -37,9 +37,9 @@ public class PayRefundGroupBuyListener implements RocketMQListener<String> {
                 log.error("消息缺少 outTradeNo: {}", message);
                 return;
             }
-            orderDomainService.handlePayRefund(outTradeNo);
+            orderDomainService.handleShipTask(outTradeNo);
         } catch (Exception e) {
-            log.error("pay-refund-group-buy 处理失败: {}", message, e);
+            log.error("order-ship-task 处理失败: {}", message, e);
             throw new RuntimeException(e);
         }
     }

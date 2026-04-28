@@ -1,6 +1,8 @@
 package com.yue.order.domain.order.service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.yue.order.domain.order.adapter.port.INormalOrderPendingPublisher;
 import com.yue.order.domain.order.adapter.port.IPayPort;
 import com.yue.order.domain.order.adapter.repository.IOrderRepository;
@@ -44,6 +46,9 @@ public class OrderDomainService implements IOrderDomainService {
 
     @Resource
     private INormalOrderPendingPublisher normalOrderPendingPublisher;
+
+    @Resource
+    private IOrderShipTaskPublisher orderShipTaskPublisher;
 
     @Value("${app.order.allow-direct-normal-create-order:true}")
     private boolean allowDirectNormalCreateOrder;
@@ -208,7 +213,6 @@ public class OrderDomainService implements IOrderDomainService {
         // 如果订单已关闭（例如先收到关单 MQ），但支付宝回调已扣款，需要触发退款
         if (order.getStatus() == OrderStatusVO.CLOSE) {
             log.warn("handlePaySuccess 订单已关闭但收到支付成功消息，触发退款 outTradeNo:{} marketType:{}", outTradeNo, marketType);
-            orderRepository.updateWaitRefundByOutTradeNo(outTradeNo);
             refundPublisher.publishPayRefund(order.getUserId(), outTradeNo, marketType);
             return;
         }
@@ -224,6 +228,112 @@ public class OrderDomainService implements IOrderDomainService {
 
         // 发布下游事件（order-paid-normal / order-paid-group_buy / order-paid-seckill）
         eventPublisher.publishOrderPaid(order.getUserId(), order.getOrderId(), outTradeNo, marketType, outTradeTime);
+    }
+
+    @Override
+    public void handleGroupBuySuccess(String message) {
+        if (StringUtils.isBlank(message)) {
+            log.warn("handleGroupBuySuccess 收到空消息");
+            return;
+        }
+
+        JSONObject dto = JSON.parseObject(message);
+        String teamId = dto.getString("teamId");
+        JSONArray orders = dto.getJSONArray("orders");
+        if (orders == null || orders.isEmpty()) {
+            log.info("handleGroupBuySuccess 无订单可处理 teamId:{}", teamId);
+            return;
+        }
+
+        for (int i = 0; i < orders.size(); i++) {
+            JSONObject item = orders.getJSONObject(i);
+            if (item == null) {
+                continue;
+            }
+            String userId = item.getString("userId");
+            String orderId = item.getString("orderId");
+            if (StringUtils.isAnyBlank(userId, orderId)) {
+                log.warn("handleGroupBuySuccess 订单信息缺失 teamId:{} item:{}", teamId, item.toJSONString());
+                continue;
+            }
+            handleGroupBuySuccessOne(teamId, userId, orderId);
+        }
+    }
+
+    @Override
+    public void handleShipTask(String outTradeNo) {
+        if (StringUtils.isBlank(outTradeNo)) {
+            log.warn("handleShipTask 收到空 outTradeNo");
+            return;
+        }
+
+        OrderEntity order = orderRepository.queryByOutTradeNo(outTradeNo);
+        if (order == null) {
+            log.warn("handleShipTask 订单不存在 outTradeNo:{}", outTradeNo);
+            return;
+        }
+        if (order.getStatus() == OrderStatusVO.SHIPPED || order.getStatus() == OrderStatusVO.DELIVERED) {
+            log.info("handleShipTask 订单已发货/签收，跳过 outTradeNo:{} status:{}", outTradeNo, order.getStatus().getCode());
+            return;
+        }
+        if (order.getStatus() == OrderStatusVO.CLOSE
+                || order.getStatus() == OrderStatusVO.WAIT_REFUND
+                || order.getStatus() == OrderStatusVO.REFUNDED) {
+            log.warn("handleShipTask 订单已关闭/退款，禁止发货 outTradeNo:{} status:{}", outTradeNo, order.getStatus().getCode());
+            return;
+        }
+        if (order.getStatus() != OrderStatusVO.WAIT_SHIP) {
+            throw new AppException(ResponseCode.ORDER_STATUS_ERROR.getCode(),
+                    "订单未进入待发货状态，无法发货: " + order.getStatus().getCode());
+        }
+
+        int updated = orderRepository.updateShippedByOutTradeNo(outTradeNo);
+        if (updated == 1) {
+            log.info("handleShipTask 发货完成 outTradeNo:{} orderId:{}", outTradeNo, order.getOrderId());
+            return;
+        }
+
+        OrderEntity refreshed = orderRepository.queryByOutTradeNo(outTradeNo);
+        if (refreshed != null && (refreshed.getStatus() == OrderStatusVO.SHIPPED || refreshed.getStatus() == OrderStatusVO.DELIVERED)) {
+            log.info("handleShipTask 幂等跳过 outTradeNo:{} status:{}", outTradeNo, refreshed.getStatus().getCode());
+            return;
+        }
+        throw new AppException(ResponseCode.UPDATE_ZERO.getCode(), "发货状态更新失败: " + outTradeNo);
+    }
+
+    @Override
+    public void handleDelivered(String outTradeNo) {
+        if (StringUtils.isBlank(outTradeNo)) {
+            log.warn("handleDelivered 收到空 outTradeNo");
+            return;
+        }
+
+        OrderEntity order = orderRepository.queryByOutTradeNo(outTradeNo);
+        if (order == null) {
+            log.warn("handleDelivered 订单不存在 outTradeNo:{}", outTradeNo);
+            return;
+        }
+        if (order.getStatus() == OrderStatusVO.DELIVERED) {
+            log.info("handleDelivered 订单已签收，跳过 outTradeNo:{}", outTradeNo);
+            return;
+        }
+        if (order.getStatus() != OrderStatusVO.SHIPPED) {
+            throw new AppException(ResponseCode.ORDER_STATUS_ERROR.getCode(),
+                    "订单未发货，无法签收: " + order.getStatus().getCode());
+        }
+
+        int updated = orderRepository.updateDeliveredByOutTradeNo(outTradeNo);
+        if (updated == 1) {
+            log.info("handleDelivered 签收完成 outTradeNo:{} orderId:{}", outTradeNo, order.getOrderId());
+            return;
+        }
+
+        OrderEntity refreshed = orderRepository.queryByOutTradeNo(outTradeNo);
+        if (refreshed != null && refreshed.getStatus() == OrderStatusVO.DELIVERED) {
+            log.info("handleDelivered 幂等跳过 outTradeNo:{}", outTradeNo);
+            return;
+        }
+        throw new AppException(ResponseCode.UPDATE_ZERO.getCode(), "签收状态更新失败: " + outTradeNo);
     }
 
     @Override
@@ -270,7 +380,6 @@ public class OrderDomainService implements IOrderDomainService {
         if (order.getStatus() == OrderStatusVO.PAY_SUCCESS) {
             log.warn("handleOrderClose 订单已支付但收到关单消息，触发退款 outTradeNo:{} marketType:{}",
                     outTradeNo, order.getMarketType().getCode());
-            orderRepository.updateWaitRefundByOutTradeNo(outTradeNo);
             refundPublisher.publishPayRefund(order.getUserId(), outTradeNo, order.getMarketType().getCode());
             return;
         }
@@ -300,6 +409,17 @@ public class OrderDomainService implements IOrderDomainService {
         }
         orderRepository.updateRefundedByOutTradeNo(outTradeNo);
         log.info("handlePayRefund 订单退款确认成功 outTradeNo:{} marketType:{}", outTradeNo, order.getMarketType().getCode());
+    }
+
+    private void handleGroupBuySuccessOne(String teamId, String userId, String orderId) {
+        OrderEntity order = orderRepository.queryByUserIdAndOrderId(userId, orderId);
+        if (order == null) {
+            log.warn("handleGroupBuySuccess 订单不存在 teamId:{} userId:{} orderId:{}", teamId, userId, orderId);
+            return;
+        }
+        log.info("handleGroupBuySuccess 开始发送事务发货消息 teamId:{} orderId:{} status:{}",
+                teamId, orderId, order.getStatus() != null ? order.getStatus().getCode() : null);
+        orderShipTaskPublisher.publishOrderShipTask(userId, orderId, order.getOutTradeNo());
     }
 
     @Override
@@ -333,7 +453,14 @@ public class OrderDomainService implements IOrderDomainService {
             return;
         }
 
-        orderRepository.updateWaitRefundByOutTradeNo(order.getOutTradeNo());
+        if (order.getStatus() == OrderStatusVO.CLOSE
+                || order.getStatus() == OrderStatusVO.WAIT_REFUND
+                || order.getStatus() == OrderStatusVO.REFUNDED) {
+            log.info("退款请求无需重复处理 userId:{} orderId:{} outTradeNo:{} status:{}",
+                    order.getUserId(), order.getOrderId(), order.getOutTradeNo(), order.getStatus().getCode());
+            return;
+        }
+
         refundPublisher.publishPayRefund(order.getUserId(), order.getOutTradeNo(), order.getMarketType().getCode());
         log.info("退款请求已入MQ userId:{} orderId:{} outTradeNo:{} marketType:{}",
                 order.getUserId(), order.getOrderId(), order.getOutTradeNo(), order.getMarketType().getCode());

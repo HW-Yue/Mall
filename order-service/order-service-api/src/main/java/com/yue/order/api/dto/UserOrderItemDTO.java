@@ -15,7 +15,7 @@ import java.util.Date;
 public class UserOrderItemDTO {
 
     private String orderId;
-    /** PAY_WAIT / PAY_SUCCESS / CLOSE */
+    /** PAY_WAIT / PAY_SUCCESS / CLOSE / WAIT_REFUND / REFUNDED / WAIT_SHIP / SHIPPED / DELIVERED */
     private String status;
     /** 商品标识（goodsId）*/
     private String productName;

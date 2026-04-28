@@ -90,6 +90,28 @@
           AND status = 0
     </update>
 
+    <update id="updateWaitShipByOrderId">
+        UPDATE t_order
+        SET status = 5, update_time = NOW()
+        WHERE user_id = #{userId}
+          AND order_id = #{orderId}
+          AND status = 1
+    </update>
+
+    <update id="updateShippedByOutTradeNo">
+        UPDATE t_order
+        SET status = 6, update_time = NOW()
+        WHERE out_trade_no = #{outTradeNo}
+          AND status = 5
+    </update>
+
+    <update id="updateDeliveredByOutTradeNo">
+        UPDATE t_order
+        SET status = 7, update_time = NOW()
+        WHERE out_trade_no = #{outTradeNo}
+          AND status = 6
+    </update>
+
     <update id="updateWaitRefundByOutTradeNo">
         UPDATE t_order
         SET status = 3, update_time = NOW()
@@ -110,6 +132,19 @@
         WHERE out_trade_no = #{outTradeNo}
           AND status = 3
     </update>
+
+    <select id="queryWaitShipOrderList" resultMap="orderMap">
+        SELECT id, order_id, user_id, goods_id, goods_name, goods_image_url,
+               source, channel,
+               original_price, deduction_price, pay_price,
+               status, out_trade_no, out_trade_time, pay_url,
+               biz_id, notify_type, notify_url, market_type,
+               create_time, update_time
+        FROM t_order
+        WHERE status = 5
+        ORDER BY update_time ASC, id ASC
+        LIMIT #{count}
+    </select>
 
     <select id="queryUserOrderList" resultMap="orderMap">
         SELECT id, order_id, user_id, goods_id, goods_name, goods_image_url,

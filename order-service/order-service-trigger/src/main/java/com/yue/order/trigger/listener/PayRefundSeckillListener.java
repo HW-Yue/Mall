@@ -13,14 +13,14 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.Resource;
 
 /**
- * 秒杀订单退款完成回执 MQ 消费者（pay-refund-seckill）。
+ * 秒杀订单退款完成回执 MQ 消费者（pay-refund-seckill-result）。
  */
 @Slf4j
 @Component
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
 @RocketMQMessageListener(
-        topic = "${app.rocketmq.topic.payRefundSeckill:pay-refund-seckill}",
-        consumerGroup = "${app.rocketmq.consumerGroup.payRefundSeckill:CG_PAY_REFUND_SECKILL}"
+        topic = "${app.rocketmq.topic.payRefundSeckillResult:pay-refund-seckill-result}",
+        consumerGroup = "${app.rocketmq.consumerGroup.payRefundSeckillResult:CG_PAY_REFUND_SECKILL_RESULT}"
 )
 public class PayRefundSeckillListener implements RocketMQListener<String> {
 

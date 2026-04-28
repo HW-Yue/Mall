@@ -21,9 +21,14 @@ app:
       payRefundNormal: pay-refund-normal
       payRefundGroupBuy: pay-refund-group-buy
       payRefundSeckill: pay-refund-seckill
+      payRefundNormalResult: pay-refund-normal-result
+      payRefundGroupBuyResult: pay-refund-group-buy-result
+      payRefundSeckillResult: pay-refund-seckill-result
+      groupBuySuccessNotify: group-buy-success-notify
       orderPaidNormal: order-paid-normal
       orderPaidGroupBuy: order-paid-group_buy
       orderPaidSeckill: order-paid-seckill
+      orderShipTask: order-ship-task
       seckillOrderCreate: seckill-order-create
       normalOrderCreate: normal-order-create
     consumerGroup:
@@ -36,5 +41,10 @@ app:
       payRefundNormal: CG_PAY_REFUND_NORMAL
       payRefundGroupBuy: CG_PAY_REFUND_GROUP_BUY
       payRefundSeckill: CG_PAY_REFUND_SECKILL
+      payRefundNormalResult: CG_PAY_REFUND_NORMAL_RESULT
+      payRefundGroupBuyResult: CG_PAY_REFUND_GROUP_BUY_RESULT
+      payRefundSeckillResult: CG_PAY_REFUND_SECKILL_RESULT
+      groupBuySuccessNotify: CG_GROUP_BUY_SUCCESS_NOTIFY
+      orderShipTask: CG_ORDER_SHIP_TASK
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE_ORDER
       normalOrderCreate: CG_NORMAL_ORDER_CREATE

@@ -283,6 +283,11 @@ public class OrderController implements IOrderController {
             case LOCK: return "PAY_WAIT";
             case PAY_SUCCESS: return "PAY_SUCCESS";
             case CLOSE: return "CLOSE";
+            case WAIT_REFUND: return "WAIT_REFUND";
+            case REFUNDED: return "REFUNDED";
+            case WAIT_SHIP: return "WAIT_SHIP";
+            case SHIPPED: return "SHIPPED";
+            case DELIVERED: return "DELIVERED";
             default: return o.getStatus().getCode();
         }
     }

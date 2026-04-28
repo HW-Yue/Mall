@@ -139,6 +139,21 @@ public class OrderRepository implements IOrderRepository {
     }
 
     @Override
+    public int updateWaitShipByOrderId(String userId, String orderId) {
+        return orderDao.updateWaitShipByOrderId(userId, orderId);
+    }
+
+    @Override
+    public int updateShippedByOutTradeNo(String outTradeNo) {
+        return orderDao.updateShippedByOutTradeNo(outTradeNo);
+    }
+
+    @Override
+    public int updateDeliveredByOutTradeNo(String outTradeNo) {
+        return orderDao.updateDeliveredByOutTradeNo(outTradeNo);
+    }
+
+    @Override
     public void updateWaitRefundByOutTradeNo(String outTradeNo) {
         orderDao.updateWaitRefundByOutTradeNo(outTradeNo);
     }
@@ -151,6 +166,19 @@ public class OrderRepository implements IOrderRepository {
     @Override
     public void updateRefundedByOutTradeNo(String outTradeNo) {
         orderDao.updateRefundedByOutTradeNo(outTradeNo);
+    }
+
+    @Override
+    public List<OrderEntity> queryWaitShipOrderList(int count) {
+        List<OrderPO> pos = orderDao.queryWaitShipOrderList(count);
+        if (pos == null || pos.isEmpty()) {
+            return new ArrayList<>();
+        }
+        List<OrderEntity> result = new ArrayList<>(pos.size());
+        for (OrderPO po : pos) {
+            result.add(toEntity(po));
+        }
+        return result;
     }
 
     @Override

@@ -35,6 +35,9 @@ public class OrderService extends AbstractOrderService {
     @Resource
     private AlipayClient alipayClient;
 
+    @Resource
+    private IRefundReceiptPublisher refundReceiptPublisher;
+
     public OrderService(IOrderRepository repository) {
         super(repository);
     }
@@ -233,11 +236,16 @@ public class OrderService extends AbstractOrderService {
             return false;
         }
 
+        if (orderEntity.getOrderStatusVO() != null
+                && OrderStatusVO.REFUNDED.getCode().equals(orderEntity.getOrderStatusVO().getCode())) {
+            log.info("退款已完成，跳过重复处理 outTradeNo:{}", outTradeNo);
+            return true;
+        }
+
         // 只有已支付状态才需要调支付宝退款
         if (!OrderStatusVO.PAY_SUCCESS.getCode().equals(orderEntity.getOrderStatusVO().getCode())) {
             log.info("支付订单状态非支付成功，跳过支付宝退款 outTradeNo:{} status:{}", outTradeNo, orderEntity.getOrderStatusVO().getCode());
-            // 仍然更新本地状态为关闭
-            repository.refundOrder(orderEntity.getUserId(), outTradeNo);
+            refundReceiptPublisher.publishRefundReceipt(orderEntity.getUserId(), outTradeNo, orderEntity.getMarketType());
             return true;
         }
 
@@ -254,7 +262,7 @@ public class OrderService extends AbstractOrderService {
             return false;
         }
 
-        repository.refundOrder(orderEntity.getUserId(), outTradeNo);
+        refundReceiptPublisher.publishRefundReceipt(orderEntity.getUserId(), outTradeNo, orderEntity.getMarketType());
         log.info("支付订单退款成功 outTradeNo:{}", outTradeNo);
         return true;
     }

@@ -163,6 +163,9 @@ rocketmq:
     pay_refund_normal: pay-refund-normal
     pay_refund_group_buy: pay-refund-group-buy
     pay_refund_seckill: pay-refund-seckill
+    pay_refund_normal_result: pay-refund-normal-result
+    pay_refund_group_buy_result: pay-refund-group-buy-result
+    pay_refund_seckill_result: pay-refund-seckill-result
   consumerGroup:
     payRefundNormal: CG_PAY_PAY_REFUND_NORMAL
     orderCloseNormal: CG_PAY_ORDER_CLOSE_NORMAL

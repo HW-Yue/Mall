@@ -28,11 +28,20 @@ public interface IOrderDao {
     int updatePaySuccess(@Param("outTradeNo") String outTradeNo,
                          @Param("outTradeTime") Date outTradeTime);
 
+    int updateWaitShipByOrderId(@Param("userId") String userId,
+                                @Param("orderId") String orderId);
+
+    int updateShippedByOutTradeNo(@Param("outTradeNo") String outTradeNo);
+
+    int updateDeliveredByOutTradeNo(@Param("outTradeNo") String outTradeNo);
+
     int updateWaitRefundByOutTradeNo(@Param("outTradeNo") String outTradeNo);
 
     int updateCloseByOutTradeNo(@Param("outTradeNo") String outTradeNo);
 
     int updateRefundedByOutTradeNo(@Param("outTradeNo") String outTradeNo);
+
+    List<OrderPO> queryWaitShipOrderList(@Param("count") int count);
 
     List<OrderPO> queryUserOrderList(@Param("userId") String userId,
                                      @Param("lastId") Long lastId,

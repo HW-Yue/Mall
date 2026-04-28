@@ -13,15 +13,15 @@ import org.springframework.stereotype.Component;
 import jakarta.annotation.Resource;
 
 /**
- * 普通订单退款完成回执 MQ 消费者（pay-refund-normal）。
+ * 普通订单退款完成回执 MQ 消费者（pay-refund-normal-result）。
  * 消费 pay-service 的退款完成消息，将 order-service 订单推进到已退款。
  */
 @Slf4j
 @Component
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
 @RocketMQMessageListener(
-        topic = "${app.rocketmq.topic.payRefundNormal:pay-refund-normal}",
-        consumerGroup = "${app.rocketmq.consumerGroup.payRefundNormal:CG_PAY_REFUND_NORMAL}"
+        topic = "${app.rocketmq.topic.payRefundNormalResult:pay-refund-normal-result}",
+        consumerGroup = "${app.rocketmq.consumerGroup.payRefundNormalResult:CG_PAY_REFUND_NORMAL_RESULT}"
 )
 public class PayRefundNormalListener implements RocketMQListener<String> {
 

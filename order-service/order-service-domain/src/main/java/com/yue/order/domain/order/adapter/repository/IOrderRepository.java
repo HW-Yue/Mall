@@ -36,6 +36,15 @@ public interface IOrderRepository {
     /** 支付成功：更新 status=1, out_trade_time */
     void updatePaySuccess(String outTradeNo, Date outTradeTime);
 
+    /** 拼团成功：更新 status=5 */
+    int updateWaitShipByOrderId(String userId, String orderId);
+
+    /** 发货完成：更新 status=6 */
+    int updateShippedByOutTradeNo(String outTradeNo);
+
+    /** 签收完成：更新 status=7 */
+    int updateDeliveredByOutTradeNo(String outTradeNo);
+
     /** 标记待退款：更新 status=3 */
     void updateWaitRefundByOutTradeNo(String outTradeNo);
 
@@ -44,6 +53,9 @@ public interface IOrderRepository {
 
     /** 退款完成：更新 status=4 */
     void updateRefundedByOutTradeNo(String outTradeNo);
+
+    /** 查询待发货订单（用于补偿重发发货任务） */
+    List<OrderEntity> queryWaitShipOrderList(int count);
 
     /** 释放普通商品库存（仅在 normal 类型时实际调用 mall 服务） */
     void unlockStock(OrderEntity orderEntity);
