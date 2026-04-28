@@ -207,25 +207,8 @@ class OrderListManager {
      * @param {string} orderId 订单号
      */
     async goPay(orderId) {
-        this.showLoading();
-        try {
-            const response = await fetch(AppApi.order(AppApiPaths.order.getPayUrl), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: this.userId, orderId: orderId })
-            });
-            const result = await response.json();
-            if (result.code !== '0000' || !result.data) {
-                this.showError('获取支付链接失败: ' + (result.info || '未知错误'));
-                return;
-            }
-            window.open(result.data, '_blank');
-        } catch (error) {
-            console.error('立即支付出错:', error);
-            this.showError('网络错误，请稍后重试');
-        } finally {
-            this.hideLoading();
-        }
+        const targetUrl = `payment.html?orderId=${encodeURIComponent(orderId)}&userId=${encodeURIComponent(this.userId)}&autoPay=1`;
+        window.location.href = targetUrl;
     }
     
     getStatusText(status) {

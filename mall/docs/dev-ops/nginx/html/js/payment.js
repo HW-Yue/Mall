@@ -5,6 +5,7 @@
     var orderId = params.get("orderId") || "";
     var userId = params.get("userId") || (window.AppUtils && window.AppUtils.getCurrentUserId()) || "";
     var payAmountParam = params.get("payAmount") || "";
+    var autoPay = params.get("autoPay") === "1";
 
     function normalizePayAmount(value) {
         var num = Number(value);
@@ -25,6 +26,12 @@
             amtEl.textContent = "￥" + amount.toFixed(2);
         } else {
             amtEl.textContent = "待确认";
+        }
+
+        if (autoPay) {
+            window.setTimeout(function () {
+                window.doPayment();
+            }, 0);
         }
     });
 
