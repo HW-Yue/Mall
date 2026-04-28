@@ -57,7 +57,12 @@
 # ===========================
 .claude/
 .agents/
+.codex
+**/.codex
 skills-lock.json
+
+# Docker buildx local state
+docker-apps/.docker/
 
 # ===========================
 # 操作系统生成文件

@@ -1,6 +1,6 @@
 # group-buy-service：Agent 与 Nacos 动态运行时配置
 
-本文说明在已接入 **Tomcat**、**DynamicTp（线程池）** 与 **Nacos** 的前提下，如何把 **数据源连接池（Hikari）**、**日志级别**、**缓存策略参数**、**业务功能开关**、**OpenFeign 超时** 交给配置中心热更新，供运维 Agent 在过载或排障场景下调参。
+本文说明在已接入 **Tomcat**、**DynamicTp（线程池）** 与 **Nacos** 的前提下，如何把 **数据源连接池（Hikari）**、**日志级别**、**缓存策略参数**、**业务功能开关**、**OpenFeign 超时** 交给配置中心热更新，供运维 Agent 在过载或排障场景下调参。当前拼团也已接入 `spring.dynamic.tp.tomcat-tp`，Tomcat 工作线程由 DynamicTp 接管。
 
 ## 1. 配置加载方式
 
@@ -113,6 +113,6 @@ logging:
 
 ## 8. 与 DynamicTp、Sentinel 的关系
 
-- **DynamicTp**：线程池维度（与 Agent 项同在 `group-buy-service-runtime-dev.yml`）。
+- **DynamicTp**：线程池维度（与 Agent 项同在 `group-buy-service-runtime-dev.yml`，包含业务线程池与 `tomcat-tp`）。
 - **Sentinel**：流控熔断（`application-dev.yml` 中 datasource 规则）。
 - **本文 Agent 运行时**：连接池大小/超时、日志、业务开关、Feign 超时等，与上述互补，按场景选择组合使用。

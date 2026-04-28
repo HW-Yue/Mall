@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-COMPOSE_FILE="${ROOT_DIR}/docker-compose-apps.yml"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE_FILE="${ROOT_DIR}/docker-apps/docker-compose-apps.yml"
 
 compose() {
   if docker compose version >/dev/null 2>&1; then
@@ -13,4 +13,4 @@ compose() {
 }
 
 cd "${ROOT_DIR}"
-compose -f "${COMPOSE_FILE}" logs -f --tail="${TAIL:-200}" "$@"
+compose -f "${COMPOSE_FILE}" down "$@"

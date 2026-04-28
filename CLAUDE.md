@@ -230,7 +230,7 @@ mvn clean package -pl <module-name> -am
 
 ```bash
 docker-compose -f docs/dev-ops/docker-compose-environment.yml up -d
-docker-compose -f docs/dev-ops/docker-compose-app.yml up -d
+docker compose -f docker-apps/docker-compose-apps.yml up -d
 ```
 
 ## 监控（Prometheus / Sentinel / DynamicTP / ELK）

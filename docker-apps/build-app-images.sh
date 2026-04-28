@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-COMPOSE_FILE="${ROOT_DIR}/docker-compose-apps.yml"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+COMPOSE_FILE="${ROOT_DIR}/docker-apps/docker-compose-apps.yml"
+DOCKER_CONFIG_DIR="${ROOT_DIR}/docker-apps/.docker"
+BUILDX_CONFIG_DIR="${DOCKER_CONFIG_DIR}/buildx"
+
+mkdir -p "${BUILDX_CONFIG_DIR}"
+export DOCKER_CONFIG="${DOCKER_CONFIG_DIR}"
+export BUILDX_CONFIG="${BUILDX_CONFIG_DIR}"
 
 MODULES=(
   "mall/mall-app"

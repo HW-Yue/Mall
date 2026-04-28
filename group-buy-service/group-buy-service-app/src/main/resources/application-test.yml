@@ -1,0 +1,147 @@
+server:
+  port: 8093
+
+# Actuator：供 Prometheus 抓取（与现有 Prometheus/Grafana 栈对接）；生产请按需收紧暴露端点与安全策略
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+spring:
+  application:
+    name: group-buy-service
+  config:
+    import:
+      - classpath:nacos/group-buy-service-runtime-dev.yml
+      - optional:nacos:group-buy-service-runtime-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://127.0.0.1:13306/test_group_buy_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    username: root
+    password: 123456
+    hikari:
+      pool-name: GroupBuy_HikariCP
+      minimum-idle: 5
+      maximum-pool-size: 15
+      idle-timeout: 180000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+  data:
+    redis:
+      host: 127.0.0.1
+      port: 16379
+      database: 0
+      timeout: 3000ms
+      client-name: groupbuy-redisson
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://127.0.0.1:16379"
+          database: 0
+          clientName: groupbuy-redisson
+          connectionPoolSize: 10
+          connectionMinimumIdleSize: 5
+          idleConnectionTimeout: 30000
+          pingConnectionInterval: 60000
+          retryAttempts: 3
+          retryInterval: 1000
+          connectTimeout: 5000
+          timeout: 3000
+          keepAlive: true
+  cloud:
+    nacos:
+      discovery:
+        ip: 100.86.250.112
+        server-addr: 100.86.250.112:8848
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        import-check:
+          enabled: false
+    sentinel:
+      eager: true
+      transport:
+        dashboard: 100.86.250.112:8858
+        port: 8721
+      datasource:
+        flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: flow
+            data-type: json
+        degrade:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-degrade-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: degrade
+            data-type: json
+        param-flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-param-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: param-flow
+            data-type: json
+        system:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-system-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: system
+            data-type: json
+        authority:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-authority-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: authority
+            data-type: json
+
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+
+rocketmq:
+  name-server: 100.86.250.112:9876
+  producer:
+    group: group-buy-service-producer
+
+app:
+  config:
+    order-service:
+      api-url: http://127.0.0.1:8092
+  rocketmq:
+    topic:
+      orderPaidGroupBuy: order-paid-group_buy
+      groupBuySuccessNotify: group-buy-success-notify
+      groupBuyTimeoutRefund: group-buy-timeout-refund
+      orderCloseGroupBuy: order-close-group-buy
+      payRefundGroupBuy: pay-refund-group-buy
+    consumerGroup:
+      orderPaidGroupBuy: CG_GROUP_BUY_ORDER_PAID
+      groupBuyTimeoutRefund: CG_GROUP_BUY_TIMEOUT_REFUND
+      payRefundGroupBuy: CG_GROUP_BUY_PAY_REFUND
+
+logstash:
+  enabled: true
+  host: 100.86.250.112
+  port: 4560
+
+logging:
+  level:
+    com.yue.groupbuy: info
+
+yue:
+  log:
+    trace:
+      provider: skywalking

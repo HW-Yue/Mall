@@ -1,9 +1,9 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="OpsAgentSpringAi_SkyWalking" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
-    <module name="ops-agent-spring-ai" />
+    <module name="yue-ops-agent" />
+    <option name="PROGRAM_PARAMETERS" value="--ops-ai.otlp.enabled=true --ops-ai.otlp.endpoint=http://100.86.250.112:11800 --ops-ai.otlp.service-name=ops-agent-spring-ai" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="com.yue.opsagent.springai.OpsAgentSpringAiApplication" />
     <option name="VM_PARAMETERS" value="-javaagent:$PROJECT_DIR$/dev-tools/skywalking/apache-skywalking-java-agent-9.6.0/skywalking-agent/skywalking-agent.jar -Dskywalking.collector.backend_service=100.86.250.112:11800 -Dskywalking.agent.service_name=ops-agent-spring-ai -Dskywalking.trace.ignore_path=/actuator/**,*:/actuator/**,SpringScheduled/**,HikariCP/**,SpringCloudGateway/GatewayFilter,Mysql/JDBC/PreparedStatement/execute" />
-    <option name="PROGRAM_PARAMETERS" value="--ops-ai.otlp.enabled=true --ops-ai.otlp.endpoint=http://100.86.250.112:11800 --ops-ai.otlp.service-name=ops-agent-spring-ai" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>

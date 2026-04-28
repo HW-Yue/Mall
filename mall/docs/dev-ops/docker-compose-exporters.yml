@@ -13,8 +13,6 @@
 #   9121 - redis-exporter
 #   5557 - rocketmq-exporter
 
-version: "3.9"
-
 services:
   # MySQL 指标导出
   # v0.14.0 仍支持 DATA_SOURCE_NAME 环境变量，省得额外挂载 .my.cnf
@@ -45,15 +43,16 @@ services:
       - my-network
 
   # RocketMQ 指标导出
-  # 官方镜像 apacherocketmq/rocketmq-exporter:0.0.2，端口 5557
+  # 官方镜像 apache/rocketmq-exporter:0.0.2，端口 5557
   rocketmq-exporter:
-    image: apacherocketmq/rocketmq-exporter:0.0.2
+    image: apache/rocketmq-exporter:0.0.2
     container_name: rocketmq-exporter
     restart: always
     ports:
       - "5557:5557"
     environment:
-      JAVA_OPTS: "-Drocketmq.config.namesrvAddr=rmq-namesrv:9876"
+      # Spring Boot relaxed binding: rocketmq.config.namesrvAddr -> ROCKETMQ_CONFIG_NAMESRVADDR
+      ROCKETMQ_CONFIG_NAMESRVADDR: "rmq-namesrv:9876"
     networks:
       - my-network
 

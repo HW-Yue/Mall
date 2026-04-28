@@ -13,6 +13,6 @@ ENV TZ=PRC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 添加应用
-ADD target/group-buy-market-app.jar /group-buy-market-app.jar
+ADD target/mall-app.jar /mall-app.jar
 
-ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /group-buy-market-app.jar $PARAMS"]
+ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /mall-app.jar $PARAMS"]

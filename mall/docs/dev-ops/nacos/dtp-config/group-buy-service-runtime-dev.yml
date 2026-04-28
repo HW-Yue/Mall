@@ -33,6 +33,14 @@ spring:
           task-wrapper-names:
             - mdc
           notify-enabled: false
+      tomcat-tp:
+        thread-pool-alias-name: group-buy-tomcat
+        core-pool-size: 10
+        maximum-pool-size: 20
+        keep-alive-time: 60
+        task-wrapper-names:
+          - mdc
+        notify-enabled: false
 
 logging:
   level:
