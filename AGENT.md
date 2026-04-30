@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-> 注意：如果修改本文件内容，必须同步更新 `AGENT.md`；如果修改 `AGENT.md`，也必须同步更新本文件。
+> 注意：如果修改本文件内容，必须同步更新 `CLAUDE.md`；如果修改 `CLAUDE.md`，也必须同步更新本文件。
 
 ## Repository Overview
 
