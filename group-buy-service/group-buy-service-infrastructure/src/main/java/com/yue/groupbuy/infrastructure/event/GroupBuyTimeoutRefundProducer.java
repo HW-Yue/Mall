@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
@@ -42,10 +41,6 @@ public class GroupBuyTimeoutRefundProducer implements IGroupBuyTimeoutMqProducer
         String payload = JSON.toJSONString(body);
         log.info("发送拼团超时退款定时消息 topic:{} teamId:{} deliverTimeMs:{}", groupBuyTimeoutRefundTopic, teamId, deliverTimeMs);
 
-        org.springframework.messaging.Message<String> message = MessageBuilder.withPayload(payload)
-                .setHeader("TIMER_DELIVER_MS", deliverTimeMs)
-                .build();
-
-        rocketMQTemplate.syncSend(groupBuyTimeoutRefundTopic, message);
+        rocketMQTemplate.syncSendDeliverTimeMills(groupBuyTimeoutRefundTopic, payload, deliverTimeMs);
     }
 }

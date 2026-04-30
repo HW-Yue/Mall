@@ -155,7 +155,7 @@ services:
         -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800}
         -Dskywalking.agent.service_name=gateway}
       PARAMS: >-
-        --spring.profiles.active=${GATEWAY_SPRING_PROFILES_ACTIVE:-dev}
+        --spring.profiles.active=${GATEWAY_SPRING_PROFILES_ACTIVE:-test}
         --rocketmq.name-server=${GATEWAY_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
     ports:
       - "${GATEWAY_PORT:-8090}:8090"

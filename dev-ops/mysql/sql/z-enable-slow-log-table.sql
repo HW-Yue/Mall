@@ -1,6 +1,6 @@
 -- 新库首次初始化时由 docker-entrypoint-initdb.d 执行；已有 data 卷的实例请用手工执行：
 -- mysql -h127.0.0.1 -P13306 -uroot -p < 本文件
--- 与 ops-agent-spring-ai/dev-ops/mysql/enable-slow-log-table.sql 内容同步维护。
+-- 慢日志表初始化统一维护在根目录 dev-ops/mysql/sql 下。
 
 SET @OLD_SLOW := @@GLOBAL.slow_query_log;
 SET GLOBAL slow_query_log = OFF;

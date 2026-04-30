@@ -1,7 +1,146 @@
 server:
   port: 8090
 
+spring:
+  application:
+    name: springcloud-gateway
+  cloud:
+    nacos:
+      discovery:
+        server-addr: nacos:8848
+        locator:
+          enabled: true
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        import-check:
+          enabled: false
+    sentinel:
+      eager: true
+      filter:
+        enabled: false
+      transport:
+        dashboard: sentinel-dashboard:8858
+        port: 8718
+      scg:
+        fallback:
+          mode: response
+          response-status: 429
+          response-body: '{"code":"429","info":"Blocked by Sentinel(gateway)"}'
+      datasource:
+        gw-flow:
+          nacos:
+            server-addr: ${spring.cloud.nacos.discovery.server-addr}
+            dataId: ${spring.application.name}-gw-flow-rules.json
+            groupId: SENTINEL_GROUP
+            rule-type: gw-flow
+            data-type: json
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: false
+            maxAge: 3600
+      routes:
+        - id: mall
+          uri: lb://mall
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/mall/**
+          filters:
+            - StripPrefix=1
+        - id: login-pay
+          uri: lb://login-pay
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/login-pay/**
+          filters:
+            - StripPrefix=1
+        - id: login-pay-alipay
+          uri: lb://login-pay
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/alipay/**
+          filters:
+            - StripPrefix=1
+        - id: order-service
+          uri: lb://order-service
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/order/**
+          filters:
+            - StripPrefix=1
+        - id: group-buy-service
+          uri: lb://group-buy-service
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/group-buy/**
+          filters:
+            - StripPrefix=1
+        - id: seckill-service
+          uri: lb://seckill-service
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/seckill/**
+          filters:
+            - StripPrefix=1
+        - id: ops-agent-spring-ai
+          uri: lb://ops-agent-spring-ai
+          order: 1
+          metadata:
+            response-timeout: -1
+          predicates:
+            - Path=/gw/api/v1/ops-ai/**
+          filters:
+            - StripPrefix=1
+            - name: RewritePath
+              args:
+                regexp: /api/v1/ops-ai/(.*)
+                replacement: /api/v1/$1
+            - name: DedupeResponseHeader
+              args:
+                name: Access-Control-Allow-Origin Access-Control-Allow-Credentials
+                strategy: RETAIN_FIRST
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 60s
+        pool:
+          type: elastic
+          max-connections: 10000
+          max-life-time: 60s
+          eviction-interval: 30s
+
 logging:
   level:
     root: info
   config: classpath:logback-spring.xml
+
+logstash:
+  enabled: true
+  host: logstash
+  port: 4560
+
+yue:
+  log:
+    trace:
+      provider: skywalking
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
