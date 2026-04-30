@@ -19,9 +19,9 @@
 
 | 资源 | 路径 |
 |------|------|
-| 告警规则 | `mall/docs/dev-ops/prometheus/alert_rules.yml` |
-| Prometheus | `mall/docs/dev-ops/prometheus/prometheus.yml` |
-| Alertmanager | `mall/docs/dev-ops/prometheus/alertmanager.yml` |
+| 告警规则 | `dev-ops/prometheus/alert_rules.yml` |
+| Prometheus | `dev-ops/prometheus/prometheus.yml` |
+| Alertmanager | `dev-ops/prometheus/alertmanager.yml` |
 | Spring AI Agent 示例配置 | `ops-agent-spring-ai/src/main/resources/application.yml` |
 
 ## 前端资源

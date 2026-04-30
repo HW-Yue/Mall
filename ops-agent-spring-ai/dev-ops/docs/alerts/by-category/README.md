@@ -1,6 +1,6 @@
 # 按 category 分类的告警清单
 
-**权威来源**：`mall/docs/dev-ops/prometheus/alert_rules.yml`  
+**权威来源**：`dev-ops/prometheus/alert_rules.yml`  
 下列 **`alert:` 名称** 与 **`labels.category`** 以该文件为准。
 
 ## 快速索引（alertname → 详解文件）

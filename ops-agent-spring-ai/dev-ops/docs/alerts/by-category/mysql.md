@@ -1,7 +1,7 @@
 # category: `mysql`（mysqld_exporter）
 
 **规则组**：`mysql-exporter-global`  
-**来源文件**：`mall/docs/dev-ops/prometheus/alert_rules.yml`  
+**来源文件**：`dev-ops/prometheus/alert_rules.yml`  
 **抓取**：`prometheus.yml` job `mysqld-exporter` → `mysqld-exporter:9104`，静态 labels **`application: shared`**。
 
 | alertname | for | severity | application | expr（摘要） |

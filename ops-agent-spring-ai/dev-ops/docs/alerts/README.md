@@ -18,4 +18,4 @@
 
 ## 权威规则文件
 
-所有 `alertname` 以 **`mall/docs/dev-ops/prometheus/alert_rules.yml`** 为准；本文档中的表格从该文件摘录，变更时请同步更新。
+所有 `alertname` 以 **`dev-ops/prometheus/alert_rules.yml`** 为准；本文档中的表格从该文件摘录，变更时请同步更新。

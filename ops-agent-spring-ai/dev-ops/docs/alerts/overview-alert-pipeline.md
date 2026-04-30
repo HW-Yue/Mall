@@ -5,10 +5,10 @@
 | 组件 | 配置位置 | 职责 |
 |------|----------|------|
 | **业务服务**（mall 各微服务） | 各服务 Spring Boot | 暴露 `/actuator/prometheus`；Micrometer 指标（HTTP、JVM、Hikari、DTP、Sentinel 等） |
-| **Nacos** | `mall/docs/dev-ops/...` | 提供 **Prometheus HTTP SD** 端点，返回需抓取的目标列表 |
-| **Prometheus** | `mall/docs/dev-ops/prometheus/prometheus.yml` | 按 `scrape_configs` 拉取指标；加载 `alert_rules.yml` **计算告警**；将告警送 Alertmanager |
+| **Nacos** | `dev-ops/...` | 提供 **Prometheus HTTP SD** 端点，返回需抓取的目标列表 |
+| **Prometheus** | `dev-ops/prometheus/prometheus.yml` | 按 `scrape_configs` 拉取指标；加载 `alert_rules.yml` **计算告警**；将告警送 Alertmanager |
 | **Exporters** | 同目录 compose（如 `docker-compose-exporters.yml`） | `mysqld-exporter`、`redis-exporter`、`rocketmq-exporter` 提供中间件指标 |
-| **Alertmanager** | `mall/docs/dev-ops/prometheus/alertmanager.yml` | 分组、抑制、去重；**Webhook** 转发到消费方 |
+| **Alertmanager** | `dev-ops/prometheus/alertmanager.yml` | 分组、抑制、去重；**Webhook** 转发到消费方 |
 | **Agent（消费方）** | `ops-agent-spring-ai` | HTTP 接收 webhook，匹配 SOP，执行工具或子 Agent |
 
 ## 2. 数据流（简图）
@@ -28,7 +28,7 @@ Exporters ────────┘              │
                         webhook POST ──► Agent（ops-agent-spring-ai 默认 :2322，见 `ops-agent-spring-ai/src/main/resources/application.yml`）
 ```
 
-> **注意**：Alertmanager webhook 默认指向 **`http://host.docker.internal:2322/api/v1/alert/receive`**（与 `mall/docs/dev-ops/prometheus/alertmanager.yml` 一致）。
+> **注意**：Alertmanager webhook 默认指向 **`http://host.docker.internal:2322/api/v1/alert/receive`**（与 `dev-ops/prometheus/alertmanager.yml` 一致）。
 
 ## 3. 与「预警」相关的代码路径（商城）
 

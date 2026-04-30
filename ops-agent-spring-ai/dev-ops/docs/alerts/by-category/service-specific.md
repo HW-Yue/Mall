@@ -2,7 +2,7 @@
 
 **用途**：写 SOP 占位符（如 `${application}`）、与 **Alertmanager `group_by`** 中的 `application` 对齐。
 
-**来源**：`mall/docs/dev-ops/prometheus/alert_rules.yml` 各专项规则中的 `labels.application`。
+**来源**：`dev-ops/prometheus/alert_rules.yml` 各专项规则中的 `labels.application`。
 
 | 规则意图 | `application` 标签值 | 备注 |
 |----------|----------------------|------|

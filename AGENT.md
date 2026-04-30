@@ -49,7 +49,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 
 1. **后端 Controller**（trigger 层）`@RequestMapping`
 2. **网关路由**：`springcloud-gateway/app/src/main/resources/application-dev.yml`（同时改 prod/test）
-3. **前端配置**：`mall/docs/dev-ops/nginx/html/js/api-config.js`（`AppApiPaths` 对象）
+3. **前端配置**：`dev-ops/nginx/html/js/api-config.js`（`AppApiPaths` 对象）
 
 **网关路由表（StripPrefix=1，去掉 `/gw`）：**
 | 前端路径前缀 | 转发服务 |
@@ -157,15 +157,15 @@ RabbitMQ 用于：mall 内部退款通知（`RefundSuccessTopicListener`，`grou
 
 ## 关键文件路径
 
-### SQL（`mall/docs/dev-ops/mysql/sql/`）
+### SQL（`dev-ops/mysql/sql/`）
 `mall_db.sql` / `order_service.sql` / `group_buy_service.sql` / `seckill_service.sql` / `grafana.sql`
 
 > 新增表/字段必须同步更新对应 SQL 文件。
 
 ### 网关 & 前端
 - 网关路由：`springcloud-gateway/app/src/main/resources/application-dev.yml`
-- 前端接口：`mall/docs/dev-ops/nginx/html/js/api-config.js`（`AppApiPaths`）
-- 前端逻辑：`mall/docs/dev-ops/nginx/html/js/mall.js`（下单）、`payment.js`（支付）、`order-list.js`（订单列表）
+- 前端接口：`dev-ops/nginx/html/js/api-config.js`（`AppApiPaths`）
+- 前端逻辑：`dev-ops/nginx/html/js/mall.js`（下单）、`payment.js`（支付）、`order-list.js`（订单列表）
 
 ### order-service
 - Controller：`order-service/order-service-trigger/src/main/java/com/yue/order/trigger/http/OrderController.java`
@@ -247,13 +247,13 @@ docker compose -f docker-apps/docker-compose-apps.yml up -d
 **关键文件：**
 | 用途 | 文件 |
 |------|------|
-| Prometheus 主配置 | `mall/docs/dev-ops/prometheus/prometheus.yml` |
-| 告警规则（36条） | `mall/docs/dev-ops/prometheus/alert_rules.yml` |
-| Alertmanager 配置 | `mall/docs/dev-ops/prometheus/alertmanager.yml` |
-| Grafana compose | `mall/docs/dev-ops/docker-compose-grafana.yml` |
-| exporter compose（mysqld/redis/rocketmq） | `mall/docs/dev-ops/docker-compose-exporters.yml` |
-| Sentinel 规则 | `mall/docs/dev-ops/nacos/sentinel-rules/*-flow-rules.json` |
-| DTP 配置 | `mall/docs/dev-ops/nacos/dtp-config/*-dtp-dev.yml` |
+| Prometheus 主配置 | `dev-ops/prometheus/prometheus.yml` |
+| 告警规则（36条） | `dev-ops/prometheus/alert_rules.yml` |
+| Alertmanager 配置 | `dev-ops/prometheus/alertmanager.yml` |
+| Grafana compose | `dev-ops/docker-compose-grafana.yml` |
+| exporter compose（mysqld/redis/rocketmq） | `dev-ops/docker-compose-exporters.yml` |
+| Sentinel 规则 | `dev-ops/nacos/sentinel-rules/*-flow-rules.json` |
+| DTP 配置 | `dev-ops/nacos/dtp-config/*-dtp-dev.yml` |
 | Sentinel 指标绑定 | `Dependencies/common-log-starter/.../sentinel/SentinelMetricsBinder.java` |
 
 **Sentinel 规则 Nacos 格式：**

@@ -7,12 +7,14 @@ services:
   mall-frontend:
     image: nexus/mall-frontend:${IMAGE_TAG:-local}
     build:
-      context: ../mall/docs/dev-ops/nginx
+      context: ../dev-ops/nginx
       dockerfile: Dockerfile
     container_name: nexus-mall-frontend
     ports:
       - "${MALL_FRONTEND_PORT:-8088}:80"
     restart: unless-stopped
+    networks:
+      - nexus-devops
 
   mall:
     image: nexus/mall-app:${IMAGE_TAG:-local}
@@ -29,13 +31,15 @@ services:
         -Dskywalking.agent.service_name=mall}
       PARAMS: >-
         --spring.profiles.active=${MALL_SPRING_PROFILES_ACTIVE:-dev}
-        --rocketmq.name-server=${MALL_ROCKETMQ_NAME_SERVER:-100.86.250.112:9876}
+        --rocketmq.name-server=${MALL_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
     ports:
       - "${MALL_PORT:-8077}:8077"
     volumes: *skywalking-agent
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - nexus-devops
 
   order-service:
     image: nexus/order-service-app:${IMAGE_TAG:-local}
@@ -51,14 +55,16 @@ services:
         -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800}
         -Dskywalking.agent.service_name=order-service}
       PARAMS: >-
-        --spring.profiles.active=${ORDER_SERVICE_SPRING_PROFILES_ACTIVE:-dev}
-        --rocketmq.name-server=${ORDER_SERVICE_ROCKETMQ_NAME_SERVER:-100.86.250.112:9876}
+        --spring.profiles.active=${ORDER_SERVICE_SPRING_PROFILES_ACTIVE:-test}
+        --rocketmq.name-server=${ORDER_SERVICE_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
     ports:
       - "${ORDER_SERVICE_PORT:-8092}:8092"
     volumes: *skywalking-agent
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - nexus-devops
 
   group-buy-service:
     image: nexus/group-buy-service-app:${IMAGE_TAG:-local}
@@ -74,14 +80,16 @@ services:
         -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800}
         -Dskywalking.agent.service_name=group-buy-service}
       PARAMS: >-
-        --spring.profiles.active=${GROUP_BUY_SERVICE_SPRING_PROFILES_ACTIVE:-dev}
-        --rocketmq.name-server=${GROUP_BUY_SERVICE_ROCKETMQ_NAME_SERVER:-100.86.250.112:9876}
+        --spring.profiles.active=${GROUP_BUY_SERVICE_SPRING_PROFILES_ACTIVE:-test}
+        --rocketmq.name-server=${GROUP_BUY_SERVICE_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
     ports:
       - "${GROUP_BUY_SERVICE_PORT:-8093}:8093"
     volumes: *skywalking-agent
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - nexus-devops
 
   seckill-service:
     image: nexus/seckill-service-app:${IMAGE_TAG:-local}
@@ -98,13 +106,15 @@ services:
         -Dskywalking.agent.service_name=seckill-service}
       PARAMS: >-
         --spring.profiles.active=${SECKILL_SERVICE_SPRING_PROFILES_ACTIVE:-dev}
-        --rocketmq.name-server=${SECKILL_SERVICE_ROCKETMQ_NAME_SERVER:-100.86.250.112:9876}
+        --rocketmq.name-server=${SECKILL_SERVICE_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
     ports:
       - "${SECKILL_SERVICE_PORT:-8094}:8094"
     volumes: *skywalking-agent
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - nexus-devops
 
   pay:
     image: nexus/pay-app:${IMAGE_TAG:-local}
@@ -120,14 +130,16 @@ services:
         -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800}
         -Dskywalking.agent.service_name=pay}
       PARAMS: >-
-        --spring.profiles.active=${PAY_SPRING_PROFILES_ACTIVE:-dev}
-        --rocketmq.name-server=${PAY_ROCKETMQ_NAME_SERVER:-100.86.250.112:9876}
+        --spring.profiles.active=${PAY_SPRING_PROFILES_ACTIVE:-test}
+        --rocketmq.name-server=${PAY_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
     ports:
-      - "${PAY_PORT:-8079}:8079"
+      - "${PAY_PORT:-18080}:${PAY_INTERNAL_PORT:-18080}"
     volumes: *skywalking-agent
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - nexus-devops
 
   gateway:
     image: nexus/springcloud-gateway:${IMAGE_TAG:-local}
@@ -144,13 +156,15 @@ services:
         -Dskywalking.agent.service_name=gateway}
       PARAMS: >-
         --spring.profiles.active=${GATEWAY_SPRING_PROFILES_ACTIVE:-dev}
-        --rocketmq.name-server=${GATEWAY_ROCKETMQ_NAME_SERVER:-100.86.250.112:9876}
+        --rocketmq.name-server=${GATEWAY_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
     ports:
       - "${GATEWAY_PORT:-8090}:8090"
     volumes: *skywalking-agent
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - nexus-devops
 
   ops-agent-spring-ai:
     image: nexus/ops-agent-spring-ai:${IMAGE_TAG:-local}
@@ -171,7 +185,7 @@ services:
       PARAMS: >-
         --server.port=2322
         --spring.profiles.active=${SPRING_PROFILES_ACTIVE:-dev}
-        --rocketmq.name-server=${ROCKETMQ_NAME_SERVER:-100.86.250.112:9876}
+        --rocketmq.name-server=${ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
         --ops-ai.otlp.enabled=${OPS_AI_OTLP_ENABLED:-true}
         --ops-ai.otlp.endpoint=${OPS_AI_OTLP_ENDPOINT:-http://100.86.250.112:11800}
         --ops-ai.otlp.service-name=${OPS_AI_OTLP_SERVICE_NAME:-ops-agent-spring-ai}
@@ -182,3 +196,9 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - nexus-devops
+
+networks:
+  nexus-devops:
+    external: true

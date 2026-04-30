@@ -15,8 +15,8 @@
 
 前置条件：
   1. 启动 mock_alipay：  make seckill-mock
-  2. pay-service 的 application-dev.yml 中将支付宝网关改为：
-       alipay.gateway-url: http://100.86.250.112:7000
+  2. Docker test 环境下 pay-service 的 application-test.yml 已将支付宝网关指向：
+       alipay.gatewayUrl: http://host.docker.internal:7000/gateway.do
   3. 预热 Redis 库存（数量 >= 压测总请求数）：
        redis-cli SET seckill:stock:1:sku_001 500000
 

@@ -1,7 +1,7 @@
 # category: `rocketmq`（rocketmq_exporter）
 
 **规则组**：`rocketmq-exporter-global`  
-**来源文件**：`mall/docs/dev-ops/prometheus/alert_rules.yml`  
+**来源文件**：`dev-ops/prometheus/alert_rules.yml`  
 **抓取**：`prometheus.yml` job `rocketmq-exporter` → `rocketmq-exporter:5557`，静态 labels **`application: shared`**。
 
 | alertname | for | severity | application | expr（摘要） |

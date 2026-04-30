@@ -1,7 +1,7 @@
 # category: `http`
 
 **规则组**：`http-layer-global`  
-**来源文件**：`mall/docs/dev-ops/prometheus/alert_rules.yml`
+**来源文件**：`dev-ops/prometheus/alert_rules.yml`
 
 | alertname | for | severity | expr（摘要） |
 |-----------|-----|----------|--------------|

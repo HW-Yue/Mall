@@ -46,7 +46,7 @@
 ### 3.1 启动 Nacos（Docker Compose）
 
 ```bash
-cd mall/docs/dev-ops
+cd dev-ops
 docker compose -f docker-compose-environment.yml up -d mysql nacos
 # 或顺带拉起其它依赖：docker compose -f docker-compose-environment.yml up -d
 ```
@@ -60,7 +60,7 @@ docker compose -f docker-compose-environment.yml up -d mysql nacos
 `init-nacos-dtp.sh` 会发布本目录下所有 `*-dtp-dev.yml`、`*-datasource-dev.yml`、`*-runtime-dev.yml`（含 `group-buy-service-runtime-dev.yml`）。
 
 ```bash
-cd mall/docs/dev-ops/nacos/dtp-config
+cd dev-ops/nacos/dtp-config
 chmod +x init-nacos-dtp.sh
 
 # 未开启鉴权
@@ -94,7 +94,7 @@ NACOS_ADDR=100.86.250.112:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-dt
 > TOKEN=$(curl -s -X POST "http://${NACOS_ADDR}/nacos/v3/auth/user/login" \
 >         -d "username=nacos&password=nacos" \
 >         | sed -n 's/.*"accessToken":"\([^"]*\)".*/\1/p')
-> content=$(cat mall/docs/dev-ops/nacos/dtp-config/shared-mysql-tuning.yml)
+> content=$(cat dev-ops/nacos/dtp-config/shared-mysql-tuning.yml)
 > curl -sS -X POST "http://${NACOS_ADDR}/nacos/v3/admin/cs/config" \
 >   -H "accessToken: ${TOKEN}" \
 >   --data-urlencode "namespaceId=public" \

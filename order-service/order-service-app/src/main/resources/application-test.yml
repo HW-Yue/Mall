@@ -22,10 +22,9 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 100.86.250.112:8848
+        server-addr: nacos:8848
         locator:
           enabled: true
-        ip: 100.86.250.112
       config:
         server-addr: ${spring.cloud.nacos.discovery.server-addr}
         import-check:
@@ -33,7 +32,7 @@ spring:
     sentinel:
       eager: true
       transport:
-        dashboard: 100.86.250.112:8858
+        dashboard: sentinel-dashboard:8858
         port: 8720
       datasource:
         flow:
@@ -74,7 +73,7 @@ spring:
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://127.0.0.1:13306/test_order_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
+    url: jdbc:mysql://mysql:3306/test_order_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
     hikari:
@@ -88,8 +87,8 @@ spring:
       connection-test-query: SELECT 1
   data:
     redis:
-      host: 127.0.0.1
-      port: 16379
+      host: redis
+      port: 6379
       database: 0
       timeout: 3000ms
       client-name: order-redisson
@@ -97,7 +96,7 @@ spring:
     redisson:
       config: |
         singleServerConfig:
-          address: "redis://127.0.0.1:16379"
+          address: "redis://redis:6379"
           database: 0
           clientName: order-redisson
           connectionPoolSize: 20
@@ -111,7 +110,7 @@ spring:
           keepAlive: true
 
 rocketmq:
-  name-server: 100.86.250.112:9876
+  name-server: rmq-namesrv:9876
   producer:
     group: order-service-producer
     send-message-timeout: 3000
@@ -167,7 +166,7 @@ mybatis:
 
 logstash:
   enabled: true
-  host: 100.86.250.112
+  host: logstash
   port: 4560
 
 logging:

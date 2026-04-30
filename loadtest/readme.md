@@ -78,4 +78,4 @@ make seckill-k6-rps-10k-50k  # 固定 RPS 渐增
 
 - `.venv/bin/python` 不存在 → 先执行 `make init` 或 `./scripts/init.sh`。
 - 端口占用 → 结束旧 Locust / k6 进程后重试。
-- mock 支付宝：只在 `seckill-full` 场景需要，跑之前先 `make seckill-mock`，并确保 `pay` 服务的 `application-dev.yml` 中 `alipay.gateway-url` 指向 `http://100.86.250.112:7000`。
+- mock 支付宝：只在 `seckill-full` 场景需要，跑之前先 `make seckill-mock`。Docker test 环境下 `pay` 服务的 `application-test.yml` 已指向 `http://host.docker.internal:7000/gateway.do`，mock 回调 `pay` 的宿主机映射端口 `18080`。

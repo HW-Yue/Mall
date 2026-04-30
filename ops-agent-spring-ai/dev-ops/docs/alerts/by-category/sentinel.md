@@ -1,7 +1,7 @@
 # category: `sentinel`
 
 **规则组**：`sentinel-global`、`order-service-specific`、`seckill-service-specific`、`group-buy-service-specific`、`pay-service-specific`、`mall-service-specific`、`gateway-specific`  
-**来源文件**：`mall/docs/dev-ops/prometheus/alert_rules.yml`
+**来源文件**：`dev-ops/prometheus/alert_rules.yml`
 
 ## 全局规则（所有业务服务通用）
 

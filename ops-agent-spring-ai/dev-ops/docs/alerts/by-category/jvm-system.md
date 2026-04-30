@@ -1,7 +1,7 @@
 # category: `system`（JVM / 抓取可用性）
 
 **规则组**：`jvm-system-global`  
-**来源文件**：`mall/docs/dev-ops/prometheus/alert_rules.yml`
+**来源文件**：`dev-ops/prometheus/alert_rules.yml`
 
 | alertname | for | severity | expr（摘要） |
 |-----------|-----|----------|--------------|

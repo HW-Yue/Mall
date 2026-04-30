@@ -18,7 +18,7 @@
 **/node_modules/
 **/dist/
 # 保留 mall 静态 html（不是构建产物，是源码）
-!mall/docs/dev-ops/nginx/html/
+!dev-ops/nginx/html/
 
 # ===========================
 # Python 虚拟环境（不可跨平台迁移）
@@ -63,6 +63,11 @@ skills-lock.json
 
 # Docker buildx local state
 docker-apps/.docker/
+
+# DevOps local runtime state
+dev-ops/docker/*
+!dev-ops/docker/.gitignore
+dev-ops/rocketmq/data/
 
 # ===========================
 # 操作系统生成文件

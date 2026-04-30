@@ -131,7 +131,7 @@ POST `Content-Type: application/json` → `http://<host>:2322/api/v1/alert/recei
 }
 ```
 
-（若 `alertname` 为演示用，请以 `mall/docs/dev-ops/prometheus/alert_rules.yml` 中真实名称为准。）
+（若 `alertname` 为演示用，请以 `dev-ops/prometheus/alert_rules.yml` 中真实名称为准。）
 
 ### 5.3 恢复事件（`send_resolved: true`）
 

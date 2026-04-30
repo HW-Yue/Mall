@@ -23,7 +23,7 @@ spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://127.0.0.1:13306/test_group_buy_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    url: jdbc:mysql://mysql:3306/test_group_buy_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: 123456
     hikari:
@@ -36,8 +36,8 @@ spring:
       connection-test-query: SELECT 1
   data:
     redis:
-      host: 127.0.0.1
-      port: 16379
+      host: redis
+      port: 6379
       database: 0
       timeout: 3000ms
       client-name: groupbuy-redisson
@@ -45,7 +45,7 @@ spring:
     redisson:
       config: |
         singleServerConfig:
-          address: "redis://127.0.0.1:16379"
+          address: "redis://redis:6379"
           database: 0
           clientName: groupbuy-redisson
           connectionPoolSize: 10
@@ -60,8 +60,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        ip: 100.86.250.112
-        server-addr: 100.86.250.112:8848
+        server-addr: nacos:8848
       config:
         server-addr: ${spring.cloud.nacos.discovery.server-addr}
         import-check:
@@ -69,7 +68,7 @@ spring:
     sentinel:
       eager: true
       transport:
-        dashboard: 100.86.250.112:8858
+        dashboard: sentinel-dashboard:8858
         port: 8721
       datasource:
         flow:
@@ -112,14 +111,14 @@ mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
 
 rocketmq:
-  name-server: 100.86.250.112:9876
+  name-server: rmq-namesrv:9876
   producer:
     group: group-buy-service-producer
 
 app:
   config:
     order-service:
-      api-url: http://127.0.0.1:8092
+      api-url: http://order-service:8092
   rocketmq:
     topic:
       orderPaidGroupBuy: order-paid-group_buy
@@ -134,7 +133,7 @@ app:
 
 logstash:
   enabled: true
-  host: 100.86.250.112
+  host: logstash
   port: 4560
 
 logging:

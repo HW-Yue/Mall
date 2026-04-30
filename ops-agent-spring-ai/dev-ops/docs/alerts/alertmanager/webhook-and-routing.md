@@ -1,6 +1,6 @@
 # Alertmanager 路由与 Webhook
 
-**权威配置**：`mall/docs/dev-ops/prometheus/alertmanager.yml`
+**权威配置**：`dev-ops/prometheus/alertmanager.yml`
 
 ## 1. 全局
 

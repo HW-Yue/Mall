@@ -1,6 +1,6 @@
 # Prometheus 告警：规则侧 labels 与 annotations
 
-**权威来源**：`mall/docs/dev-ops/prometheus/alert_rules.yml` 每条 `alert` 下的 `labels` / `annotations`。
+**权威来源**：`dev-ops/prometheus/alert_rules.yml` 每条 `alert` 下的 `labels` / `annotations`。
 
 ## 1. 通用标签（多数规则）
 

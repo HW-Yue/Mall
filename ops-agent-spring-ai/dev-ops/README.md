@@ -14,9 +14,9 @@
 
 商城侧 Prometheus 规则与抓取定义的**权威路径**在 monorepo 内为：
 
-- [`mall/docs/dev-ops/prometheus/alert_rules.yml`](../../mall/docs/dev-ops/prometheus/alert_rules.yml) — 所有 `alert` 名称与表达式
-- [`mall/docs/dev-ops/prometheus/prometheus.yml`](../../mall/docs/dev-ops/prometheus/prometheus.yml) — 抓取任务、Nacos SD、Exporter
-- [`mall/docs/dev-ops/prometheus/alertmanager.yml`](../../mall/docs/dev-ops/prometheus/alertmanager.yml) — Alertmanager 路由与 webhook
+- [`dev-ops/prometheus/alert_rules.yml`](../../dev-ops/prometheus/alert_rules.yml) — 所有 `alert` 名称与表达式
+- [`dev-ops/prometheus/prometheus.yml`](../../dev-ops/prometheus/prometheus.yml) — 抓取任务、Nacos SD、Exporter
+- [`dev-ops/prometheus/alertmanager.yml`](../../dev-ops/prometheus/alertmanager.yml) — Alertmanager 路由与 webhook
 
 本 `dev-ops/docs` 下的描述均应与上述文件保持一致；若不一致，**以 mall 下 YAML 为准**，并应回写修正本文档。
 

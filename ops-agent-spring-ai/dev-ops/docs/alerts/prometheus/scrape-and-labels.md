@@ -1,13 +1,13 @@
 # Prometheus 抓取与标签
 
-**权威配置**：`mall/docs/dev-ops/prometheus/prometheus.yml`  
-**规则文件**：`mall/docs/dev-ops/prometheus/alert_rules.yml`
+**权威配置**：`dev-ops/prometheus/prometheus.yml`  
+**规则文件**：`dev-ops/prometheus/alert_rules.yml`
 
 ## 1. 全局
 
 - `scrape_interval: 15s`
 - `evaluation_interval: 15s`
-- `rule_files: [/etc/prometheus/alert_rules.yml]`（容器内路径；宿主机对应 `mall/docs/dev-ops/prometheus/alert_rules.yml`）
+- `rule_files: [/etc/prometheus/alert_rules.yml]`（容器内路径；宿主机对应 `dev-ops/prometheus/alert_rules.yml`）
 
 ## 2. Job：`nacos-sd-spring-boot`
 

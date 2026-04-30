@@ -55,7 +55,7 @@
 ### 4.1 启动基础设施（含 Sentinel Dashboard）
 
 ```bash
-cd mall/docs/dev-ops
+cd dev-ops
 docker-compose -f docker-compose-environment.yml up -d nacos mysql sentinel-dashboard
 ```
 
@@ -66,7 +66,7 @@ Nacos 就绪后执行 **4.2** 发布规则（compose 不自动执行 `init-nacos
 ### 4.2 批量发布规则到 Nacos
 
 ```bash
-cd mall/docs/dev-ops/nacos/sentinel-rules
+cd dev-ops/nacos/sentinel-rules
 # Nacos 未开启鉴权
 NACOS_ADDR=100.86.250.112:8848 ./init-nacos-rules.sh
 

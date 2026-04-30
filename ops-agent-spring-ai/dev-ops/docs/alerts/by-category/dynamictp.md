@@ -1,7 +1,7 @@
 # category: `dynamictp`
 
 **规则组**：`dynamictp-global`、`order-service-specific`（线程池子集）  
-**来源文件**：`mall/docs/dev-ops/prometheus/alert_rules.yml`
+**来源文件**：`dev-ops/prometheus/alert_rules.yml`
 
 ## 全局
 

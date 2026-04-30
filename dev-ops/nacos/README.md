@@ -15,15 +15,15 @@
 
 ## 子目录
 
-- **[dtp-config](./dtp-config/README.md)**：DynamicTp、Hikari 覆盖、拼团 `group-buy-service-runtime-dev.yml` 等 YAML。
-- **[sentinel-rules](./sentinel-rules/README.md)**：各服务 `*-rules.json`，发布到 `SENTINEL_GROUP`。
+- **[dtp-config](dtp-config/README.md)**：DynamicTp、Hikari 覆盖、拼团 `group-buy-service-runtime-dev.yml` 等 YAML。
+- **[sentinel-rules](sentinel-rules/README.md)**：各服务 `*-rules.json`，发布到 `SENTINEL_GROUP`。
 
 ## 一键发布（推荐）
 
 在宿主机（或 CI）中：
 
 ```bash
-cd mall/docs/dev-ops/nacos
+cd dev-ops/nacos
 chmod +x init-nacos-runtime.sh
 NACOS_ADDR=100.86.250.112:8848 ./init-nacos-runtime.sh
 # 若 Nacos 开启鉴权：

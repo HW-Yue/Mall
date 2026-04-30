@@ -11,8 +11,8 @@ services:
   mall:
     image: nexus/mall-app:${IMAGE_TAG:-local}
     build:
-      context: ../../../mall/mall-app
-      dockerfile: Dockerfile
+      context: ../mall/mall-app
+      dockerfile: ../mall/mall-app/Dockerfile
     container_name: nexus-mall
     environment:
       <<: *app-env
@@ -25,8 +25,8 @@ services:
   order-service:
     image: nexus/order-service-app:${IMAGE_TAG:-local}
     build:
-      context: ../../../order-service/order-service-app
-      dockerfile: Dockerfile
+      context: ../order-service/order-service-app
+      dockerfile: ../order-service/order-service-app/Dockerfile
     container_name: nexus-order-service
     environment:
       <<: *app-env
@@ -39,8 +39,8 @@ services:
   group-buy-service:
     image: nexus/group-buy-service-app:${IMAGE_TAG:-local}
     build:
-      context: ../../../group-buy-service/group-buy-service-app
-      dockerfile: Dockerfile
+      context: ../group-buy-service/group-buy-service-app
+      dockerfile: ../group-buy-service/group-buy-service-app/Dockerfile
     container_name: nexus-group-buy-service
     environment:
       <<: *app-env
@@ -53,8 +53,8 @@ services:
   seckill-service:
     image: nexus/seckill-service-app:${IMAGE_TAG:-local}
     build:
-      context: ../../../seckill-service/seckill-service-app
-      dockerfile: Dockerfile
+      context: ../seckill-service/seckill-service-app
+      dockerfile: ../seckill-service/seckill-service-app/Dockerfile
     container_name: nexus-seckill-service
     environment:
       <<: *app-env
@@ -67,8 +67,8 @@ services:
   pay:
     image: nexus/pay-app:${IMAGE_TAG:-local}
     build:
-      context: ../../../pay/pay-app
-      dockerfile: Dockerfile
+      context: ../pay/pay-app
+      dockerfile: ../pay/pay-app/Dockerfile
     container_name: nexus-pay
     environment:
       <<: *app-env
@@ -81,8 +81,8 @@ services:
   gateway:
     image: nexus/springcloud-gateway:${IMAGE_TAG:-local}
     build:
-      context: ../../../springcloud-gateway/app
-      dockerfile: Dockerfile
+      context: ../springcloud-gateway/app
+      dockerfile: ../springcloud-gateway/app/Dockerfile
     container_name: nexus-gateway
     environment:
       <<: *app-env
