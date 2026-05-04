@@ -152,8 +152,10 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 | `pay-success-seckill` | pay | order-service | 普通 |
 | `order-paid-group_buy` | order-service | group-buy-service | **事务消息** |
 | `order-paid-seckill` | order-service | seckill-service | **事务消息** |
+| `order-close-group-buy` | pay / group-buy-service（团级超时自发） | pay / order-service / group-buy-service（回退 `team_order.lock_count`） | 普通 |
+| `pay-refund-seckill` | order-service | pay（调支付宝退款）/ seckill-service（恢复 Redis available+real & MySQL `stock_count`） | **事务消息** |
 
-RabbitMQ 用于：mall 内部退款通知（`RefundSuccessTopicListener`，`group_buy_market_exchange`）
+> 表中只列了核心几条，全量 topic 见各服务 `application-{profile}.yml` 的 `app.rocketmq.topic`。
 
 ## 关键文件路径
 
@@ -199,7 +201,7 @@ RabbitMQ 用于：mall 内部退款通知（`RefundSuccessTopicListener`，`grou
 | mall | 8 | 2.7.12 |
 | pay | 8 | 2.7.12 |
 
-ORM: MyBatis，Cache: Redisson，MQ: RocketMQ（主）+ RabbitMQ（mall 内部退款）
+ORM: MyBatis，Cache: Redisson，MQ: RocketMQ
 
 ### Redis（Redisson）
 统一用 `redisson-spring-boot-starter:3.26.0`，配置键 `spring.data.redis.*` + `spring.redis.redisson.config`（YAML 片段）。不使用 Lettuce / 自研 `redis.sdk.config`。

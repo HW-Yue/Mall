@@ -418,6 +418,23 @@ public class TradeRepository implements ITradeRepository {
         return tOrderGroupDao.update2Refunded(outTradeNo);
     }
 
+    @Transactional(timeout = 3000)
+    @Override
+    public boolean closeUnpaidOrderAndReleaseStock(String outTradeNo) {
+        int closed = tOrderGroupDao.closeUnpaidByOutTradeNo(outTradeNo);
+        if (closed == 0) {
+            return false;
+        }
+        Map<String, Object> teamInfo = tOrderGroupDao.queryTeamInfoByOutTradeNo(outTradeNo);
+        if (teamInfo == null || teamInfo.get("teamId") == null) {
+            log.warn("拼团关单回退占用库存跳过，未查到 teamId outTradeNo:{}", outTradeNo);
+            return true;
+        }
+        String teamId = String.valueOf(teamInfo.get("teamId"));
+        groupBuyOrderDao.updateSubLockCount(teamId);
+        return true;
+    }
+
     private NotifyTaskEntity buildNotifyTaskEntity(NotifyTask task) {
         return NotifyTaskEntity.builder()
                 .teamId(task.getTeamId())

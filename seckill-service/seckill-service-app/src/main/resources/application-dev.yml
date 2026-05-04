@@ -129,11 +129,13 @@ app:
       orderPaidSeckill: order-paid-seckill
       orderCloseSeckill: order-close-seckill
       seckillStockDeduct: seckill-stock-deduct
+      payRefundSeckill: pay-refund-seckill
     consumerGroup:
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE
       orderPaidSeckill: CG_ORDER_PAID_SECKILL
       orderCloseSeckill: CG_ORDER_CLOSE_SECKILL_MARKET
       seckillStockDeduct: CG_SECKILL_STOCK_DEDUCT
+      payRefundSeckill: CG_SECKILL_PAY_REFUND
 
 logging:
   level:

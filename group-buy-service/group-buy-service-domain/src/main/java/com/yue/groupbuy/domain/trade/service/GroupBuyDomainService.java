@@ -182,12 +182,9 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
             return;
         }
 
-        // 2. 处理未支付订单：本地关单 + 发送 order-close-group-buy MQ
+        // 2. 处理未支付订单：发 order-close-group-buy MQ，由本服务 listener 统一原子关单 + 回退 lock_count
         List<TeamOrderEntity> unpaidOrders = tradeRepository.queryUnpaidOrdersByTeamId(teamId);
         if (unpaidOrders != null && !unpaidOrders.isEmpty()) {
-            // 先批量关闭未支付订单
-            int closedCount = tradeRepository.closeUnpaidOrdersByTeamId(teamId);
-            log.info("拼团超时退款处理，批量关闭未支付订单 teamId:{} closedCount:{}", teamId, closedCount);
             for (TeamOrderEntity order : unpaidOrders) {
                 try {
                     groupBuyRefundMqProducer.sendOrderCloseMessage(order.getOutTradeNo(), order.getUserId());
@@ -226,6 +223,16 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
             return;
         }
         log.info("拼团退款完成回执处理成功 outTradeNo:{}", outTradeNo);
+    }
+
+    @Override
+    public void handleOrderClose(String outTradeNo) {
+        boolean done = tradeRepository.closeUnpaidOrderAndReleaseStock(outTradeNo);
+        if (!done) {
+            log.info("拼团关单跳过，订单非未支付态 outTradeNo:{}", outTradeNo);
+            return;
+        }
+        log.info("拼团关单完成，已回退占用库存 outTradeNo:{}", outTradeNo);
     }
 
     private void scheduleTeamTimeoutIfNecessary(String teamId) {

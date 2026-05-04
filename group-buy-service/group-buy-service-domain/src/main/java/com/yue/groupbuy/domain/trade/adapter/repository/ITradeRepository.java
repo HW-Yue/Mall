@@ -84,4 +84,11 @@ public interface ITradeRepository {
      */
     int updateOrder2Refunded(String outTradeNo);
 
+    /**
+     * 关闭单笔未支付订单并回退团占用库存（CAS：t_order.status 0→3，命中后再 lock_count-1）。
+     * @return true 本次确实把订单从未支付翻到了已关团并扣减了 lock_count；
+     *         false 订单已被处理过（非 status=0），无副作用。
+     */
+    boolean closeUnpaidOrderAndReleaseStock(String outTradeNo);
+
 }

@@ -57,6 +57,10 @@ public class OrderCloseSeckillListener implements RocketMQListener<String> {
             }
 
             StockContext stockContext = loadStockContext(orderId);
+            if (stockContext == null) {
+                log.warn("[秒杀关单] 库存上下文不存在（活动可能已结束），跳过可售库存恢复 orderId:{}", orderId);
+                return;
+            }
 
             // 这里只恢复可售库存；真实库存只在支付成功链路扣减，不在关单时回滚。
             seckillStockPort.recoverStock(stockContext.getActivityId(), stockContext.getProductId());
@@ -79,12 +83,16 @@ public class OrderCloseSeckillListener implements RocketMQListener<String> {
 
         String seckillToken = stringRedisTemplate.opsForValue().get(TOKEN_BY_ORDER_KEY_PREFIX + orderId);
         if (StringUtils.isBlank(seckillToken)) {
-            throw new IllegalStateException("[秒杀关单] Redis 未找到 orderMeta 和 seckillToken orderId:" + orderId);
+            // 活动已结束，Redis 数据已过期，无需恢复库存
+            log.warn("[秒杀关单] Redis 未找到 orderMeta 和 seckillToken，视为活动已结束 orderId:{}", orderId);
+            return null;
         }
 
         String tokenValue = stringRedisTemplate.opsForValue().get(TOKEN_KEY_PREFIX + seckillToken);
         if (StringUtils.isBlank(tokenValue)) {
-            throw new IllegalStateException("[秒杀关单] Redis token 已过期且无 orderMeta seckillToken:" + seckillToken + " orderId:" + orderId);
+            // token 已过期，活动数据不在 Redis，无需恢复
+            log.warn("[秒杀关单] Redis token 已过期且无 orderMeta，视为活动已结束 seckillToken:{} orderId:{}", seckillToken, orderId);
+            return null;
         }
 
         return parseStockContext(tokenValue, orderId, "token");

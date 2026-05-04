@@ -79,9 +79,23 @@ public class SeckillStockPort implements ISeckillStockPort {
             "redis.call('DECR', realKey);" +
             "return 1;";
 
+    // ── Lua：退款回退双层库存（仅当 key 存在时才 INCR，避免活动结束后凭空创建幽灵 key）──
+    /**
+     * 返回 (availExists*10 + realExists)：11=两层都恢复，10/01=仅一层，0=活动已结束
+     */
+    private static final String RESTORE_FULL_LUA =
+            "local availableKey = KEYS[1];" +
+            "local realKey      = KEYS[2];" +
+            "local availExists = redis.call('EXISTS', availableKey);" +
+            "local realExists  = redis.call('EXISTS', realKey);" +
+            "if (availExists == 1) then redis.call('INCR', availableKey) end;" +
+            "if (realExists == 1) then redis.call('INCR', realKey) end;" +
+            "return availExists * 10 + realExists;";
+
     private static final DefaultRedisScript<Long> AVAILABLE_DEDUCT_SCRIPT = new DefaultRedisScript<>();
     private static final DefaultRedisScript<Long> REAL_DEDUCT_SCRIPT      = new DefaultRedisScript<>();
     private static final DefaultRedisScript<Long> ROLLBACK_ORDER_SCRIPT   = new DefaultRedisScript<>();
+    private static final DefaultRedisScript<Long> RESTORE_FULL_SCRIPT     = new DefaultRedisScript<>();
 
     static {
         AVAILABLE_DEDUCT_SCRIPT.setScriptText(AVAILABLE_DEDUCT_LUA);
@@ -90,6 +104,8 @@ public class SeckillStockPort implements ISeckillStockPort {
         REAL_DEDUCT_SCRIPT.setResultType(Long.class);
         ROLLBACK_ORDER_SCRIPT.setScriptText(ROLLBACK_ORDER_LUA);
         ROLLBACK_ORDER_SCRIPT.setResultType(Long.class);
+        RESTORE_FULL_SCRIPT.setScriptText(RESTORE_FULL_LUA);
+        RESTORE_FULL_SCRIPT.setResultType(Long.class);
     }
 
     @Resource
@@ -156,6 +172,15 @@ public class SeckillStockPort implements ISeckillStockPort {
     @Override
     public void recoverStock(Long activityId, String goodsId) {
         stringRedisTemplate.opsForValue().increment(buildAvailableKey(activityId, goodsId));
+    }
+
+    @Override
+    public int restoreFullStock(Long activityId, String goodsId) {
+        Long result = stringRedisTemplate.execute(
+                RESTORE_FULL_SCRIPT,
+                Arrays.asList(buildAvailableKey(activityId, goodsId), buildRealKey(activityId, goodsId))
+        );
+        return result != null ? result.intValue() : 0;
     }
 
     @Override

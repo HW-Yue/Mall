@@ -59,4 +59,7 @@ public interface ITOrderGroupDao {
 
     /** 批量关闭团队中未支付的个人订单（status = 0 -> 3） */
     int closeUnpaidOrdersByTeamId(@Param("teamId") String teamId);
+
+    /** 按 outTradeNo 关闭单笔未支付订单（status = 0 -> 3），返回受影响行数 */
+    int closeUnpaidByOutTradeNo(@Param("outTradeNo") String outTradeNo);
 }

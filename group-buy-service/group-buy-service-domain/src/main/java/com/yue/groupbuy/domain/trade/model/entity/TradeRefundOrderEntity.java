@@ -19,5 +19,7 @@ public class TradeRefundOrderEntity {
     private Long activityId;
     /** 订单ID */
     private String orderId;
+    /** 外部交易号 */
+    private String outTradeNo;
 
 }

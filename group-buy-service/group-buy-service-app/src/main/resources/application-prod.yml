@@ -15,3 +15,4 @@ app:
       orderPaidGroupBuy: CG_GROUP_BUY_ORDER_PAID
       groupBuyTimeoutRefund: CG_GROUP_BUY_TIMEOUT_REFUND
       payRefundGroupBuy: CG_GROUP_BUY_PAY_REFUND
+      orderCloseGroupBuy: CG_GROUP_BUY_ORDER_CLOSE

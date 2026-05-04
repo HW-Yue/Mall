@@ -27,7 +27,7 @@ public class OutTradeNoRuleFilter implements ILogicHandler<TradeSettlementRuleCo
 
         MarketPayOrderEntity marketPayOrderEntity = repository.queryMarketPayOrderEntityByOutTradeNo(requestParameter.getUserId(), requestParameter.getOutTradeNo());
 
-        if (null == marketPayOrderEntity || TradeOrderStatusEnumVO.CLOSE.equals(marketPayOrderEntity.getTradeOrderStatusEnumVO())) {
+        if (null == marketPayOrderEntity || TradeOrderStatusEnumVO.CLOSED.equals(marketPayOrderEntity.getTradeOrderStatusEnumVO())) {
             log.error("不存在的外部交易单号或用户已退单 userId:{} outTradeNo:{}", requestParameter.getUserId(), requestParameter.getOutTradeNo());
             throw new AppException(ResponseCode.E0104);
         }

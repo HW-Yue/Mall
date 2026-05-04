@@ -78,7 +78,15 @@ window.RunWorkbench = (() => {
         dom.resultEmpty = document.getElementById('run-result-empty');
 
         document.querySelectorAll('[data-route-mode]').forEach((button) => {
-            button.addEventListener('click', () => setMode(button.dataset.routeMode));
+            button.addEventListener('click', () => {
+                const mode = button.dataset.routeMode;
+                if (state.mode === mode) return;
+                if (mode === 'text') {
+                    fillExample('plain');
+                } else {
+                    fillExample(dom.alertExample.value || 'http5xx');
+                }
+            });
         });
         document.querySelectorAll('[data-run-example]').forEach((button) => {
             button.addEventListener('click', () => fillExample(button.dataset.runExample));
@@ -433,11 +441,11 @@ window.RunWorkbench = (() => {
                     <span>查看数据</span>
                     <span class="json-block-hint">${escapeHtml(summary)}</span>
                 </button>
-                <div class="json-tree">${buildJsonTreeHtml(data)}</div>
+                <div class="json-tree">${buildJsonTreeHtml(data, false)}</div>
             </div>`;
     }
 
-    function buildJsonTreeHtml(value) {
+    function buildJsonTreeHtml(value, initialCollapsed = true) {
         if (value === null) return `<span class="json-null">null</span>`;
         if (value === true) return `<span class="json-boolean">true</span>`;
         if (value === false) return `<span class="json-boolean">false</span>`;
@@ -455,9 +463,11 @@ window.RunWorkbench = (() => {
         const open = isArr ? '[' : '{';
         const close = isArr ? ']' : '}';
         const count = isArr ? `${entries.length} items` : `${entries.length} keys`;
+        const collapsedClass = initialCollapsed ? 'collapsed' : '';
+        const toggleIcon = initialCollapsed ? '▶' : '▼';
 
-        return `<span class="json-node-wrap collapsed">
-            <span class="json-node-toggle" role="button">▶</span>
+        return `<span class="json-node-wrap ${collapsedClass}">
+            <span class="json-node-toggle" role="button">${toggleIcon}</span>
             <span class="json-inline-summary">${open}${escapeHtml(count)}${close}</span>
             <span class="json-expanded">
                 <span>${open}</span>

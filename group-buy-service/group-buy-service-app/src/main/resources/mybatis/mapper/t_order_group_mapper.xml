@@ -141,4 +141,11 @@
         where team_id = #{teamId} and status = 0
     </update>
 
+    <!-- 按 outTradeNo 关闭单笔未支付订单（status = 0 -> 3），CAS 幂等 -->
+    <update id="closeUnpaidByOutTradeNo" parameterType="java.lang.String">
+        update t_order
+        set status = 3, update_time = now()
+        where out_trade_no = #{outTradeNo} and status = 0
+    </update>
+
 </mapper>

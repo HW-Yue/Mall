@@ -7,6 +7,8 @@ import cn.bugstack.domain.order.model.entity.OrderEntity;
 import cn.bugstack.domain.order.model.entity.PayOrderEntity;
 import cn.bugstack.domain.order.model.valobj.MarketTypeVO;
 import cn.bugstack.domain.order.model.valobj.OrderStatusVO;
+import cn.bugstack.domain.order.model.valobj.PayOrderEvent;
+import cn.bugstack.domain.order.model.valobj.PayOrderStateMachine;
 import com.alibaba.fastjson.JSONObject;
 import com.alipay.api.AlipayApiException;
 import com.alipay.api.AlipayClient;
@@ -66,6 +68,9 @@ public class OrderService extends AbstractOrderService {
 
         String form = alipayClient.pageExecute(request).getBody();
 
+        // 状态机软校验：CREATE → PAY_WAIT
+        PayOrderStateMachine.next(OrderStatusVO.CREATE, PayOrderEvent.CREATE_DONE);
+
         PayOrderEntity payOrderEntity = new PayOrderEntity();
         payOrderEntity.setOrderId(orderId);
         payOrderEntity.setPayUrl(form);
@@ -99,6 +104,9 @@ public class OrderService extends AbstractOrderService {
                     orderId, status != null ? status.getCode() : null);
             return;
         }
+
+        // 状态机软校验：PAY_WAIT → PAY_SUCCESS
+        PayOrderStateMachine.next(status, PayOrderEvent.PAY_SUCCESS);
 
         repository.changeOrderPaySuccess(orderId, payTime);
         log.info("支付成功落库完成 orderId:{} payTime:{}", orderId, payTime);
@@ -216,6 +224,8 @@ public class OrderService extends AbstractOrderService {
             return false;
         }
         if (OrderStatusVO.PAY_WAIT.getCode().equals(orderEntity.getOrderStatusVO().getCode())) {
+            // 状态机软校验：PAY_WAIT → CLOSE
+            PayOrderStateMachine.next(orderEntity.getOrderStatusVO(), PayOrderEvent.CLOSE_TIMEOUT);
             boolean result = repository.changeOrderClose(outTradeNo);
             if (result) {
                 log.info("支付订单关单成功 outTradeNo:{}", outTradeNo);
@@ -261,6 +271,9 @@ public class OrderService extends AbstractOrderService {
             log.error("支付宝退款失败 outTradeNo:{} msg:{}", outTradeNo, execute.getMsg());
             return false;
         }
+
+        // 状态机软校验：PAY_SUCCESS → WAIT_REFUND
+        PayOrderStateMachine.next(orderEntity.getOrderStatusVO(), PayOrderEvent.REFUND_REQUEST);
 
         refundReceiptPublisher.publishRefundReceipt(orderEntity.getUserId(), outTradeNo, orderEntity.getMarketType());
         log.info("支付订单退款成功 outTradeNo:{}", outTradeNo);

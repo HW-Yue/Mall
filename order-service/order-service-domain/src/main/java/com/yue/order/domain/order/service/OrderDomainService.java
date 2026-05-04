@@ -10,6 +10,8 @@ import com.yue.order.domain.order.model.entity.CreateOrderCommand;
 import com.yue.order.domain.order.model.entity.NormalOrderEnqueueResult;
 import com.yue.order.domain.order.model.entity.OrderEntity;
 import com.yue.order.domain.order.model.valobj.MarketTypeVO;
+import com.yue.order.domain.order.model.valobj.OrderEvent;
+import com.yue.order.domain.order.model.valobj.OrderStateMachine;
 import com.yue.order.domain.order.model.valobj.OrderStatusVO;
 import com.yue.order.types.enums.ResponseCode;
 import com.yue.order.types.exception.AppException;
@@ -287,6 +289,9 @@ public class OrderDomainService implements IOrderDomainService {
                     "订单未进入待发货状态，无法发货: " + order.getStatus().getCode());
         }
 
+        // 状态机软校验：WAIT_SHIP → SHIPPED
+        OrderStateMachine.next(order.getStatus(), OrderEvent.SHIP_DONE);
+
         int updated = orderRepository.updateShippedByOutTradeNo(outTradeNo);
         if (updated == 1) {
             log.info("handleShipTask 发货完成 outTradeNo:{} orderId:{}", outTradeNo, order.getOrderId());
@@ -321,6 +326,9 @@ public class OrderDomainService implements IOrderDomainService {
             throw new AppException(ResponseCode.ORDER_STATUS_ERROR.getCode(),
                     "订单未发货，无法签收: " + order.getStatus().getCode());
         }
+
+        // 状态机软校验：SHIPPED → DELIVERED
+        OrderStateMachine.next(order.getStatus(), OrderEvent.DELIVER);
 
         int updated = orderRepository.updateDeliveredByOutTradeNo(outTradeNo);
         if (updated == 1) {
@@ -389,6 +397,9 @@ public class OrderDomainService implements IOrderDomainService {
             return;
         }
 
+        // 状态机软校验：LOCK → CLOSE
+        OrderStateMachine.next(order.getStatus(), OrderEvent.CLOSE);
+
         // 释放库存（普通商品通过 mall 服务解锁）
         orderRepository.unlockStock(order);
 
@@ -407,6 +418,9 @@ public class OrderDomainService implements IOrderDomainService {
             log.info("handlePayRefund 订单已是退款完成状态，跳过 outTradeNo:{}", outTradeNo);
             return;
         }
+        // 状态机软校验：WAIT_REFUND → REFUNDED
+        OrderStateMachine.next(order.getStatus(), OrderEvent.REFUND_COMPLETE);
+
         orderRepository.updateRefundedByOutTradeNo(outTradeNo);
         log.info("handlePayRefund 订单退款确认成功 outTradeNo:{} marketType:{}", outTradeNo, order.getMarketType().getCode());
     }
@@ -446,10 +460,13 @@ public class OrderDomainService implements IOrderDomainService {
 
     private void doRefund(OrderEntity order) {
         if (order.getStatus() == OrderStatusVO.LOCK) {
-            orderRepository.unlockStock(order);
-            orderRepository.updateCloseByOutTradeNo(order.getOutTradeNo());
-            log.info("未支付订单退款请求按关单处理 userId:{} orderId:{} outTradeNo:{}",
-                    order.getUserId(), order.getOrderId(), order.getOutTradeNo());
+            // 状态机软校验：LOCK → CLOSE
+            OrderStateMachine.next(order.getStatus(), OrderEvent.CLOSE);
+            // 发 MQ：由 order-close listener 异步关单 + 解库存；pay / seckill 等下游也通过此 topic 清理台账
+            eventPublisher.publishOrderClose(order.getUserId(), order.getOrderId(),
+                    order.getOutTradeNo(), order.getMarketType().getCode());
+            log.info("doRefund LOCK 已发 order-close-{} userId:{} orderId:{} outTradeNo:{}",
+                    order.getMarketType().getCode(), order.getUserId(), order.getOrderId(), order.getOutTradeNo());
             return;
         }
 
@@ -461,6 +478,8 @@ public class OrderDomainService implements IOrderDomainService {
             return;
         }
 
+        // 状态机软校验：PAY_SUCCESS → WAIT_REFUND
+        OrderStateMachine.next(order.getStatus(), OrderEvent.REFUND_REQUEST);
         refundPublisher.publishPayRefund(order.getUserId(), order.getOutTradeNo(), order.getMarketType().getCode());
         log.info("退款请求已入MQ userId:{} orderId:{} outTradeNo:{} marketType:{}",
                 order.getUserId(), order.getOrderId(), order.getOutTradeNo(), order.getMarketType().getCode());

@@ -31,4 +31,10 @@ public interface IGroupBuyDomainService {
      * 处理支付侧退款完成回执
      */
     void handlePayRefund(String outTradeNo);
+
+    /**
+     * 处理未支付订单关单：CAS 关本地订单并回退团占用库存。
+     * 由 order-close-group-buy 消息触发（pay 侧到期关单 / 团级超时自发自消）。
+     */
+    void handleOrderClose(String outTradeNo);
 }

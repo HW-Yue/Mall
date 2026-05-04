@@ -1,5 +1,6 @@
 package com.yue.groupbuy.domain.trade.service.refund.business;
 
+import com.yue.groupbuy.domain.trade.adapter.port.IGroupBuyRefundMqProducer;
 import com.yue.groupbuy.domain.trade.adapter.repository.ITradeRepository;
 import com.yue.groupbuy.domain.trade.model.entity.NotifyTaskEntity;
 import com.yue.groupbuy.domain.trade.model.valobj.TeamRefundSuccess;
@@ -18,6 +19,9 @@ public abstract class AbstractRefundOrderStrategy implements IRefundOrderStrateg
 
     @Resource
     protected ITradeRepository repository;
+
+    @Resource
+    protected IGroupBuyRefundMqProducer groupBuyRefundMqProducer;
 
     @Resource
     protected ITradeTaskService tradeTaskService;

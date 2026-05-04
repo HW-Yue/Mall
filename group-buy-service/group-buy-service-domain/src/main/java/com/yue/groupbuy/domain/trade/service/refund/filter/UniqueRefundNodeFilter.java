@@ -20,7 +20,7 @@ public class UniqueRefundNodeFilter implements ILogicHandler<TradeRefundCommandE
         MarketPayOrderEntity marketPayOrderEntity = dynamicContext.getMarketPayOrderEntity();
         TradeOrderStatusEnumVO tradeOrderStatusEnumVO = marketPayOrderEntity.getTradeOrderStatusEnumVO();
 
-        if (TradeOrderStatusEnumVO.CLOSE.equals(tradeOrderStatusEnumVO)) {
+        if (TradeOrderStatusEnumVO.CLOSED.equals(tradeOrderStatusEnumVO)) {
             log.info("逆向流程，退单操作(幂等-重复退单) userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
             return stop(
                     tradeRefundCommandEntity,

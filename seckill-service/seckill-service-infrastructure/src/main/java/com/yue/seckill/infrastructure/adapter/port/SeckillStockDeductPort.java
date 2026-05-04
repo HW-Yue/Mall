@@ -27,11 +27,21 @@ public class SeckillStockDeductPort implements ISeckillStockDeductPort {
 
     @Override
     public void sendDeductStockTask(Long activityId, String productId) {
+        sendStockTask(activityId, productId, "deduct");
+    }
+
+    @Override
+    public void sendRecoverStockTask(Long activityId, String productId) {
+        sendStockTask(activityId, productId, "recover");
+    }
+
+    private void sendStockTask(Long activityId, String productId, String op) {
         Map<String, Object> msg = new HashMap<>();
         msg.put("activityId", activityId);
         msg.put("productId", productId);
+        msg.put("op", op);
         rocketMQTemplate.convertAndSend(topic, JSON.toJSONString(msg));
-        log.info("[秒杀库存] 发送 MySQL 库存扣减任务 topic:{} activityId:{} productId:{}", topic, activityId, productId);
+        log.info("[秒杀库存] 发送 MySQL 库存任务 topic:{} op:{} activityId:{} productId:{}", topic, op, activityId, productId);
     }
 
 }

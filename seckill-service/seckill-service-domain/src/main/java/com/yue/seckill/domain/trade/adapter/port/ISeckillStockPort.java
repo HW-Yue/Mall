@@ -35,6 +35,12 @@ public interface ISeckillStockPort {
 
     void recoverStock(Long activityId, String goodsId);
 
+    /**
+     * 退款回退 Redis 双层库存（available 与 real 同时 +1，仅在 key 仍存在时才递增）。
+     * @return 11=两层都恢复, 10=仅 available, 1=仅 real, 0=活动已结束（两个 key 都不存在）
+     */
+    int restoreFullStock(Long activityId, String goodsId);
+
     void rollbackSeckillOrder(Long activityId, String goodsId, String userId, String seckillToken);
 
     void saveSeckillToken(String seckillToken, String userId, String goodsId, Long activityId);

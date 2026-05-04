@@ -7,4 +7,9 @@ public interface ISeckillStockDeductPort {
 
     void sendDeductStockTask(Long activityId, String productId);
 
+    /**
+     * 异步通知 MySQL 回退 sc_sku_activity.stock_count（退款链路）。
+     */
+    void sendRecoverStockTask(Long activityId, String productId);
+
 }

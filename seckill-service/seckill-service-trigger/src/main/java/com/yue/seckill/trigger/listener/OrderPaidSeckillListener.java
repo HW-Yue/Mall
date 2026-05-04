@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 秒杀支付成功消费者（order-paid-seckill）
@@ -35,6 +36,8 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
     private static final String TOKEN_BY_ORDER_KEY_PREFIX = "seckill:token:by:order:";
     private static final String TOKEN_KEY_PREFIX = "seckill:token:";
     private static final String ORDER_META_KEY_PREFIX = "seckill:order:meta:";
+    private static final String ORDER_BY_TRADE_KEY_PREFIX = "seckill:order:by-trade:";
+    private static final long REFUND_INDEX_TTL_HOURS = 24L;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -70,6 +73,11 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
             if (realResult == 1) {
                 // 4. 扣减成功 → 发 MQ 异步更新 MySQL stock_count
                 seckillStockDeductPort.sendDeductStockTask(stockContext.getActivityId(), stockContext.getProductId());
+                // 4.1 写反向索引：退款链路靠 outTradeNo 反查 activity/product
+                stringRedisTemplate.opsForValue().set(
+                        ORDER_BY_TRADE_KEY_PREFIX + outTradeNo,
+                        stockContext.getActivityId() + ":" + stockContext.getProductId(),
+                        REFUND_INDEX_TTL_HOURS, TimeUnit.HOURS);
                 log.info("[真实库存] 扣减成功，已发 MySQL 更新 MQ outTradeNo:{} activityId:{} productId:{}",
                         outTradeNo, stockContext.getActivityId(), stockContext.getProductId());
             } else if (realResult == 0) {

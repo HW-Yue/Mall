@@ -36,17 +36,29 @@ public class SeckillStockDeductListener implements RocketMQListener<String> {
             JSONObject dto = JSON.parseObject(message);
             Long activityId = dto.getLong("activityId");
             String productId = dto.getString("productId");
+            String op = dto.getString("op");
 
             if (activityId == null) {
                 log.error("[MySQL库存扣减] 消息缺少 activityId: {}", message);
                 return;
             }
 
-            boolean success = seckillActivityRepository.deductStock(activityId, productId);
-            if (success) {
-                log.info("[MySQL库存扣减] 成功 activityId:{} productId:{}", activityId, productId);
+            if (op == null || "deduct".equals(op)) {
+                boolean success = seckillActivityRepository.deductStock(activityId, productId);
+                if (success) {
+                    log.info("[MySQL库存扣减] 成功 activityId:{} productId:{}", activityId, productId);
+                } else {
+                    log.warn("[MySQL库存扣减] 无可扣减库存（已售罄或并发）activityId:{} productId:{}", activityId, productId);
+                }
+            } else if ("recover".equals(op)) {
+                boolean success = seckillActivityRepository.recoverStock(activityId, productId);
+                if (success) {
+                    log.info("[MySQL库存恢复] 成功 activityId:{} productId:{}", activityId, productId);
+                } else {
+                    log.warn("[MySQL库存恢复] 未命中（活动已删除？）activityId:{} productId:{}", activityId, productId);
+                }
             } else {
-                log.warn("[MySQL库存扣减] 无可扣减库存（已售罄或并发）activityId:{} productId:{}", activityId, productId);
+                log.warn("[MySQL库存] 未知 op:{} activityId:{} productId:{}", op, activityId, productId);
             }
         } catch (Exception e) {
             log.error("seckill-stock-deduct 处理失败: {}", message, e);
