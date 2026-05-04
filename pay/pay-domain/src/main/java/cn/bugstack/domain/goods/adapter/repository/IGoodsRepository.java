@@ -1,12 +1,12 @@
 package cn.bugstack.domain.goods.adapter.repository;
 
 /**
- * @author Fuzhengwei bugstack.cn @小傅哥
- * @description 结算仓储
- * @create 2025-02-15 09:12
+ * 商品/履约相关仓储出站接口
  */
 public interface IGoodsRepository {
 
+    /**
+     * 将订单标记为履约完成
+     */
     void changeOrderDealDone(String orderId);
-
 }

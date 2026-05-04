@@ -1,6 +1,6 @@
 package com.yue.order.infrastructure.event;
 
-import com.yue.order.domain.order.service.IOrderShipTaskPublisher;
+import com.yue.order.domain.order.adapter.port.IOrderShipTaskPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;

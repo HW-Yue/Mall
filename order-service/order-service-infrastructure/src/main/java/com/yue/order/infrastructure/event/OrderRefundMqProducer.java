@@ -1,6 +1,6 @@
 package com.yue.order.infrastructure.event;
 
-import com.yue.order.domain.order.service.IOrderRefundPublisher;
+import com.yue.order.domain.order.adapter.port.IOrderRefundPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -16,13 +16,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * 订单退款请求事务消息生产者。
+ * 订单退款事件 MQ 生产者。
  * 通过事务消息先落 WAIT_REFUND，再提交 pay-refund-* 请求给 pay-service。
  */
 @Slf4j
 @Service
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
-public class PayRefundMqProducer implements IOrderRefundPublisher {
+public class OrderRefundMqProducer implements IOrderRefundPublisher {
 
     @Resource
     private RocketMQTemplate rocketMQTemplate;
@@ -60,7 +60,7 @@ public class PayRefundMqProducer implements IOrderRefundPublisher {
                     topic, outTradeNo, result != null ? result.getLocalTransactionState() : null);
         } catch (Exception e) {
             log.error("publishPayRefund 失败 topic:{} outTradeNo:{}", topic, outTradeNo, e);
-            throw new RuntimeException(e);
+            throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
         }
     }
 

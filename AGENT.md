@@ -6,6 +6,15 @@
 
 Multi-module Java enterprise microservices mono-repo，DDD 架构。
 
+## 文档与图表输出目录
+
+所有架构图、流程图、技术图、MQ 路由图等可视化产物，统一归档到 `dev-ops/docs/` 下，不要散落到其他目录。
+
+约定：
+- 生成的 SVG / PNG / Mermaid / 说明文档，优先放在 `dev-ops/docs/`
+- 新增图表时，按主题继续细分子目录，例如 `dev-ops/docs/mq/`、`dev-ops/docs/architecture/`
+- 如果是和某个业务域强相关的说明图，也可以放在对应子目录下，但根目录仍以 `dev-ops/docs/` 为入口
+
 **Services:**
 - `springcloud-gateway` — API Gateway（:8090），StripPrefix=1 去掉路径前缀 `/gw`
 - `mall` — 商城（Spring Boot 3.2, Java 21），普通商品展示与下单入口、后台配置

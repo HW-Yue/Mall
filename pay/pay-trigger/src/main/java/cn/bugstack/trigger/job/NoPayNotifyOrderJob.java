@@ -3,7 +3,7 @@ package cn.bugstack.trigger.job;
 import cn.bugstack.domain.order.model.entity.OrderEntity;
 import cn.bugstack.domain.order.model.valobj.OrderStatusVO;
 import cn.bugstack.domain.order.service.IOrderService;
-import cn.bugstack.infrastructure.adapter.port.PaySuccessRocketMqPort;
+import cn.bugstack.domain.order.adapter.port.IPaySuccessPublisher;
 import com.alipay.api.AlipayClient;
 import com.alipay.api.domain.AlipayTradeQueryModel;
 import com.alipay.api.request.AlipayTradeQueryRequest;
@@ -29,7 +29,7 @@ public class NoPayNotifyOrderJob {
     @Resource
     private AlipayClient alipayClient;
     @Resource
-    private PaySuccessRocketMqPort paySuccessRocketMqPort;
+    private IPaySuccessPublisher paySuccessPublisher;
 
     @Scheduled(cron = "0 0/30 * * * ?")
     public void exec() {
@@ -59,7 +59,7 @@ public class NoPayNotifyOrderJob {
                 // 判断状态码
                 if ("10000".equals(code)) {
                     orderService.changeOrderPaySuccess(orderId, alipayTradeQueryResponse.getSendPayDate());
-                    paySuccessRocketMqPort.sendSettlementMessage(
+                    paySuccessPublisher.sendSettlementMessage(
                             orderEntity.getUserId(),
                             orderId,
                             alipayTradeQueryResponse.getSendPayDate(),

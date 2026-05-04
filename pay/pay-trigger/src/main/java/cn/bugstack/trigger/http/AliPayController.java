@@ -8,7 +8,8 @@ import cn.bugstack.domain.order.model.entity.OrderEntity;
 import cn.bugstack.domain.order.model.entity.PayOrderEntity;
 import cn.bugstack.domain.order.model.valobj.MarketTypeVO;
 import cn.bugstack.domain.order.service.IOrderService;
-import cn.bugstack.infrastructure.adapter.port.PaySuccessRocketMqPort;
+import cn.bugstack.domain.order.adapter.port.IOrderRefundPublisher;
+import cn.bugstack.domain.order.adapter.port.IPaySuccessPublisher;
 import cn.bugstack.types.common.Constants;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -45,7 +46,10 @@ public class AliPayController implements IPayService {
     private IOrderService orderService;
 
     @Resource
-    private PaySuccessRocketMqPort paySuccessRocketMqPort;
+    private IPaySuccessPublisher paySuccessPublisher;
+
+    @Resource
+    private IOrderRefundPublisher orderRefundPublisher;
     
     @Resource
     private AlipayClient alipayClient;
@@ -174,7 +178,7 @@ public class AliPayController implements IPayService {
             boolean refundStatus = orderService.refundPayOrder(userId, tradeNo);
             log.info("支付回调，订单已关单，执行退款 orderId:{} refundStatus:{}", tradeNo, refundStatus);
             if (refundStatus) {
-                paySuccessRocketMqPort.sendPayRefundMessage(userId, tradeNo, marketType);
+                orderRefundPublisher.sendPayRefundMessage(userId, tradeNo, marketType);
             }
             return "success";
         }
@@ -186,7 +190,7 @@ public class AliPayController implements IPayService {
         }
 
         orderService.changeOrderPaySuccess(tradeNo, payTime);
-        paySuccessRocketMqPort.sendSettlementMessage(userId, tradeNo, payTime, marketType);
+        paySuccessPublisher.sendSettlementMessage(userId, tradeNo, payTime, marketType);
 
         return "success";
     }

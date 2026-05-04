@@ -4,6 +4,10 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.yue.order.domain.order.adapter.port.INormalOrderPendingPublisher;
+import com.yue.order.domain.order.adapter.port.IOrderClosePublisher;
+import com.yue.order.domain.order.adapter.port.IOrderPaidPublisher;
+import com.yue.order.domain.order.adapter.port.IOrderRefundPublisher;
+import com.yue.order.domain.order.adapter.port.IOrderShipTaskPublisher;
 import com.yue.order.domain.order.adapter.port.IPayPort;
 import com.yue.order.domain.order.adapter.repository.IOrderRepository;
 import com.yue.order.domain.order.model.entity.CreateOrderCommand;
@@ -40,7 +44,10 @@ public class OrderDomainService implements IOrderDomainService {
 
     /** 下游事件发布（由 infrastructure 层实现，通过 Spring 注入） */
     @Resource
-    private IOrderEventPublisher eventPublisher;
+    private IOrderPaidPublisher orderPaidPublisher;
+
+    @Resource
+    private IOrderClosePublisher orderClosePublisher;
 
     /** 退款事件发布（由 infrastructure 层实现） */
     @Resource
@@ -226,10 +233,19 @@ public class OrderDomainService implements IOrderDomainService {
 
         // 更新订单状态为支付成功
         orderRepository.updatePaySuccess(outTradeNo, outTradeTime != null ? outTradeTime : new Date());
-        log.info("handlePaySuccess 更新订单成功 outTradeNo:{} marketType:{}", outTradeNo, marketType);
+        String resolvedMarketType = order.getMarketType() != null
+                ? order.getMarketType().getCode()
+                : StringUtils.defaultIfBlank(marketType, MarketTypeVO.NORMAL.getCode());
+        log.info("handlePaySuccess 更新订单成功 outTradeNo:{} marketType:{}", outTradeNo, resolvedMarketType);
 
         // 发布下游事件（order-paid-normal / order-paid-group_buy / order-paid-seckill）
-        eventPublisher.publishOrderPaid(order.getUserId(), order.getOrderId(), outTradeNo, marketType, outTradeTime);
+        orderPaidPublisher.publishOrderPaid(order.getUserId(), order.getOrderId(), outTradeNo, resolvedMarketType, outTradeTime);
+
+        // 普通大促 / 秒杀：支付成功后直接推进到履约发货任务
+        if (!MarketTypeVO.GROUP_BUY.getCode().equals(resolvedMarketType)) {
+            orderShipTaskPublisher.publishOrderShipTask(order.getUserId(), order.getOrderId(), outTradeNo);
+            log.info("handlePaySuccess 已发布发货任务 outTradeNo:{} marketType:{}", outTradeNo, resolvedMarketType);
+        }
     }
 
     @Override
@@ -452,7 +468,7 @@ public class OrderDomainService implements IOrderDomainService {
             }
 
             handleOrderClose(outTradeNo);
-            eventPublisher.publishOrderClose(order.getUserId(), order.getOrderId(), outTradeNo, order.getMarketType().getCode());
+            orderClosePublisher.publishOrderClose(order.getUserId(), order.getOrderId(), outTradeNo, order.getMarketType().getCode());
             log.info("businessTimeoutClose 已触发关单 outTradeNo:{} marketType:{}",
                     outTradeNo, order.getMarketType().getCode());
         }
@@ -463,7 +479,7 @@ public class OrderDomainService implements IOrderDomainService {
             // 状态机软校验：LOCK → CLOSE
             OrderStateMachine.next(order.getStatus(), OrderEvent.CLOSE);
             // 发 MQ：由 order-close listener 异步关单 + 解库存；pay / seckill 等下游也通过此 topic 清理台账
-            eventPublisher.publishOrderClose(order.getUserId(), order.getOrderId(),
+            orderClosePublisher.publishOrderClose(order.getUserId(), order.getOrderId(),
                     order.getOutTradeNo(), order.getMarketType().getCode());
             log.info("doRefund LOCK 已发 order-close-{} userId:{} orderId:{} outTradeNo:{}",
                     order.getMarketType().getCode(), order.getUserId(), order.getOrderId(), order.getOutTradeNo());

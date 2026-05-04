@@ -19,7 +19,7 @@ app:
   # 调用 order-service create_order_normal_from_mall 时与订单侧 app.order.internal-create-token 对齐（空表示不校验）
   order:
     internal-create-token: ""
-  # RocketMQ 业务配置（mall 不再消费 pay-success-* 和 group-buy-success-notify，已迁移到各微服务）
+  # RocketMQ 业务配置：mall 这里只保留 topic 常量对齐，不直接承担 MQ 生产职责
 
 
 server:

@@ -1,0 +1,230 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/>
+    </marker>
+    <filter id="shadow-soft">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#00000012"/>
+    </filter>
+    <style>
+      text {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue',
+          Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif;
+      }
+      .title { fill: #1a1a1a; font-size: 24px; font-weight: 700; }
+      .subtitle { fill: #6a6a6a; font-size: 13px; }
+      .section { fill: #6a6a6a; font-size: 15px; font-weight: 700; letter-spacing: 0.04em; }
+      .header { fill: #1a1a1a; font-size: 14px; font-weight: 700; }
+      .box-label { fill: #1a1a1a; font-size: 13px; font-weight: 600; }
+      .topic-label { fill: #1a1a1a; font-size: 12px; font-weight: 600; }
+      .note { fill: #6a6a6a; font-size: 12px; }
+      .arrow-label { fill: #5a5a5a; font-size: 11px; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="1200" fill="#f8f6f3"/>
+
+  <text x="600" y="38" text-anchor="middle" class="title">RocketMQ Topic 路由图</text>
+  <text x="600" y="62" text-anchor="middle" class="subtitle">按 topic 一行一条，标出“谁生产了哪个 topic，谁消费了哪个 topic”</text>
+  <text x="600" y="84" text-anchor="middle" class="subtitle">服务名使用模块简称：pay / order / group-buy / seckill</text>
+
+  <text x="170" y="112" text-anchor="middle" class="header">生产者</text>
+  <text x="560" y="112" text-anchor="middle" class="header">Topic</text>
+  <text x="960" y="112" text-anchor="middle" class="header">消费者</text>
+
+  <line x1="50" y1="122" x2="1150" y2="122" stroke="#d7d2ca" stroke-width="1.5"/>
+
+  <text x="56" y="150" class="section">支付成功链路</text>
+  <text x="56" y="360" class="section">订单结算 / 关单 / 退款链路</text>
+  <text x="56" y="850" class="section">辅助回写链路</text>
+
+  <!-- Row template coordinates:
+       producer box x=50 w=250
+       topic box x=365 w=390
+       consumer box x=830 w=320
+       row height = 46, step = 58
+  -->
+
+  <!-- 1 -->
+  <rect x="50" y="166" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="166" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="166" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="195" text-anchor="middle" class="box-label">pay</text>
+  <text x="560" y="192" text-anchor="middle" class="topic-label">pay-success-normal</text>
+  <text x="990" y="195" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="189" x2="365" y2="189" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="189" x2="830" y2="189" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 2 -->
+  <rect x="50" y="224" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="224" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="224" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="253" text-anchor="middle" class="box-label">pay</text>
+  <text x="560" y="250" text-anchor="middle" class="topic-label">pay-success-group-buy</text>
+  <text x="990" y="253" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="247" x2="365" y2="247" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="247" x2="830" y2="247" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 3 -->
+  <rect x="50" y="282" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="282" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="282" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="311" text-anchor="middle" class="box-label">pay</text>
+  <text x="560" y="308" text-anchor="middle" class="topic-label">pay-success-seckill</text>
+  <text x="990" y="311" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="305" x2="365" y2="305" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="305" x2="830" y2="305" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 4 -->
+  <rect x="50" y="390" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="390" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="390" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="419" text-anchor="middle" class="box-label">order</text>
+  <text x="560" y="416" text-anchor="middle" class="topic-label">order-paid-group_buy</text>
+  <text x="990" y="419" text-anchor="middle" class="box-label">group-buy</text>
+  <line x1="300" y1="413" x2="365" y2="413" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="413" x2="830" y2="413" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 5 -->
+  <rect x="50" y="448" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="448" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="448" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="477" text-anchor="middle" class="box-label">order</text>
+  <text x="560" y="474" text-anchor="middle" class="topic-label">order-paid-seckill</text>
+  <text x="990" y="477" text-anchor="middle" class="box-label">seckill</text>
+  <line x1="300" y1="471" x2="365" y2="471" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="471" x2="830" y2="471" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 6 -->
+  <rect x="50" y="506" width="250" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="506" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="506" width="320" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="535" text-anchor="middle" class="box-label">group-buy</text>
+  <text x="560" y="532" text-anchor="middle" class="topic-label">group-buy-success-notify</text>
+  <text x="990" y="535" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="529" x2="365" y2="529" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="529" x2="830" y2="529" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 7 -->
+  <rect x="50" y="564" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="564" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="564" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="593" text-anchor="middle" class="box-label">order</text>
+  <text x="560" y="590" text-anchor="middle" class="topic-label">order-close-normal</text>
+  <text x="990" y="593" text-anchor="middle" class="box-label">pay / order</text>
+  <line x1="300" y1="587" x2="365" y2="587" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="587" x2="830" y2="587" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 8 -->
+  <rect x="50" y="622" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="622" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="622" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="651" text-anchor="middle" class="box-label">order + group-buy</text>
+  <text x="560" y="648" text-anchor="middle" class="topic-label">order-close-group-buy</text>
+  <text x="990" y="651" text-anchor="middle" class="box-label">pay / order / group-buy</text>
+  <line x1="300" y1="645" x2="365" y2="645" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="645" x2="830" y2="645" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 9 -->
+  <rect x="50" y="680" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="680" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="680" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="709" text-anchor="middle" class="box-label">order</text>
+  <text x="560" y="706" text-anchor="middle" class="topic-label">order-close-seckill</text>
+  <text x="990" y="709" text-anchor="middle" class="box-label">pay / order / seckill</text>
+  <line x1="300" y1="703" x2="365" y2="703" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="703" x2="830" y2="703" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 10 -->
+  <rect x="50" y="738" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="738" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="738" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="767" text-anchor="middle" class="box-label">order</text>
+  <text x="560" y="764" text-anchor="middle" class="topic-label">pay-refund-normal</text>
+  <text x="990" y="767" text-anchor="middle" class="box-label">pay</text>
+  <line x1="300" y1="761" x2="365" y2="761" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="761" x2="830" y2="761" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 11 -->
+  <rect x="50" y="796" width="250" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="796" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="796" width="320" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="825" text-anchor="middle" class="box-label">pay</text>
+  <text x="560" y="822" text-anchor="middle" class="topic-label">pay-refund-normal-result</text>
+  <text x="990" y="825" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="819" x2="365" y2="819" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="819" x2="830" y2="819" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 12 -->
+  <rect x="50" y="854" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="854" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="854" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="883" text-anchor="middle" class="box-label">order</text>
+  <text x="560" y="880" text-anchor="middle" class="topic-label">pay-refund-group-buy</text>
+  <text x="990" y="883" text-anchor="middle" class="box-label">pay / group-buy</text>
+  <line x1="300" y1="877" x2="365" y2="877" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="877" x2="830" y2="877" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 13 -->
+  <rect x="50" y="912" width="250" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="912" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="912" width="320" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="941" text-anchor="middle" class="box-label">pay</text>
+  <text x="560" y="938" text-anchor="middle" class="topic-label">pay-refund-group-buy-result</text>
+  <text x="990" y="941" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="935" x2="365" y2="935" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="935" x2="830" y2="935" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 14 -->
+  <rect x="50" y="970" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="970" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="970" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="999" text-anchor="middle" class="box-label">order</text>
+  <text x="560" y="996" text-anchor="middle" class="topic-label">pay-refund-seckill</text>
+  <text x="990" y="999" text-anchor="middle" class="box-label">pay / seckill</text>
+  <line x1="300" y1="993" x2="365" y2="993" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="993" x2="830" y2="993" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 15 -->
+  <rect x="50" y="1028" width="250" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="1028" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="1028" width="320" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="1057" text-anchor="middle" class="box-label">pay</text>
+  <text x="560" y="1054" text-anchor="middle" class="topic-label">pay-refund-seckill-result</text>
+  <text x="990" y="1057" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="1051" x2="365" y2="1051" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="1051" x2="830" y2="1051" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 16 -->
+  <rect x="50" y="1086" width="250" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="1086" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="1086" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="1115" text-anchor="middle" class="box-label">seckill</text>
+  <text x="560" y="1112" text-anchor="middle" class="topic-label">seckill-stock-deduct</text>
+  <text x="990" y="1115" text-anchor="middle" class="box-label">seckill</text>
+  <line x1="300" y1="1109" x2="365" y2="1109" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="1109" x2="830" y2="1109" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 17 -->
+  <rect x="50" y="1144" width="250" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="1144" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="1144" width="320" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="1173" text-anchor="middle" class="box-label">group-buy</text>
+  <text x="560" y="1170" text-anchor="middle" class="topic-label">group-buy-timeout-refund</text>
+  <text x="990" y="1173" text-anchor="middle" class="box-label">group-buy</text>
+  <line x1="300" y1="1167" x2="365" y2="1167" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="1167" x2="830" y2="1167" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Legend -->
+  <rect x="835" y="40" width="315" height="82" rx="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="852" y="63" class="header">图例</text>
+  <rect x="854" y="72" width="18" height="14" rx="4" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="882" y="84" class="note">生产者</text>
+  <rect x="944" y="72" width="18" height="14" rx="4" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="972" y="84" class="note">Topic</text>
+  <rect x="1030" y="72" width="18" height="14" rx="4" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="1"/>
+  <text x="1058" y="84" class="note">消费者</text>
+  <line x1="854" y1="103" x2="890" y2="103" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="900" y="107" class="note">publish / consume</text>
+
+</svg>

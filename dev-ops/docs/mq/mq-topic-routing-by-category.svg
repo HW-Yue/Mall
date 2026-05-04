@@ -1,0 +1,242 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1520" width="1200" height="1520">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/>
+    </marker>
+    <style>
+      text {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue',
+          Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif;
+      }
+      .title { fill: #1a1a1a; font-size: 25px; font-weight: 700; }
+      .subtitle { fill: #6a6a6a; font-size: 13px; }
+      .header { fill: #1a1a1a; font-size: 14px; font-weight: 700; }
+      .section-title { fill: #1a1a1a; font-size: 16px; font-weight: 700; }
+      .section-note { fill: #6a6a6a; font-size: 12px; }
+      .box-label { fill: #1a1a1a; font-size: 13px; font-weight: 600; }
+      .topic-label { fill: #1a1a1a; font-size: 12px; font-weight: 700; }
+      .small { fill: #5a5a5a; font-size: 11px; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="1520" fill="#f8f6f3"/>
+
+  <text x="600" y="38" text-anchor="middle" class="title">RocketMQ Topic 路由图</text>
+  <text x="600" y="60" text-anchor="middle" class="subtitle">按 topic 种类分组，展示每类 topic 的生产者和消费者</text>
+  <text x="600" y="82" text-anchor="middle" class="subtitle">左边是生产者，中间是 topic，右边是消费者</text>
+
+  <text x="145" y="114" text-anchor="middle" class="header">生产者</text>
+  <text x="600" y="114" text-anchor="middle" class="header">Topic</text>
+  <text x="1035" y="114" text-anchor="middle" class="header">消费者</text>
+
+  <line x1="40" y1="124" x2="1160" y2="124" stroke="#d7d2ca" stroke-width="1.5"/>
+
+  <!-- Section 1 -->
+  <rect x="32" y="145" width="1136" height="186" rx="14" fill="#eef5fb" stroke="#d5dde7" stroke-width="1.5"/>
+  <text x="52" y="173" class="section-title">支付成功类</text>
+  <text x="170" y="173" class="section-note">pay-success-*</text>
+  <text x="900" y="173" class="section-note">pay -> order</text>
+
+  <rect x="60" y="195" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="195" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="195" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="221" text-anchor="middle" class="box-label">pay</text>
+  <text x="570" y="221" text-anchor="middle" class="topic-label">pay-success-normal</text>
+  <text x="1000" y="221" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="215" x2="360" y2="215" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="215" x2="860" y2="215" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="243" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="243" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="243" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="269" text-anchor="middle" class="box-label">pay</text>
+  <text x="570" y="269" text-anchor="middle" class="topic-label">pay-success-group-buy</text>
+  <text x="1000" y="269" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="263" x2="360" y2="263" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="263" x2="860" y2="263" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="291" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="291" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="291" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="317" text-anchor="middle" class="box-label">pay</text>
+  <text x="570" y="317" text-anchor="middle" class="topic-label">pay-success-seckill</text>
+  <text x="1000" y="317" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="311" x2="360" y2="311" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="311" x2="860" y2="311" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Section 2 -->
+  <rect x="32" y="355" width="1136" height="186" rx="14" fill="#eef9f4" stroke="#d6e8df" stroke-width="1.5"/>
+  <text x="52" y="383" class="section-title">订单已支付确认类</text>
+  <text x="210" y="383" class="section-note">order-paid-* / group-buy-success-notify</text>
+  <text x="890" y="383" class="section-note">order -> 下游业务</text>
+
+  <rect x="60" y="405" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="405" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="405" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="431" text-anchor="middle" class="box-label">order-service</text>
+  <text x="570" y="431" text-anchor="middle" class="topic-label">order-paid-group_buy</text>
+  <text x="1000" y="431" text-anchor="middle" class="box-label">group-buy-service</text>
+  <line x1="280" y1="425" x2="360" y2="425" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="425" x2="860" y2="425" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="453" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="453" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="453" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="479" text-anchor="middle" class="box-label">order-service</text>
+  <text x="570" y="479" text-anchor="middle" class="topic-label">order-paid-seckill</text>
+  <text x="1000" y="479" text-anchor="middle" class="box-label">seckill-service</text>
+  <line x1="280" y1="473" x2="360" y2="473" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="473" x2="860" y2="473" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="501" width="220" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="501" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="501" width="280" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="527" text-anchor="middle" class="box-label">group-buy-service</text>
+  <text x="570" y="527" text-anchor="middle" class="topic-label">group-buy-success-notify</text>
+  <text x="1000" y="527" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="521" x2="360" y2="521" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="521" x2="860" y2="521" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Section 3 -->
+  <rect x="32" y="565" width="1136" height="186" rx="14" fill="#fbf4e8" stroke="#e6d9c2" stroke-width="1.5"/>
+  <text x="52" y="593" class="section-title">关单类</text>
+  <text x="120" y="593" class="section-note">order-close-*</text>
+  <text x="895" y="593" class="section-note">关单后可能进入退款</text>
+
+  <rect x="60" y="615" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="615" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="615" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="641" text-anchor="middle" class="box-label">order-service</text>
+  <text x="570" y="641" text-anchor="middle" class="topic-label">order-close-normal</text>
+  <text x="1000" y="641" text-anchor="middle" class="box-label">pay-service</text>
+  <line x1="280" y1="635" x2="360" y2="635" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="635" x2="860" y2="635" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="663" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="663" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="663" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="689" text-anchor="middle" class="box-label">order-service + group-buy-service</text>
+  <text x="570" y="689" text-anchor="middle" class="topic-label">order-close-group-buy</text>
+  <text x="1000" y="682" text-anchor="middle" class="box-label">pay / order / group-buy</text>
+  <text x="1000" y="699" text-anchor="middle" class="small">按 marketType 路由</text>
+  <line x1="280" y1="683" x2="360" y2="683" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="683" x2="860" y2="683" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="711" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="711" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="711" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="737" text-anchor="middle" class="box-label">order-service</text>
+  <text x="570" y="737" text-anchor="middle" class="topic-label">order-close-seckill</text>
+  <text x="1000" y="730" text-anchor="middle" class="box-label">pay / order / seckill</text>
+  <text x="1000" y="747" text-anchor="middle" class="small">按 marketType 路由</text>
+  <line x1="280" y1="731" x2="360" y2="731" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="731" x2="860" y2="731" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Section 4 -->
+  <rect x="32" y="775" width="1136" height="186" rx="14" fill="#fff0f0" stroke="#e6caca" stroke-width="1.5"/>
+  <text x="52" y="803" class="section-title">退款请求类</text>
+  <text x="140" y="803" class="section-note">pay-refund-*</text>
+  <text x="890" y="803" class="section-note">order -> pay，触发支付宝退款</text>
+
+  <rect x="60" y="825" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="825" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="825" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="851" text-anchor="middle" class="box-label">order-service</text>
+  <text x="570" y="851" text-anchor="middle" class="topic-label">pay-refund-normal</text>
+  <text x="1000" y="851" text-anchor="middle" class="box-label">pay-service</text>
+  <line x1="280" y1="845" x2="360" y2="845" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="845" x2="860" y2="845" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="873" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="873" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="873" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="899" text-anchor="middle" class="box-label">order-service</text>
+  <text x="570" y="899" text-anchor="middle" class="topic-label">pay-refund-group-buy</text>
+  <text x="1000" y="899" text-anchor="middle" class="box-label">pay / group-buy</text>
+  <line x1="280" y1="893" x2="360" y2="893" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="893" x2="860" y2="893" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="921" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="921" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="921" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="947" text-anchor="middle" class="box-label">order-service</text>
+  <text x="570" y="947" text-anchor="middle" class="topic-label">pay-refund-seckill</text>
+  <text x="1000" y="947" text-anchor="middle" class="box-label">pay / seckill</text>
+  <line x1="280" y1="941" x2="360" y2="941" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="941" x2="860" y2="941" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Section 5 -->
+  <rect x="32" y="985" width="1136" height="306" rx="14" fill="#f3f3f1" stroke="#dcd9d4" stroke-width="1.5"/>
+  <text x="52" y="1013" class="section-title">退款结果 / 补偿类</text>
+  <text x="190" y="1013" class="section-note">pay-refund-*-result / group-buy-timeout-refund / seckill-stock-deduct</text>
+  <text x="900" y="1013" class="section-note">回执 + 本地状态回写</text>
+
+  <rect x="60" y="1035" width="220" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="1035" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="1035" width="280" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="1061" text-anchor="middle" class="box-label">pay-service</text>
+  <text x="570" y="1061" text-anchor="middle" class="topic-label">pay-refund-normal-result</text>
+  <text x="1000" y="1061" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="1055" x2="360" y2="1055" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="1055" x2="860" y2="1055" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="1083" width="220" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="1083" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="1083" width="280" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="1109" text-anchor="middle" class="box-label">pay-service</text>
+  <text x="570" y="1109" text-anchor="middle" class="topic-label">pay-refund-group-buy-result</text>
+  <text x="1000" y="1109" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="1103" x2="360" y2="1103" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="1103" x2="860" y2="1103" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="1131" width="220" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="1131" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="1131" width="280" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="1157" text-anchor="middle" class="box-label">pay-service</text>
+  <text x="570" y="1157" text-anchor="middle" class="topic-label">pay-refund-seckill-result</text>
+  <text x="1000" y="1157" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="1151" x2="360" y2="1151" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="1151" x2="860" y2="1151" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="1179" width="220" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="1179" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="1179" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="1205" text-anchor="middle" class="box-label">group-buy-service</text>
+  <text x="570" y="1205" text-anchor="middle" class="topic-label">group-buy-timeout-refund</text>
+  <text x="1000" y="1205" text-anchor="middle" class="box-label">group-buy-service</text>
+  <line x1="280" y1="1199" x2="360" y2="1199" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="1199" x2="860" y2="1199" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="1227" width="220" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="1227" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="1227" width="280" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="1253" text-anchor="middle" class="box-label">seckill-service</text>
+  <text x="570" y="1253" text-anchor="middle" class="topic-label">seckill-stock-deduct</text>
+  <text x="1000" y="1253" text-anchor="middle" class="box-label">seckill-service</text>
+  <line x1="280" y1="1247" x2="360" y2="1247" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="1247" x2="860" y2="1247" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Section 6 -->
+  <rect x="32" y="1295" width="1136" height="180" rx="14" fill="#f6eefb" stroke="#ddd0e8" stroke-width="1.5"/>
+  <text x="52" y="1323" class="section-title">履约 / 发货任务类</text>
+  <text x="175" y="1323" class="section-note">group-buy-success-notify / order-ship-task</text>
+  <text x="910" y="1323" class="section-note">拼团成团后逐单推进履约</text>
+
+  <rect x="60" y="1345" width="220" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="1345" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="1345" width="280" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="1371" text-anchor="middle" class="box-label">group-buy-service</text>
+  <text x="570" y="1371" text-anchor="middle" class="topic-label">group-buy-success-notify</text>
+  <text x="1000" y="1371" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="1365" x2="360" y2="1365" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="1365" x2="860" y2="1365" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="60" y="1393" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="360" y="1393" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
+  <rect x="860" y="1393" width="280" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="170" y="1419" text-anchor="middle" class="box-label">order-service</text>
+  <text x="570" y="1419" text-anchor="middle" class="topic-label">order-ship-task</text>
+  <text x="1000" y="1419" text-anchor="middle" class="box-label">order-service</text>
+  <line x1="280" y1="1413" x2="360" y2="1413" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="780" y1="1413" x2="860" y2="1413" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

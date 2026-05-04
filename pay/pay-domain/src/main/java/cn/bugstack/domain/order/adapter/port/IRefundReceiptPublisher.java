@@ -1,4 +1,4 @@
-package cn.bugstack.domain.order.service;
+package cn.bugstack.domain.order.adapter.port;
 
 /**
  * 退款回执发布接口（出站，由 infrastructure 层实现）

@@ -1,7 +1,7 @@
 package com.yue.order.infrastructure.event;
 
 import com.alibaba.fastjson.JSON;
-import com.yue.order.domain.order.service.IOrderEventPublisher;
+import com.yue.order.domain.order.adapter.port.IOrderPaidPublisher;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +20,7 @@ import java.util.Map;
 @Slf4j
 @Service
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
-public class OrderPaidMqProducer implements IOrderEventPublisher {
+public class OrderPaidMqProducer implements IOrderPaidPublisher {
 
     @Resource
     private RocketMQTemplate rocketMQTemplate;
@@ -33,15 +33,6 @@ public class OrderPaidMqProducer implements IOrderEventPublisher {
 
     @Value("${app.rocketmq.topic.orderPaidSeckill:order-paid-seckill}")
     private String orderPaidSeckillTopic;
-
-    @Value("${app.rocketmq.topic.orderCloseNormal:order-close-normal}")
-    private String orderCloseNormalTopic;
-
-    @Value("${app.rocketmq.topic.orderCloseGroupBuy:order-close-group-buy}")
-    private String orderCloseGroupBuyTopic;
-
-    @Value("${app.rocketmq.topic.orderCloseSeckill:order-close-seckill}")
-    private String orderCloseSeckillTopic;
 
     @Override
     public void publishOrderPaid(String userId, String orderId, String outTradeNo, String marketType, Date outTradeTime) {
@@ -62,34 +53,9 @@ public class OrderPaidMqProducer implements IOrderEventPublisher {
         }
     }
 
-    @Override
-    public void publishOrderClose(String userId, String orderId, String outTradeNo, String marketType) {
-        String topic = resolveCloseTopic(marketType);
-        Map<String, Object> msg = new HashMap<>();
-        msg.put("userId", userId);
-        msg.put("orderId", orderId);
-        msg.put("outTradeNo", outTradeNo);
-        msg.put("marketType", marketType);
-        msg.put("outTradeTime", null);
-
-        String messageBody = JSON.toJSONString(msg);
-        try {
-            rocketMQTemplate.convertAndSend(topic, messageBody);
-            log.info("publishOrderClose topic:{} outTradeNo:{}", topic, outTradeNo);
-        } catch (Exception e) {
-            log.error("publishOrderClose 失败 topic:{} outTradeNo:{}", topic, outTradeNo, e);
-        }
-    }
-
     private String resolveTopic(String marketType) {
         if ("group_buy".equals(marketType)) return orderPaidGroupBuyTopic;
         if ("seckill".equals(marketType)) return orderPaidSeckillTopic;
         return orderPaidNormalTopic;
-    }
-
-    private String resolveCloseTopic(String marketType) {
-        if ("group_buy".equals(marketType)) return orderCloseGroupBuyTopic;
-        if ("seckill".equals(marketType)) return orderCloseSeckillTopic;
-        return orderCloseNormalTopic;
     }
 }
