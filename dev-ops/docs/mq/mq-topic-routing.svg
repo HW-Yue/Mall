@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1200" width="1200" height="1200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1400" width="1200" height="1400">
   <defs>
     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
       <polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/>
@@ -22,7 +22,7 @@
     </style>
   </defs>
 
-  <rect width="1200" height="1200" fill="#f8f6f3"/>
+  <rect width="1200" height="1400" fill="#f8f6f3"/>
 
   <text x="600" y="38" text-anchor="middle" class="title">RocketMQ Topic 路由图</text>
   <text x="600" y="62" text-anchor="middle" class="subtitle">按 topic 一行一条，标出“谁生产了哪个 topic，谁消费了哪个 topic”</text>
@@ -37,6 +37,7 @@
   <text x="56" y="150" class="section">支付成功链路</text>
   <text x="56" y="360" class="section">订单结算 / 关单 / 退款链路</text>
   <text x="56" y="850" class="section">辅助回写链路</text>
+  <text x="56" y="1190" class="section">履约 / 发货任务链路</text>
 
   <!-- Row template coordinates:
        producer box x=50 w=250
@@ -214,6 +215,28 @@
   <text x="990" y="1173" text-anchor="middle" class="box-label">group-buy</text>
   <line x1="300" y1="1167" x2="365" y2="1167" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
   <line x1="755" y1="1167" x2="830" y2="1167" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- 18 -->
+  <rect x="50" y="1222" width="250" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="1222" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="1222" width="320" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="1251" text-anchor="middle" class="box-label">pay</text>
+  <text x="560" y="1248" text-anchor="middle" class="topic-label">order-ship-task</text>
+  <text x="990" y="1251" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="1245" x2="365" y2="1245" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="1245" x2="830" y2="1245" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="990" y="1268" text-anchor="middle" class="note">normal / seckill 支付成功后补发</text>
+
+  <!-- 19 -->
+  <rect x="50" y="1280" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="365" y="1280" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="830" y="1280" width="320" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
+  <text x="175" y="1309" text-anchor="middle" class="box-label">group-buy</text>
+  <text x="560" y="1306" text-anchor="middle" class="topic-label">order-ship-task</text>
+  <text x="990" y="1309" text-anchor="middle" class="box-label">order</text>
+  <line x1="300" y1="1303" x2="365" y2="1303" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="755" y1="1303" x2="830" y2="1303" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="990" y="1326" text-anchor="middle" class="note">group-buy 成团后补发</text>
 
   <!-- Legend -->
   <rect x="835" y="40" width="315" height="82" rx="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>

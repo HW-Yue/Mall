@@ -68,6 +68,7 @@ docker-apps/.docker/
 dev-ops/docker/*
 !dev-ops/docker/.gitignore
 dev-ops/rocketmq/data/
+mall/docs/dev-ops/
 
 # ===========================
 # 操作系统生成文件
