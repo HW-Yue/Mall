@@ -217,26 +217,26 @@
   <line x1="755" y1="1167" x2="830" y2="1167" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
 
   <!-- 18 -->
-  <rect x="50" y="1222" width="250" height="46" rx="12" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2.5"/>
+  <rect x="50" y="1222" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
   <rect x="365" y="1222" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
   <rect x="830" y="1222" width="320" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
-  <text x="175" y="1251" text-anchor="middle" class="box-label">pay</text>
+  <text x="175" y="1251" text-anchor="middle" class="box-label">order</text>
   <text x="560" y="1248" text-anchor="middle" class="topic-label">order-ship-task</text>
   <text x="990" y="1251" text-anchor="middle" class="box-label">order</text>
   <line x1="300" y1="1245" x2="365" y2="1245" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
   <line x1="755" y1="1245" x2="830" y2="1245" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="990" y="1268" text-anchor="middle" class="note">normal / seckill 支付成功后补发</text>
+  <text x="990" y="1268" text-anchor="middle" class="note">normal / seckill：order 收到 pay-success 后补发</text>
 
   <!-- 19 -->
   <rect x="50" y="1280" width="250" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
   <rect x="365" y="1280" width="390" height="46" rx="12" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2.5"/>
   <rect x="830" y="1280" width="320" height="46" rx="12" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2.5"/>
-  <text x="175" y="1309" text-anchor="middle" class="box-label">group-buy</text>
+  <text x="175" y="1309" text-anchor="middle" class="box-label">order</text>
   <text x="560" y="1306" text-anchor="middle" class="topic-label">order-ship-task</text>
   <text x="990" y="1309" text-anchor="middle" class="box-label">order</text>
   <line x1="300" y1="1303" x2="365" y2="1303" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
   <line x1="755" y1="1303" x2="830" y2="1303" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="990" y="1326" text-anchor="middle" class="note">group-buy 成团后补发</text>
+  <text x="990" y="1326" text-anchor="middle" class="note">group-buy：order 收到成团通知后补发</text>
 
   <!-- Legend -->
   <rect x="835" y="40" width="315" height="82" rx="12" fill="#ffffff" stroke="#4a4a4a" stroke-width="1.5"/>

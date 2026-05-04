@@ -220,7 +220,7 @@
   <rect x="32" y="1295" width="1136" height="276" rx="14" fill="#f6eefb" stroke="#ddd0e8" stroke-width="1.5"/>
   <text x="52" y="1323" class="section-title">履约 / 发货任务类</text>
   <text x="175" y="1323" class="section-note">group-buy-success-notify / order-ship-task</text>
-  <text x="910" y="1323" class="section-note">支付成功后统一推进到已发货</text>
+  <text x="910" y="1323" class="section-note">order 收到支付成功后发履约 MQ</text>
 
   <rect x="60" y="1345" width="220" height="40" rx="10" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
   <rect x="360" y="1345" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
@@ -243,20 +243,20 @@
   <rect x="60" y="1441" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
   <rect x="360" y="1441" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
   <rect x="860" y="1441" width="280" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
-  <text x="170" y="1467" text-anchor="middle" class="box-label">pay-service</text>
+  <text x="170" y="1467" text-anchor="middle" class="box-label">order-service</text>
   <text x="570" y="1467" text-anchor="middle" class="topic-label">order-ship-task</text>
   <text x="1000" y="1467" text-anchor="middle" class="box-label">order-service</text>
-  <text x="1000" y="1484" text-anchor="middle" class="small">normal / seckill 支付成功后补发</text>
+  <text x="1000" y="1484" text-anchor="middle" class="small">normal / seckill：先改 PAY_SUCCESS，再发 ship task</text>
   <line x1="280" y1="1461" x2="360" y2="1461" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
   <line x1="780" y1="1461" x2="860" y2="1461" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
 
   <rect x="60" y="1489" width="220" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
   <rect x="360" y="1489" width="420" height="40" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="2"/>
   <rect x="860" y="1489" width="280" height="40" rx="10" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
-  <text x="170" y="1515" text-anchor="middle" class="box-label">pay-service</text>
+  <text x="170" y="1515" text-anchor="middle" class="box-label">order-service</text>
   <text x="570" y="1515" text-anchor="middle" class="topic-label">order-ship-task</text>
   <text x="1000" y="1515" text-anchor="middle" class="box-label">order-service</text>
-  <text x="1000" y="1532" text-anchor="middle" class="small">group-buy 成团后补发</text>
+  <text x="1000" y="1532" text-anchor="middle" class="small">group-buy：成团通知后由 order 补发</text>
   <line x1="280" y1="1509" x2="360" y2="1509" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
   <line x1="780" y1="1509" x2="860" y2="1509" stroke="#5a5a5a" stroke-width="2" marker-end="url(#arrow)"/>
 </svg>
