@@ -9,14 +9,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 
+import cn.bugstack.test.config.RocketMqMockTestConfig;
+
 @Slf4j
 @RunWith(SpringRunner.class)
-@SpringBootTest
+@SpringBootTest(properties = "spring.profiles.active=test-mock")
+@Import(RocketMqMockTestConfig.class)
 public class OrderServiceTest {
 
     @Resource
