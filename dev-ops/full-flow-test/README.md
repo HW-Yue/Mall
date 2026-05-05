@@ -18,6 +18,7 @@ docker compose -f dev-ops/docker-compose-elk.yml up -d
 - MySQL、Redis、Nacos、RocketMQ、Sentinel、Logstash 都通过 Docker 网络内服务名访问。
 - MySQL 初始化 SQL 位于 `dev-ops/mysql/sql/`。
 - 测试库 SQL 位于 `dev-ops/mysql/sql/test/`，由 `dev-ops/mysql/sql/zz-init-test-sql.sh` 在 MySQL 首次初始化时导入。
+- 如果修改业务库初始化 SQL，必须同步修改对应测试 SQL，避免单测库和全链路测试库结构漂移。
 - 如果需要重新导入 SQL，必须先清空 `dev-ops/mysql/data/` 后再启动 MySQL；只执行 compose down 不会重新初始化。
 
 ## 2. 构建应用镜像

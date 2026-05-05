@@ -120,19 +120,18 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 
 退款：前端 → 各营销服务 `refund` → HTTP 调 order-service `refund_execute`
 
-## MQ Topic 规划
+## MQ 文档
 
-| Topic | 生产者 | 消费者 | 消息类型 |
-|-------|--------|--------|--------|
-| `pay-success-normal` | pay | order-service | 普通 |
-| `pay-success-group-buy` | pay | order-service | 普通 |
-| `pay-success-seckill` | pay | order-service | 普通 |
-| `order-paid-group_buy` | order-service | group-buy-service | **事务消息** |
-| `order-paid-seckill` | order-service | seckill-service | **事务消息** |
-| `order-close-group-buy` | pay / group-buy-service（团级超时自发） | pay / order-service / group-buy-service（回退 `team_order.lock_count`） | 普通 |
-| `pay-refund-seckill` | order-service | pay（调支付宝退款）/ seckill-service（恢复 Redis available+real & MySQL `stock_count`） | **事务消息** |
+MQ topic、生产者、消费者、消费者组、参数说明统一维护在：
 
-> 表中只列了核心几条，全量 topic 见各服务 `application-{profile}.yml` 的 `app.rocketmq.topic`。
+- 总览：`dev-ops/docs/mq/README.md`
+- Topic 明细：`dev-ops/docs/mq/topics/`
+
+事实来源：
+
+- 各服务 `application-{profile}.yml`
+- `@RocketMQMessageListener`
+- `*-infrastructure` 下 MQ producer / publisher
 
 ## 关键文件路径
 
@@ -140,45 +139,44 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 `mall_db.sql` / `order_service.sql` / `group_buy_service.sql` / `seckill_service.sql` / `grafana.sql`
 
 > 新增表/字段必须同步更新对应 SQL 文件。
+> 如果改的是业务库 SQL，还必须同步检查并更新 `dev-ops/mysql/sql/test/*.sql` 对应测试 SQL。
 
-### 网关 & 前端
-- 网关路由：`springcloud-gateway/app/src/main/resources/application-dev.yml`
-- 前端接口：`dev-ops/nginx/html/js/api-config.js`（`AppApiPaths`）
-- 前端逻辑：`dev-ops/nginx/html/js/mall.js`（下单）、`payment.js`（支付）、`order-list.js`（订单列表）
+其余网关 / 前端 / 各服务关键入口，统一维护在：
 
-### order-service
-- Controller：`order-service/order-service-trigger/src/main/java/com/yue/order/trigger/http/OrderController.java`
-- MQ Listeners：`order-service-trigger/.../listener/PaySuccess{,GroupBuy,Seckill}Listener.java`
-- MQ Producer：`order-service-infrastructure/.../event/OrderPaidMqProducer.java`
-
-### group-buy-service
-- `GroupBuyMarketController.java` / `GroupBuyTradeController.java`（trigger/http）
-- `OrderServicePort.java`（infrastructure/adapter/port）；Feign 超时来自 `app.agent.feign.order-service.*`
-- `OrderPaidGroupBuyListener.java`（trigger/listener）
-
-### seckill-service
-- `SeckillMarketController.java` / `SeckillTradeController.java`（trigger/http）
-- `SeckillMarketServiceImpl.java` / `SeckillTradeServiceImpl.java`（domain）
-- `OrderServicePort.java`（infrastructure/adapter/port）
-- `OrderPaidSeckillListener.java`（trigger/listener）
-
-### mall
-- `IndexController.java` / `OrderTradeController.java`（trigger/http）
-- `BackendConfigController.java`（trigger/http/admin）
-
-### pay
-- `AliPayController.java`（trigger/http）
-- `PaySuccessRocketMqPort.java`（infrastructure/adapter/port）
+- 总览：`dev-ops/docs/code-map/README.md`
+- 网关与前端：`dev-ops/docs/code-map/gateway-and-frontend.md`
+- `order-service`：`dev-ops/docs/code-map/order-service.md`
+- `group-buy-service`：`dev-ops/docs/code-map/group-buy-service.md`
+- `seckill-service`：`dev-ops/docs/code-map/seckill-service.md`
+- `mall`：`dev-ops/docs/code-map/mall.md`
+- `pay`：`dev-ops/docs/code-map/pay.md`
 
 ## 技术配置
 
 ### 版本
 | 服务 | Java | Spring Boot |
 |------|------|-------------|
-| mall | 8 | 2.7.12 |
-| pay | 8 | 2.7.12 |
+| mall | 21 | 3.2.12 |
+| order-service | 21 | 3.2.12 |
+| group-buy-service | 21 | 3.2.12 |
+| seckill-service | 21 | 3.2.12 |
+| pay | 21 | 3.2.12 |
+| springcloud-gateway | 21 | 3.2.12 |
+| ops-agent-spring-ai | 21 | 3.4.5 |
 
-ORM: MyBatis，Cache: Redisson，MQ: RocketMQ
+### 当前主技术栈
+
+- ORM：MyBatis Spring Boot Starter `3.0.5`
+- Cache：Redisson Spring Boot Starter `3.26.0`
+- MQ：RocketMQ Spring Boot Starter `2.3.1` + RocketMQ Client `5.3.0`
+- 注册发现 / 配置：Spring Cloud Alibaba `2023.0.1.0`
+- 服务间调用：OpenFeign `4.1.2`
+- 动态线程池：DynamicTp `1.1.9.1-3.x`
+
+补充：
+
+- `ops-agent-spring-ai` 独立使用 Spring Boot `3.4.5`、Spring Cloud `2024.0.1`、Spring Cloud Alibaba `2023.0.3.3`
+- `ops-agent-spring-ai` 的 RocketMQ Client 版本为 `5.3.1`
 
 ### Redis（Redisson）
 统一用 `redisson-spring-boot-starter:3.26.0`，配置键 `spring.data.redis.*` + `spring.redis.redisson.config`（YAML 片段）。不使用 Lettuce / 自研 `redis.sdk.config`。
@@ -221,42 +219,21 @@ docker compose -f docker-apps/docker-compose-apps.yml up -d
 - 业务应用镜像和容器入口在 `docker-apps/`；需要确认应用依赖的环境地址时，先查 `dev-ops/`，再查各服务 `application-{profile}.yml` 和 `docker-apps/docker-compose-apps.yml`。
 - 涉及订单、拼团、支付、网关、Nacos、MySQL 初始化或 Docker 启停的重大变更，提交前必须先完成一次完整全链路测试，流程见 `dev-ops/full-flow-test/README.md`，脚本入口为 `bash dev-ops/app/group-buy-full-flow-test.sh`。
 
-## 监控（Prometheus / Sentinel / DynamicTP / ELK）
+## 监控文档
 
-> 告警 → SOP → ReAct → 7 域 skill 诊断流水线见 `ops-agent-spring-ai/README.md`
+Prometheus、Alertmanager、Sentinel、DynamicTP、ELK、SkyWalking、启动顺序统一维护在：
 
-**指标暴露**：各服务开启 `management.endpoints.web.exposure.include: health,prometheus`
-- Sentinel：`SentinelMetricsBinder`（`common-log-starter`）注册 Gauge，**首次请求后才有数据**
-- DynamicTP：各服务 `dtp-dev.yml` 配置 `collector-types: [micrometer, internal_logging]`
-- JVM/HTTP：Spring Boot Actuator 自动暴露
+- 总览：`dev-ops/docs/monitoring/README.md`
+- 分主题文档：`dev-ops/docs/monitoring/`
 
-**关键文件：**
-| 用途 | 文件 |
-|------|------|
-| Prometheus 主配置 | `dev-ops/prometheus/prometheus.yml` |
-| 告警规则（36条） | `dev-ops/prometheus/alert_rules.yml` |
-| Alertmanager 配置 | `dev-ops/prometheus/alertmanager.yml` |
-| Grafana compose | `dev-ops/docker-compose-grafana.yml` |
-| exporter compose（mysqld/redis/rocketmq） | `dev-ops/docker-compose-exporters.yml` |
-| Sentinel 规则 | `dev-ops/nacos/sentinel-rules/`（按 `flow/`、`degrade/`、`param-flow/`、`system/`、`authority/`、`gateway/` 分目录） |
-| DTP 配置 | `dev-ops/nacos/dtp-config/`（按 `dynamic-tp/`、`datasource/`、`runtime/`、`shared/` 分目录） |
-| Sentinel 指标绑定 | `Dependencies/common-log-starter/.../sentinel/SentinelMetricsBinder.java` |
+相关事实来源：
 
-**Sentinel 规则 Nacos 格式：**
-- dataId: `{app}-flow-rules.json`，groupId: `SENTINEL_GROUP`
-- `resource` 为纯 URI，不带 HTTP Method 前缀（如 `/api/v1/order/create_order`）
-- `grade`: `0`=并发线程数，`1`=QPS；`controlBehavior`: `0`=快速失败，`1`=Warm Up，`2`=匀速排队
-
-**告警标签规范：**
-- Sentinel 告警用 `{app="xxx"}`，DTP/JVM/Hikari/HTTP 用 `{application="xxx"}`
-
-**启动顺序：**
-1. `docker-compose-environment.yml`（建 `nexus-devops` 网络，启 MySQL / Redis / Nacos 等）
-2. `docker-compose-rocketmq.yml`
-3. `docker-compose-elk.yml`（ES 9.2.0 + Logstash :4560 + Kibana :5601，无鉴权）
-4. `docker-compose-mcp.yml`（ES MCP :8085 / Prometheus MCP :8001，均走 SSE）
-5. `docker-compose-exporters.yml`（mysqld-exporter :9104 / redis-exporter :9121 / rocketmq-exporter :5557）
-6. `docker-compose-grafana.yml`（Prometheus + Alertmanager + Grafana）
+- `dev-ops/prometheus/`
+- `dev-ops/docker-compose-*.yml`
+- `dev-ops/nacos/README.md`
+- `dev-ops/nacos/sentinel-rules/README.md`
+- `dev-ops/SKYWALKING.md`
+- 告警 → SOP → ReAct 流水线：`ops-agent-spring-ai/README.md`
 
 ## 服务单测约定
 
@@ -276,131 +253,24 @@ docker compose -f docker-apps/docker-compose-apps.yml up -d
 
 不要把测试替身、测试 profile 判断、测试桩逻辑写进 `domain`、`trigger`、`infrastructure` 的生产源码里，除非是修复明显空实现或把硬编码外部依赖改成正常 Spring 注入。
 
-### 改代码后怎么改测试
+### 测试文档
 
-改 `domain service / state machine / rule chain`：
+改代码后的测试补齐规则、单测隔离、执行方式、提交前最低要求统一维护在：
 
-- 同步修改或新增 `*DomainServiceTest`、`*StateMachineTest`、`*Rule*Test`、`*Calculator*Test`
-- 不启 Spring，只用 Mockito / stub / fake object
-- 覆盖成功路径、失败补偿路径、幂等、重复消息、非法状态迁移
+- 总览：`dev-ops/docs/testing/README.md`
+- 改代码后怎么改测试：`dev-ops/docs/testing/change-driven-test-rules.md`
+- 单测隔离与测试基座：`dev-ops/docs/testing/test-isolation-and-fixtures.md`
+- 单测执行方式：`dev-ops/docs/testing/test-execution.md`
+- 提交前最低测试要求：`dev-ops/docs/testing/minimum-test-requirements.md`
 
-改 `controller`：
+详细策略与单测计划：
 
-- 同步修改或新增 `*ControllerTest`
-- 优先纯 Mockito controller 测试
-- 断言参数校验、返回码映射、service 调用、异常映射
-- 如果 controller 组装了跨服务请求 DTO，必须断言 DTO 字段
+- `dev-ops/docs/testing/service-standalone-test-strategy.md`
+- `dev-ops/docs/testing/service-unit-test-plan/README.md`
+- 集成 / 全链路测试：`dev-ops/full-flow-test/README.md`
 
-改 `listener / job`：
+额外要求：
 
-- 同步修改或新增 `*ListenerTest`、`*JobTest`
-- listener 直接调用 `onMessage(...)`
-- job 直接调用 job 方法
-- 覆盖正常消息、缺字段 / 非法消息、重复消息 / 幂等、下游异常
-
-改 `MQ producer / transaction listener`：
-
-- 同步修改或新增 `*InfrastructureTest`、`*MqProducerTest`、`*TransactionListenerTest`
-- 不连真实 RocketMQ
-- 只 mock `RocketMQTemplate`
-- 断言 `topic`、`payload`、`headers`
-- 事务消息断言本地事务返回值：`COMMIT / ROLLBACK / UNKNOWN`
-
-改 `Feign port / 外部 adapter`：
-
-- 同步修改或新增 `*PortTest`、`*InfrastructureTest`
-- 不走真实 Nacos / 服务发现 / HTTP
-- mock 下游 client
-- 断言请求 DTO 组装、空响应、失败码映射、异常映射、失败补偿
-
-改 `repository / DAO / MyBatis mapper`：
-
-- 同步修改或新增 `*RepositoryTest`、`*InfrastructureTest`
-- 允许连本服务测试库
-- 不跨服务读写别的服务库
-- 至少覆盖新增 SQL 的读写主路径和关键状态分支
-
-改 `profile / 配置装配 / app 启动相关`：
-
-- 必须同步检查 `application-test-mock.yml`
-- 必须同步检查 `maven-surefire-plugin`
-- 必须同步检查 `mockito-extensions/org.mockito.plugins.MockMaker`
-- 必须同步检查本服务测试基类和 test config
-
-不要让测试去连接真实：
-
-- Nacos
-- RocketMQ broker
-- Sentinel dashboard
-- Logstash
-- 其他微服务
-
-### 单测隔离设计
-
-每个服务都按这套结构维护：
-
-- `src/main/resources/application-test-mock.yml`
-- `src/test/java/.../config/RocketMqMockTestConfig.java`
-- `src/test/java/.../config/Abstract*ComponentTest.java`
-- `src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker`
-
-规则：
-
-- `test-mock` profile 只给测试使用
-- Feign 一律在测试类里 `@MockBean` 或 Mockito mock
-- MQ 一律 mock，不连真实 broker
-- repository 组件测试只连本服务测试库
-
-现有测试基座：
-
-- `pay/pay-app/src/test/java/cn/bugstack/test/config/AbstractPayComponentTest.java`
-- `order-service/order-service-app/src/test/java/com/yue/order/test/config/AbstractOrderServiceComponentTest.java`
-- `group-buy-service/group-buy-service-app/src/test/java/com/yue/groupbuy/test/config/AbstractGroupBuyComponentTest.java`
-- `seckill-service/seckill-service-app/src/test/java/com/yue/seckill/test/config/AbstractSeckillComponentTest.java`
-- `mall/mall-app/src/test/java/com/yue/test/config/AbstractMallComponentTest.java`
-
-MQ mock 配置：
-
-- `pay/pay-app/src/test/java/cn/bugstack/test/config/RocketMqMockTestConfig.java`
-- `order-service/order-service-app/src/test/java/com/yue/order/test/config/RocketMqMockTestConfig.java`
-- `group-buy-service/group-buy-service-app/src/test/java/com/yue/groupbuy/test/config/RocketMqMockTestConfig.java`
-- `seckill-service/seckill-service-app/src/test/java/com/yue/seckill/test/config/RocketMqMockTestConfig.java`
-- `mall/mall-app/src/test/java/com/yue/test/config/RocketMqMockTestConfig.java`
-
-### 每个服务执行 mvn 单测的方式
-
-统一从各自 `app` 模块执行，`surefire` 已默认注入 `spring.profiles.active=test-mock`：
-
-```bash
-mvn -pl pay/pay-app -am test -DskipTests=false
-mvn -pl order-service/order-service-app -am test -DskipTests=false
-mvn -pl group-buy-service/group-buy-service-app -am test -DskipTests=false
-mvn -pl seckill-service/seckill-service-app -am test -DskipTests=false
-mvn -pl mall/mall-app -am test -DskipTests=false
-```
-
-只跑单个测试类：
-
-```bash
-mvn -pl order-service/order-service-app -am test -DskipTests=false -Dtest=OrderDomainServiceTest
-mvn -pl seckill-service/seckill-service-app -am test -DskipTests=false -Dtest=SeckillTradeServiceImplTest
-```
-
-只跑某个测试方法：
-
-```bash
-mvn -pl pay/pay-app -am test -DskipTests=false -Dtest=AliPayControllerTest#payNotifyHandlesClosedOrderByRefunding
-```
-
-### 提交前最低要求
-
-如果改动只在单一服务内，至少跑该服务 `app` 模块测试。
-
-如果改动涉及交易主链路，至少跑受影响的服务：
-
-- 改 `mall -> order-service`：跑 `mall-app`、`order-service-app`
-- 改 `group-buy-service -> order-service -> pay`：跑 `group-buy-service-app`、`order-service-app`、`pay-app`
-- 改 `seckill-service -> order-service -> pay`：跑 `seckill-service-app`、`order-service-app`、`pay-app`
-- 改公共 MQ topic 路由或退款/关单链路：跑 `pay-app`、`order-service-app` 和对应营销服务
-
-详细说明见 `dev-ops/docs/testing/service-standalone-test-strategy.md`
+- 只改单服务内部代码：至少跑受影响服务单测
+- 改跨服务链路代码：必须在单测之外补跑集成 / 全链路测试
+- 全链路脚本入口：`bash dev-ops/app/group-buy-full-flow-test.sh`
