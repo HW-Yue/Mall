@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: seckill-service
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+    sentinel:
+      enabled: false
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+    url: jdbc:mysql://100.86.250.112:13306/test_seckill_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    username: root
+    password: 123456
+  data:
+    redis:
+      host: 100.86.250.112
+      port: 16379
+      database: 0
+      timeout: 3000ms
+      client-name: seckill-redisson
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://100.86.250.112:16379"
+          database: 0
+          clientName: seckill-redisson
+          connectionPoolSize: 20
+          connectionMinimumIdleSize: 5
+          idleConnectionTimeout: 30000
+          pingConnectionInterval: 60000
+          retryAttempts: 3
+          retryInterval: 1000
+          connectTimeout: 5000
+          timeout: 3000
+          keepAlive: true
+
+rocketmq:
+  producer:
+    group: seckill-service-producer
+
+app:
+  rocketmq:
+    topic:
+      seckillOrderCreate: seckill-order-create
+      orderPaidSeckill: order-paid-seckill
+      orderCloseSeckill: order-close-seckill
+      seckillStockDeduct: seckill-stock-deduct
+      payRefundSeckill: pay-refund-seckill
+    consumerGroup:
+      seckillOrderCreate: CG_SECKILL_ORDER_CREATE
+      orderPaidSeckill: CG_ORDER_PAID_SECKILL
+      orderCloseSeckill: CG_ORDER_CLOSE_SECKILL_MARKET
+      seckillStockDeduct: CG_SECKILL_STOCK_DEDUCT
+      payRefundSeckill: CG_SECKILL_PAY_REFUND
+
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+
+logging:
+  level:
+    com.yue.seckill: info

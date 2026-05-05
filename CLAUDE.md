@@ -1,6 +1,4 @@
-# CLAUDE.md
-
-> 注意：如果修改本文件内容，必须同步更新 `AGENT.md`；如果修改 `AGENT.md`，也必须同步更新本文件。
+> 注意：如果修改本文件内容，必须同步更新 `CLAUDE.md`；如果修改 `CLAUDE.md`，也必须同步更新本文件。
 
 ## Repository Overview
 
@@ -289,3 +287,150 @@ docker compose -f docker-apps/docker-compose-apps.yml up -d
 4. `docker-compose-mcp.yml`（ES MCP :8085 / Prometheus MCP :8001，均走 SSE）
 5. `docker-compose-exporters.yml`（mysqld-exporter :9104 / redis-exporter :9121 / rocketmq-exporter :5557）
 6. `docker-compose-grafana.yml`（Prometheus + Alertmanager + Grafana）
+
+## 服务单测约定
+
+目标：
+
+- 每个服务单独执行自己的测试
+- 不依赖其他服务启动
+- 不为了测试修改业务对外接口
+- 不在生产代码里加 `if (test)`、mock 分支、测试专用 controller
+
+测试相关改动只允许放在这些位置：
+
+- `*-app/src/test/java`
+- `*-app/src/test/resources`
+- `*-app/src/main/resources/application-test-mock.yml`
+- `*-app/pom.xml`
+
+不要把测试替身、测试 profile 判断、测试桩逻辑写进 `domain`、`trigger`、`infrastructure` 的生产源码里，除非是修复明显空实现或把硬编码外部依赖改成正常 Spring 注入。
+
+### 改代码后怎么改测试
+
+改 `domain service / state machine / rule chain`：
+
+- 同步修改或新增 `*DomainServiceTest`、`*StateMachineTest`、`*Rule*Test`、`*Calculator*Test`
+- 不启 Spring，只用 Mockito / stub / fake object
+- 覆盖成功路径、失败补偿路径、幂等、重复消息、非法状态迁移
+
+改 `controller`：
+
+- 同步修改或新增 `*ControllerTest`
+- 优先纯 Mockito controller 测试
+- 断言参数校验、返回码映射、service 调用、异常映射
+- 如果 controller 组装了跨服务请求 DTO，必须断言 DTO 字段
+
+改 `listener / job`：
+
+- 同步修改或新增 `*ListenerTest`、`*JobTest`
+- listener 直接调用 `onMessage(...)`
+- job 直接调用 job 方法
+- 覆盖正常消息、缺字段 / 非法消息、重复消息 / 幂等、下游异常
+
+改 `MQ producer / transaction listener`：
+
+- 同步修改或新增 `*InfrastructureTest`、`*MqProducerTest`、`*TransactionListenerTest`
+- 不连真实 RocketMQ
+- 只 mock `RocketMQTemplate`
+- 断言 `topic`、`payload`、`headers`
+- 事务消息断言本地事务返回值：`COMMIT / ROLLBACK / UNKNOWN`
+
+改 `Feign port / 外部 adapter`：
+
+- 同步修改或新增 `*PortTest`、`*InfrastructureTest`
+- 不走真实 Nacos / 服务发现 / HTTP
+- mock 下游 client
+- 断言请求 DTO 组装、空响应、失败码映射、异常映射、失败补偿
+
+改 `repository / DAO / MyBatis mapper`：
+
+- 同步修改或新增 `*RepositoryTest`、`*InfrastructureTest`
+- 允许连本服务测试库
+- 不跨服务读写别的服务库
+- 至少覆盖新增 SQL 的读写主路径和关键状态分支
+
+改 `profile / 配置装配 / app 启动相关`：
+
+- 必须同步检查 `application-test-mock.yml`
+- 必须同步检查 `maven-surefire-plugin`
+- 必须同步检查 `mockito-extensions/org.mockito.plugins.MockMaker`
+- 必须同步检查本服务测试基类和 test config
+
+不要让测试去连接真实：
+
+- Nacos
+- RocketMQ broker
+- Sentinel dashboard
+- Logstash
+- 其他微服务
+
+### 单测隔离设计
+
+每个服务都按这套结构维护：
+
+- `src/main/resources/application-test-mock.yml`
+- `src/test/java/.../config/RocketMqMockTestConfig.java`
+- `src/test/java/.../config/Abstract*ComponentTest.java`
+- `src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker`
+
+规则：
+
+- `test-mock` profile 只给测试使用
+- Feign 一律在测试类里 `@MockBean` 或 Mockito mock
+- MQ 一律 mock，不连真实 broker
+- repository 组件测试只连本服务测试库
+
+现有测试基座：
+
+- `pay/pay-app/src/test/java/cn/bugstack/test/config/AbstractPayComponentTest.java`
+- `order-service/order-service-app/src/test/java/com/yue/order/test/config/AbstractOrderServiceComponentTest.java`
+- `group-buy-service/group-buy-service-app/src/test/java/com/yue/groupbuy/test/config/AbstractGroupBuyComponentTest.java`
+- `seckill-service/seckill-service-app/src/test/java/com/yue/seckill/test/config/AbstractSeckillComponentTest.java`
+- `mall/mall-app/src/test/java/com/yue/test/config/AbstractMallComponentTest.java`
+
+MQ mock 配置：
+
+- `pay/pay-app/src/test/java/cn/bugstack/test/config/RocketMqMockTestConfig.java`
+- `order-service/order-service-app/src/test/java/com/yue/order/test/config/RocketMqMockTestConfig.java`
+- `group-buy-service/group-buy-service-app/src/test/java/com/yue/groupbuy/test/config/RocketMqMockTestConfig.java`
+- `seckill-service/seckill-service-app/src/test/java/com/yue/seckill/test/config/RocketMqMockTestConfig.java`
+- `mall/mall-app/src/test/java/com/yue/test/config/RocketMqMockTestConfig.java`
+
+### 每个服务执行 mvn 单测的方式
+
+统一从各自 `app` 模块执行，`surefire` 已默认注入 `spring.profiles.active=test-mock`：
+
+```bash
+mvn -pl pay/pay-app -am test -DskipTests=false
+mvn -pl order-service/order-service-app -am test -DskipTests=false
+mvn -pl group-buy-service/group-buy-service-app -am test -DskipTests=false
+mvn -pl seckill-service/seckill-service-app -am test -DskipTests=false
+mvn -pl mall/mall-app -am test -DskipTests=false
+```
+
+只跑单个测试类：
+
+```bash
+mvn -pl order-service/order-service-app -am test -DskipTests=false -Dtest=OrderDomainServiceTest
+mvn -pl seckill-service/seckill-service-app -am test -DskipTests=false -Dtest=SeckillTradeServiceImplTest
+```
+
+只跑某个测试方法：
+
+```bash
+mvn -pl pay/pay-app -am test -DskipTests=false -Dtest=AliPayControllerTest#payNotifyHandlesClosedOrderByRefunding
+```
+
+### 提交前最低要求
+
+如果改动只在单一服务内，至少跑该服务 `app` 模块测试。
+
+如果改动涉及交易主链路，至少跑受影响的服务：
+
+- 改 `mall -> order-service`：跑 `mall-app`、`order-service-app`
+- 改 `group-buy-service -> order-service -> pay`：跑 `group-buy-service-app`、`order-service-app`、`pay-app`
+- 改 `seckill-service -> order-service -> pay`：跑 `seckill-service-app`、`order-service-app`、`pay-app`
+- 改公共 MQ topic 路由或退款/关单链路：跑 `pay-app`、`order-service-app` 和对应营销服务
+
+详细说明见 `dev-ops/docs/testing/service-standalone-test-strategy.md`

@@ -1,0 +1,64 @@
+app:
+  config:
+    api-version: v1
+    cross-origin: '*'
+    no-market:
+      api-url: http://127.0.0.1:8091
+      notify-url: http://127.0.0.1:8001/
+      source: s01
+      chanel: c01
+  order:
+    internal-create-token: ""
+
+spring:
+  application:
+    name: mall
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+    sentinel:
+      enabled: false
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://100.86.250.112:13306/test_mall_db?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.zaxxer.hikari.HikariDataSource
+  data:
+    redis:
+      host: 100.86.250.112
+      port: 16379
+      database: 0
+      timeout: 3000ms
+      client-name: mall-redisson
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://100.86.250.112:16379"
+          database: 0
+          clientName: mall-redisson
+          connectionPoolSize: 10
+          connectionMinimumIdleSize: 5
+          idleConnectionTimeout: 30000
+          pingConnectionInterval: 60000
+          retryAttempts: 3
+          retryInterval: 1000
+          connectTimeout: 5000
+          timeout: 3000
+          keepAlive: true
+
+rocketmq:
+  producer:
+    group: mall-producer
+
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  config-location: classpath:/mybatis/config/mybatis-config.xml
+
+logging:
+  level:
+    root: info

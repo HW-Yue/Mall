@@ -1,0 +1,92 @@
+spring:
+  application:
+    name: order-service
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+    sentinel:
+      enabled: false
+  datasource:
+    username: root
+    password: 123456
+    url: jdbc:mysql://100.86.250.112:13306/test_order_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true&sessionVariables=sql_mode='NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES'
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: 100.86.250.112
+      port: 16379
+      database: 0
+      timeout: 3000ms
+      client-name: order-redisson
+  redis:
+    redisson:
+      config: |
+        singleServerConfig:
+          address: "redis://100.86.250.112:16379"
+          database: 0
+          clientName: order-redisson
+          connectionPoolSize: 20
+          connectionMinimumIdleSize: 5
+          idleConnectionTimeout: 30000
+          pingConnectionInterval: 60000
+          retryAttempts: 3
+          retryInterval: 1000
+          connectTimeout: 5000
+          timeout: 3000
+          keepAlive: true
+
+app:
+  order:
+    allow-direct-normal-create-order: true
+    get-pay-url-pending-retries: 6
+    get-pay-url-pending-wait-ms: 50
+    internal-create-token: ""
+  rocketmq:
+    topic:
+      paySuccessNormal: pay-success-normal
+      paySuccessGroupBuy: pay-success-group-buy
+      paySuccessSeckill: pay-success-seckill
+      orderCloseNormal: order-close-normal
+      orderCloseGroupBuy: order-close-group-buy
+      orderCloseSeckill: order-close-seckill
+      payRefundNormal: pay-refund-normal
+      payRefundGroupBuy: pay-refund-group-buy
+      payRefundSeckill: pay-refund-seckill
+      payRefundNormalResult: pay-refund-normal-result
+      payRefundGroupBuyResult: pay-refund-group-buy-result
+      payRefundSeckillResult: pay-refund-seckill-result
+      groupBuySuccessNotify: group-buy-success-notify
+      orderPaidNormal: order-paid-normal
+      orderPaidGroupBuy: order-paid-group_buy
+      orderPaidSeckill: order-paid-seckill
+      orderShipTask: order-ship-task
+      seckillOrderCreate: seckill-order-create
+      normalOrderCreate: normal-order-create
+    consumerGroup:
+      paySuccessNormal: CG_PAY_SUCCESS_NORMAL
+      paySuccessGroupBuy: CG_PAY_SUCCESS_GROUP_BUY
+      paySuccessSeckill: CG_PAY_SUCCESS_SECKILL
+      orderCloseNormal: CG_ORDER_CLOSE_NORMAL
+      orderCloseGroupBuy: CG_ORDER_CLOSE_GROUP_BUY
+      orderCloseSeckill: CG_ORDER_CLOSE_SECKILL
+      payRefundNormal: CG_PAY_REFUND_NORMAL
+      payRefundGroupBuy: CG_PAY_REFUND_GROUP_BUY
+      payRefundSeckill: CG_PAY_REFUND_SECKILL
+      payRefundNormalResult: CG_PAY_REFUND_NORMAL_RESULT
+      payRefundGroupBuyResult: CG_PAY_REFUND_GROUP_BUY_RESULT
+      payRefundSeckillResult: CG_PAY_REFUND_SECKILL_RESULT
+      groupBuySuccessNotify: CG_GROUP_BUY_SUCCESS_NOTIFY
+      orderShipTask: CG_ORDER_SHIP_TASK
+      seckillOrderCreate: CG_SECKILL_ORDER_CREATE_ORDER
+      normalOrderCreate: CG_NORMAL_ORDER_CREATE
+
+mybatis:
+  mapper-locations: classpath:/mybatis/mapper/*.xml
+  config-location: classpath:/mybatis/config/mybatis-config.xml
+
+logging:
+  level:
+    root: info

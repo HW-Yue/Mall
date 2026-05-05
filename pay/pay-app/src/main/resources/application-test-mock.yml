@@ -1,129 +1,25 @@
-server:
-  port: 18080
-
-# Actuator：供 Prometheus 抓取 /actuator/prometheus（与 Docker 内 Prometheus + Nacos SD 对接）
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,prometheus
-  metrics:
-    tags:
-      application: ${spring.application.name}
-
 spring:
   application:
     name: login-pay
   cloud:
     nacos:
       discovery:
-        server-addr: nacos:8848
-        locator:
-          enabled: true
+        enabled: false
+      config:
+        enabled: false
     sentinel:
-      eager: true
-      transport:
-        dashboard: sentinel-dashboard:8858
-        port: 8723
-      datasource:
-        flow:
-          nacos:
-            server-addr: ${spring.cloud.nacos.discovery.server-addr}
-            dataId: ${spring.application.name}-flow-rules.json
-            groupId: SENTINEL_GROUP
-            rule-type: flow
-            data-type: json
-        degrade:
-          nacos:
-            server-addr: ${spring.cloud.nacos.discovery.server-addr}
-            dataId: ${spring.application.name}-degrade-rules.json
-            groupId: SENTINEL_GROUP
-            rule-type: degrade
-            data-type: json
-        param-flow:
-          nacos:
-            server-addr: ${spring.cloud.nacos.discovery.server-addr}
-            dataId: ${spring.application.name}-param-flow-rules.json
-            groupId: SENTINEL_GROUP
-            rule-type: param-flow
-            data-type: json
-        system:
-          nacos:
-            server-addr: ${spring.cloud.nacos.discovery.server-addr}
-            dataId: ${spring.application.name}-system-rules.json
-            groupId: SENTINEL_GROUP
-            rule-type: system
-            data-type: json
-        authority:
-          nacos:
-            server-addr: ${spring.cloud.nacos.discovery.server-addr}
-            dataId: ${spring.application.name}-authority-rules.json
-            groupId: SENTINEL_GROUP
-            rule-type: authority
-            data-type: json
+      enabled: false
   datasource:
     username: root
     password: 123456
-    url: jdbc:mysql://mysql:3306/test_pay?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://100.86.250.112:13306/test_pay?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
     driver-class-name: com.mysql.cj.jdbc.Driver
-  hikari:
-    pool-name: Pay_HikariCP
-    minimum-idle: 15
-    idle-timeout: 180000
-    maximum-pool-size: 25
-    auto-commit: true
-    max-lifetime: 1800000
-    connection-timeout: 30000
-    connection-test-query: SELECT 1
-
-app:
-  config:
-    api-version: v1
-    cross-origin: '*'
-    group-buy-market:
-      api-url: http://group-buy-service:8093
-      source: s01
-      chanel: c01
-    no-market:
-      api-url: http://group-buy-service:8093
-      source: s01
-      chanel: c01
 
 mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
   config-location: classpath:/mybatis/config/mybatis-config.xml
 
-weixin:
-  config:
-    originalid: gh_7fe298abcb91
-    token: aldf
-    app-id: wx62a8a225daee8e88
-    app-secret: 72d44d94b649f0d3a903c7f0fcf333f2
-    template_id: D5JeVK-9D-S2jsS75TMngJXeboj4_223wzQVo4AJ-6A
-
-alipay:
-  enabled: true
-  app_id: 9021000156676042
-  merchant_private_key: MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCDEuGEtUnhhMKgmse63EALkQFvlUxKZpfEQ3ZIM3PWdUogwwP8BmeWnyVNHlEiy4nmU+hpKbpAlmBVbOvOjByCNNkjA0sPfSlaWNYrcFE8NzcefVXxmT5EZBthbAET+X/od8826GmUUuaPjtJhAK1bbLzE6Zqs7n6bAS7HEgjcoToBzQ3T+jTx8Can6yzGUsnVYRWhf/uHLN9SBV8S0v83q+pe4TdwFSOLepfKjfPev7xsBfpzEqSMQiZ/ltyyKYZOTaDmPKCguV1Y/O5YCLdOjveODeVHiTZjtRR5IkSlBY7ZWQXKTz5626CqBI/pZBjeCwU8H/LzzbIwHDP/0ov9AgMBAAECggEAZLhFg2yrcRhLVo6ZnAVTUZADwnK/RQzA4pfUdHbVNJ68b6Brl2Z0g1GXoEMDpfEx7kPb+7OM48SqEfq42ObhoUxq7nTBYQ2UkVBigs60HclwGYXGXPic2ID0aVBNI8Q9fa1TFaZSOx/Y+8eL8e5LSE2uYMIBkZFSyFmIUICTPrWmX/6x5huuaZJp8afF26fPZ2XN2PiFHz1JZ7zOWnYrDgo9xOHQPSaEy4if2wK6ue/U5xpCa2AkmtlY4xgHMGFR6QK1yQptTqtYq2qjtBq0dA7nEDW1PMAmLJUcvNjjeaf2+TFgdCwurmj/uVe9FmxqEz+5onPgk38Q1/PGDNp+AQKBgQDf4XlsbTCqo4Ijx6FV8yNbKdP/NPffkkP2zmM4KQjyFlr4DJOZHCMZnAHLJ4YjZHEfzAC4q5ougk+NnA+R8n+Xc4oKB7r4Ii3G0vUObLLcrrfbmd4Xz96AJV2sfDbYKtLC6omu+SkFyyADtLkBDzgQA6ylLPnpo1XGz5udNZw8jQKBgQCV4NwuaTLtORNDzQtLpPVieVdhVtLdfjsNfuzToWtZmo8REgKu90/ZH9aZ8nC/SuBJoPXLsZQdaOp8RvSDMVN2girZdoT160k49GJ8VOpeJfv6fUBoZZ+3hVRj3uDuEh0Tvse52qRQ3slT06Ac8+geKhE0aYYTsAnFRtvGaHIJMQKBgHsx2J44i4IqjW9g57+jFn6Qys5xeEC3fNyv/1slAX4tnQtH6GRlXk82UKpY6nBJUhKcMH1uOF6FaH9VNCAsn9dYRcp1LIZkUGpLJXw1hkr3fcbCqbrSsO41IZHLnGZhUi7d3rvA8bj1aH2BkhgqJsBxNSyDTlYpggbvsQLWQE31AoGBAJK/9ba3qHaf4N4NIVcysFV4K/eSFKts0pNXSLm6nqrAa/6x3NDGNHeK9gwMVxrmTI+rO5/zQuw88wM2Umk2Xdt2flAo/OzxMOPEXb4RQt1mYb+U7gCKKIV/1e5np2NTdwcDUPoIO8U3LneWiXpv00HdvLTN8crLHfX8eGpfj/CxAoGAFOBSEjBUv0sFFMu2VkvnwdVFilcYcddxNKBGhXd6r+QCW6FI+4QDeFEW5WruF+jciu3MUvTVV4w6OyCYwVTIiSbrvt+27JHMyFD04bKfmsZeQ/gokVzuu88kIX747HilzgJSyS3kvYLSPn4a946I+xkTDueCQXurVmGDPDekz3U=
-  alipay_public_key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxQnlTHWARNnL28x9ggM5zRGFfQCIHMqk9q3l8hbv3x9HeVloyTc8OP/rI5lYifWzlRgPsW0wcN6H7V2iErxEDjGbxg51gIIZlV71THr9uMpA8R+b5xj4eIuL+uAGQa8mneW+TJ3ZVBrXeYUgexrC/591WoFCqiwzw3CMf/wHiZHamVyCe1kYNgbzneGHadsxBBXL3zgrsH3PsKXTq6PpS4K2VrIxxBSRS2G+PAjInh0rMqVsdJizCTPRdKgpUY2qNspzm4CuKZc19kqp99ApLecvOqz+/unNxLP7HrBF4OMyBstdRzRFyGqS0kOVr/Wfczu1kfWwnuS86bLjI4RoIwIDAQAB
-  notify_url: http://pay:18080/api/v1/alipay/alipay_notify_url
-  return_url: http://127.0.0.1/
-  gatewayUrl: http://host.docker.internal:7000/gateway.do
-  mock-refund: true
-
-sc:
-  group:
-    buy:
-      market:
-        source: s01
-        chanel: c01
-
 rocketmq:
-  producer:
-    group: alipay-producer
-    send-message-timeout: 3000
-  consumer:
-    group: alipay-consumer
   topic:
     pay_success_normal: pay-success-normal
     pay_success_group_buy: pay-success-group-buy
@@ -137,25 +33,38 @@ rocketmq:
     pay_refund_normal_result: pay-refund-normal-result
     pay_refund_group_buy_result: pay-refund-group-buy-result
     pay_refund_seckill_result: pay-refund-seckill-result
-  consumerGroup:
-    payRefundNormal: CG_PAY_PAY_REFUND_NORMAL
-    orderCloseNormal: CG_PAY_ORDER_CLOSE_NORMAL
-    orderCloseGroupBuy: CG_PAY_ORDER_CLOSE_GROUP_BUY
-    payRefundGroupBuy: CG_PAY_PAY_REFUND_GROUP_BUY
-    orderCloseSeckill: CG_PAY_ORDER_CLOSE_SECKILL
-    payRefundSeckill: CG_PAY_PAY_REFUND_SECKILL
 
-logstash:
+app:
+  config:
+    api-version: v1
+    cross-origin: '*'
+    group-buy-market:
+      api-url: http://127.0.0.1:8093
+      source: s01
+      chanel: c01
+    no-market:
+      api-url: http://127.0.0.1:8093
+      source: s01
+      chanel: c01
+
+weixin:
+  config:
+    originalid: test-original
+    token: test-token
+    app-id: test-app-id
+    app-secret: test-app-secret
+    template_id: test-template
+
+alipay:
   enabled: true
-  host: logstash
-  port: 4560
+  app_id: test-app
+  merchant_private_key: test-private
+  alipay_public_key: test-public
+  notify_url: http://127.0.0.1/mock-notify
+  return_url: http://127.0.0.1/mock-return
+  gatewayUrl: http://127.0.0.1/mock-gateway
+  mock-refund: true
 
 logging:
   level:
     root: info
-  config: classpath:logback-spring.xml
-
-yue:
-  log:
-    trace:
-      provider: skywalking

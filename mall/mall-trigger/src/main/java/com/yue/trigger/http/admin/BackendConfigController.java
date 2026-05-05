@@ -38,7 +38,7 @@ public class BackendConfigController implements IBackendConfigController {
 
     @Override
     public Response<Boolean> updateDccConfig(String key, String value) {
-        return null;
+        return backendConfigAppService.updateDccConfig(key, value);
     }
 
     @Override

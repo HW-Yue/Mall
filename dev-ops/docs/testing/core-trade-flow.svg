@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1180" width="1400" height="1180">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#5a5a5a"/>
+    </marker>
+    <marker id="arrow-comp" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <polygon points="0 0, 8 4, 0 8" fill="#cc6b2c"/>
+    </marker>
+    <style>
+      text {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue',
+          Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif;
+      }
+      .title { fill: #1a1a1a; font-size: 30px; font-weight: 700; }
+      .subtitle { fill: #6a6a6a; font-size: 14px; }
+      .section-title { fill: #1a1a1a; font-size: 18px; font-weight: 700; }
+      .note { fill: #6a6a6a; font-size: 12px; }
+      .box-label { fill: #1a1a1a; font-size: 16px; font-weight: 700; }
+      .box-sub { fill: #5a5a5a; font-size: 12px; }
+      .edge-label { fill: #4a4a4a; font-size: 12px; font-weight: 700; }
+      .legend-label { fill: #1a1a1a; font-size: 13px; font-weight: 600; }
+      .tag-text { fill: #7a4a12; font-size: 11px; font-weight: 700; }
+      .id-text { fill: #0f5132; font-size: 11px; font-weight: 700; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="1180" fill="#f8f6f3"/>
+
+  <text x="700" y="44" text-anchor="middle" class="title">核心交易链路图</text>
+  <text x="700" y="68" text-anchor="middle" class="subtitle">覆盖普通商品、拼团、秒杀三条交易主链，以及支付成功、关单、退款、库存回补的同步/异步协作关系</text>
+
+  <rect x="40" y="92" width="1320" height="110" rx="16" fill="#f3f3f1" stroke="#d8d4ce" stroke-width="1.5"/>
+  <text x="62" y="122" class="section-title">图例</text>
+  <line x1="70" y1="150" x2="160" y2="150" stroke="#5a5a5a" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="176" y="154" class="legend-label">Feign 同步调用</text>
+  <line x1="330" y1="150" x2="420" y2="150" stroke="#5a5a5a" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+  <text x="436" y="154" class="legend-label">MQ 异步消息</text>
+  <line x1="560" y1="150" x2="650" y2="150" stroke="#cc6b2c" stroke-width="2.5" stroke-dasharray="10 6" marker-end="url(#arrow-comp)"/>
+  <text x="666" y="154" class="legend-label">失败补偿 / 退款 / 回滚</text>
+  <rect x="840" y="136" width="104" height="26" rx="13" fill="#fff1d6" stroke="#e0b56c" stroke-width="1.5"/>
+  <text x="892" y="153" text-anchor="middle" class="tag-text">补偿点</text>
+  <rect x="1030" y="136" width="140" height="26" rx="13" fill="#e6f4ee" stroke="#8cc7ad" stroke-width="1.5"/>
+  <text x="1100" y="153" text-anchor="middle" class="id-text">Idempotent</text>
+
+  <rect x="60" y="246" width="260" height="84" rx="14" fill="#eef5fb" stroke="#d5dde7" stroke-width="1.8"/>
+  <text x="190" y="279" text-anchor="middle" class="box-label">User</text>
+  <text x="190" y="303" text-anchor="middle" class="box-sub">提交普通单 / 拼团单 / 秒杀单</text>
+
+  <rect x="60" y="388" width="260" height="98" rx="14" fill="#eef9f4" stroke="#d6e8df" stroke-width="1.8"/>
+  <text x="190" y="423" text-anchor="middle" class="box-label">mall</text>
+  <text x="190" y="447" text-anchor="middle" class="box-sub">OrderTradeController</text>
+  <text x="190" y="466" text-anchor="middle" class="box-sub">锁库、反作弊、普通单建单入口</text>
+  <rect x="206" y="396" width="94" height="22" rx="11" fill="#e6f4ee" stroke="#8cc7ad" stroke-width="1.2"/>
+  <text x="253" y="411" text-anchor="middle" class="id-text">Idempotent</text>
+
+  <rect x="60" y="552" width="260" height="110" rx="14" fill="#eef9f4" stroke="#d6e8df" stroke-width="1.8"/>
+  <text x="190" y="587" text-anchor="middle" class="box-label">group-buy-service</text>
+  <text x="190" y="611" text-anchor="middle" class="box-sub">锁单、组队、成团结算</text>
+  <text x="190" y="630" text-anchor="middle" class="box-sub">支付成功回流、超时退款</text>
+  <rect x="196" y="560" width="104" height="22" rx="11" fill="#e6f4ee" stroke="#8cc7ad" stroke-width="1.2"/>
+  <text x="248" y="575" text-anchor="middle" class="id-text">Idempotent</text>
+
+  <rect x="60" y="738" width="260" height="110" rx="14" fill="#eef9f4" stroke="#d6e8df" stroke-width="1.8"/>
+  <text x="190" y="773" text-anchor="middle" class="box-label">seckill-service</text>
+  <text x="190" y="797" text-anchor="middle" class="box-sub">令牌校验、预占库存、下单</text>
+  <text x="190" y="816" text-anchor="middle" class="box-sub">支付后扣真实库存、退款回补</text>
+  <rect x="196" y="746" width="104" height="22" rx="11" fill="#e6f4ee" stroke="#8cc7ad" stroke-width="1.2"/>
+  <text x="248" y="761" text-anchor="middle" class="id-text">Idempotent</text>
+
+  <rect x="542" y="312" width="320" height="140" rx="16" fill="#a8c5e6" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="702" y="352" text-anchor="middle" class="box-label">order-service</text>
+  <text x="702" y="378" text-anchor="middle" class="box-sub">创建订单、查询支付、支付成功、关单、退款</text>
+  <text x="702" y="400" text-anchor="middle" class="box-sub">普通 / 拼团 / 秒杀统一订单状态流转中心</text>
+  <rect x="708" y="322" width="120" height="24" rx="12" fill="#e6f4ee" stroke="#8cc7ad" stroke-width="1.2"/>
+  <text x="768" y="338" text-anchor="middle" class="id-text">Idempotent</text>
+
+  <rect x="1040" y="312" width="260" height="140" rx="16" fill="#9dd4c7" stroke="#4a4a4a" stroke-width="2"/>
+  <text x="1170" y="352" text-anchor="middle" class="box-label">pay</text>
+  <text x="1170" y="378" text-anchor="middle" class="box-sub">创建支付单、支付成功、关单、退款</text>
+  <text x="1170" y="400" text-anchor="middle" class="box-sub">退款回执事务消息、本地状态推进</text>
+  <rect x="1178" y="322" width="98" height="24" rx="12" fill="#e6f4ee" stroke="#8cc7ad" stroke-width="1.2"/>
+  <text x="1227" y="338" text-anchor="middle" class="id-text">Idempotent</text>
+
+  <rect x="1040" y="522" width="260" height="94" rx="16" fill="#fbf4e8" stroke="#e6d9c2" stroke-width="1.8"/>
+  <text x="1170" y="558" text-anchor="middle" class="box-label">AliPay</text>
+  <text x="1170" y="582" text-anchor="middle" class="box-sub">支付网关回调 / 退款结果来源</text>
+
+  <rect x="514" y="574" width="378" height="236" rx="18" fill="#f3f3f1" stroke="#d8d4ce" stroke-width="1.8"/>
+  <text x="703" y="606" text-anchor="middle" class="section-title">RocketMQ Topics</text>
+  <text x="703" y="628" text-anchor="middle" class="note">pay-success-* / order-paid-* / order-close-* / pay-refund-* / pay-refund-*-result</text>
+
+  <rect x="544" y="652" width="318" height="42" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="703" y="678" text-anchor="middle" class="box-sub">pay-success-normal / group-buy / seckill</text>
+  <rect x="544" y="708" width="318" height="42" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="703" y="734" text-anchor="middle" class="box-sub">order-paid-group_buy / seckill</text>
+  <rect x="544" y="764" width="318" height="42" rx="10" fill="#f4e4c1" stroke="#4a4a4a" stroke-width="1.5"/>
+  <text x="703" y="790" text-anchor="middle" class="box-sub">order-close-* / pay-refund-*</text>
+
+  <line x1="190" y1="330" x2="190" y2="388" stroke="#5a5a5a" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <text x="206" y="363" class="edge-label">普通单入口</text>
+
+  <line x1="210" y1="330" x2="210" y2="552" stroke="#5a5a5a" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <text x="226" y="520" class="edge-label">拼团入口</text>
+
+  <line x1="230" y1="330" x2="230" y2="738" stroke="#5a5a5a" stroke-width="2.2" marker-end="url(#arrow)"/>
+  <text x="246" y="704" class="edge-label">秒杀入口</text>
+
+  <line x1="320" y1="437" x2="542" y2="382" stroke="#5a5a5a" stroke-width="2.6" marker-end="url(#arrow)"/>
+  <text x="394" y="392" class="edge-label">Feign sync 建单</text>
+
+  <line x1="320" y1="607" x2="542" y2="402" stroke="#5a5a5a" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+  <text x="358" y="500" class="edge-label">MQ / Feign 触发建单</text>
+
+  <line x1="320" y1="793" x2="542" y2="424" stroke="#5a5a5a" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+  <text x="374" y="643" class="edge-label">MQ 异步建单</text>
+
+  <line x1="862" y1="382" x2="1040" y2="382" stroke="#5a5a5a" stroke-width="2.6" marker-end="url(#arrow)"/>
+  <text x="913" y="370" class="edge-label">Feign sync 创建支付单</text>
+
+  <line x1="1170" y1="452" x2="1170" y2="522" stroke="#5a5a5a" stroke-width="2.6" marker-end="url(#arrow)"/>
+  <text x="1184" y="494" class="edge-label">支付网关交互</text>
+
+  <line x1="1040" y1="560" x2="862" y2="432" stroke="#5a5a5a" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+  <text x="964" y="509" class="edge-label">MQ pay-success-*</text>
+
+  <line x1="702" y1="452" x2="702" y2="574" stroke="#5a5a5a" stroke-width="2.4" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+  <text x="718" y="528" class="edge-label">order-paid-* / order-close-* / pay-refund-*</text>
+
+  <line x1="544" y1="672" x2="320" y2="596" stroke="#5a5a5a" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+  <text x="414" y="650" class="edge-label">order-paid-group_buy</text>
+
+  <line x1="544" y1="728" x2="320" y2="782" stroke="#5a5a5a" stroke-width="2.2" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+  <text x="392" y="774" class="edge-label">order-paid-seckill</text>
+
+  <line x1="862" y1="738" x2="1040" y2="418" stroke="#cc6b2c" stroke-width="2.4" stroke-dasharray="10 6" marker-end="url(#arrow-comp)"/>
+  <text x="924" y="616" class="edge-label">order-close-* / pay-refund-*</text>
+
+  <line x1="1040" y1="660" x2="862" y2="660" stroke="#cc6b2c" stroke-width="2.4" stroke-dasharray="10 6" marker-end="url(#arrow-comp)"/>
+  <text x="905" y="646" class="edge-label">pay-refund-*-result</text>
+
+  <line x1="544" y1="786" x2="320" y2="626" stroke="#cc6b2c" stroke-width="2.2" stroke-dasharray="10 6" marker-end="url(#arrow-comp)"/>
+  <text x="394" y="700" class="edge-label">超时退款 / 已支付退款回流</text>
+
+  <line x1="544" y1="794" x2="320" y2="818" stroke="#cc6b2c" stroke-width="2.2" stroke-dasharray="10 6" marker-end="url(#arrow-comp)"/>
+  <text x="386" y="842" class="edge-label">关单恢复库存 / 退款回补库存</text>
+
+  <line x1="320" y1="452" x2="320" y2="504" stroke="#cc6b2c" stroke-width="2.2" stroke-dasharray="10 6" marker-end="url(#arrow-comp)"/>
+  <text x="336" y="484" class="edge-label">建单失败解锁库存</text>
+  <rect x="222" y="492" width="98" height="24" rx="12" fill="#fff1d6" stroke="#e0b56c" stroke-width="1.2"/>
+  <text x="271" y="508" text-anchor="middle" class="tag-text">补偿点</text>
+
+  <rect x="380" y="298" width="122" height="26" rx="13" fill="#fff1d6" stroke="#e0b56c" stroke-width="1.2"/>
+  <text x="441" y="315" text-anchor="middle" class="tag-text">成功主路径</text>
+  <rect x="920" y="692" width="108" height="26" rx="13" fill="#fff1d6" stroke="#e0b56c" stroke-width="1.2"/>
+  <text x="974" y="709" text-anchor="middle" class="tag-text">补偿主路径</text>
+
+  <rect x="40" y="906" width="1320" height="226" rx="18" fill="#ffffff" stroke="#d8d4ce" stroke-width="1.5"/>
+  <text x="62" y="940" class="section-title">测试覆盖要求</text>
+  <text x="62" y="968" class="note">每个关键节点都要覆盖成功、补偿、幂等三类行为，尤其是 listener、state machine、refund/close 相关逻辑</text>
+
+  <rect x="68" y="994" width="390" height="108" rx="14" fill="#eef5fb" stroke="#d5dde7" stroke-width="1.5"/>
+  <text x="92" y="1023" class="box-label">成功路径全覆盖</text>
+  <text x="92" y="1050" class="box-sub">mall / group-buy / seckill 入口成功触发建单</text>
+  <text x="92" y="1070" class="box-sub">order-service 成功创建订单并调用 pay</text>
+  <text x="92" y="1090" class="box-sub">pay 回调后正常回流到订单和营销服务</text>
+
+  <rect x="500" y="994" width="390" height="108" rx="14" fill="#fbf4e8" stroke="#e6d9c2" stroke-width="1.5"/>
+  <text x="524" y="1023" class="box-label">失败补偿路径全覆盖</text>
+  <text x="524" y="1050" class="box-sub">mall 建单失败解锁库存</text>
+  <text x="524" y="1070" class="box-sub">order close / refund 驱动 pay 与营销库存回补</text>
+  <text x="524" y="1090" class="box-sub">pay-refund-*-result 回执驱动订单最终收口</text>
+
+  <rect x="932" y="994" width="390" height="108" rx="14" fill="#eef9f4" stroke="#d6e8df" stroke-width="1.5"/>
+  <text x="956" y="1023" class="box-label">幂等 / 重复消息 / 非法状态迁移全覆盖</text>
+  <text x="956" y="1050" class="box-sub">listener 重复消费不重复推进状态</text>
+  <text x="956" y="1070" class="box-sub">state machine 非法迁移被拒绝或软失败</text>
+  <text x="956" y="1090" class="box-sub">退款、关单、支付成功在终态下保持幂等</text>
+</svg>
