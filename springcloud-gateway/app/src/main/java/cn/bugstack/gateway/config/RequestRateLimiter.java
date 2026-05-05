@@ -1,4 +1,4 @@
-package cn.bugstack.xfg.dev.tech.config;
+package cn.bugstack.gateway.config;
 
 import org.springframework.cloud.gateway.filter.ratelimit.KeyResolver;
 import org.springframework.context.annotation.Bean;

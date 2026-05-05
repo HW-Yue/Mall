@@ -78,7 +78,7 @@
     </dependencies>
 
     <build>
-        <finalName>xfg-dev-tech-app</finalName>
+        <finalName>springcloud-gateway-app</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -99,7 +99,7 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <mainClass>cn.bugstack.xfg.dev.tech.SpringcloudGatewayApplication</mainClass>
+                    <mainClass>cn.bugstack.gateway.SpringcloudGatewayApplication</mainClass>
                     <layout>JAR</layout>
                 </configuration>
             </plugin>

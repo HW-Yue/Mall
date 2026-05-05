@@ -1,4 +1,4 @@
-package cn.bugstack.xfg.dev.tech.config;
+package cn.bugstack.gateway.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -45,4 +45,3 @@ public class RouteConfiguration {
     }
 
 }
-

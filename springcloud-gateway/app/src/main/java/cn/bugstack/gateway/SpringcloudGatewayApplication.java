@@ -1,4 +1,4 @@
-package cn.bugstack.xfg.dev.tech;
+package cn.bugstack.gateway;
 
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.boot.SpringApplication;

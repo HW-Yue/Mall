@@ -1,4 +1,4 @@
-package cn.bugstack.xfg.dev.tech.config;
+package cn.bugstack.gateway.config;
 
 import com.alibaba.csp.sentinel.adapter.gateway.common.rule.GatewayFlowRule;
 import com.alibaba.csp.sentinel.datasource.Converter;

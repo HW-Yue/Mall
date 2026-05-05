@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# 把当前目录下所有 *-rules.json 批量发布到 Nacos（Group = SENTINEL_GROUP）
+# 递归扫描当前目录下所有 *-rules.json 批量发布到 Nacos（Group = SENTINEL_GROUP）
 # 用法：
 #   NACOS_ADDR=100.86.250.112:8848 ./init-nacos-rules.sh
 # 可选：
@@ -40,18 +40,17 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-shopt -s nullglob
-FILES=( *-rules.json )
+mapfile -t FILES < <(find . -type f -name '*-rules.json' | sort)
 if (( ${#FILES[@]} == 0 )); then
-  echo "[warn] 当前目录没有 *-rules.json"
+  echo "[warn] 当前目录及子目录没有 *-rules.json"
   exit 0
 fi
 
 for f in "${FILES[@]}"; do
-  dataId="${f}"     # 文件名即 DataId，与 application-dev.yml 中 datasource.xxx.dataId 对齐
+  dataId="$(basename "${f}")"     # 文件名即 DataId，与 application-dev.yml 中 datasource.xxx.dataId 对齐
   content=$(cat "${f}")
   # 依 data-type: json，直接把 JSON 作为 content 发布
-  echo "[pub] ${dataId}  group=${GROUP}  ns=${NAMESPACE}"
+  echo "[pub] ${dataId}  path=${f#./}  group=${GROUP}  ns=${NAMESPACE}"
   curl -s -o /dev/null -w "  -> HTTP %{http_code}\n" -X POST "${BASE_URL}" \
     "${CURL_TOKEN[@]}" \
     --data-urlencode "namespaceId=${NAMESPACE}" \

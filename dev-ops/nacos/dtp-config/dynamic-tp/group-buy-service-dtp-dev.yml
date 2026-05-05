@@ -1,14 +1,7 @@
-# 源文件：group-buy-service/group-buy-service-app/src/main/resources/nacos/group-buy-service-runtime-dev.yml
-# DynamicTp + Agent 运行时（Hikari / 日志 / app.agent / Feign）
-# app.agent.feign.order-service.*：Feign 超时在启动时绑定；仅改 Nacos 不重启不会更新 Feign Request.Options（见 group-buy-service/docs/AGENT_NACOS_RUNTIME.md §6）。
+# group-buy-service DynamicTp / Tomcat 线程池配置（dev）
+# DataId: group-buy-service-dtp-dev.yml  Group: DEFAULT_GROUP
 
 spring:
-  datasource:
-    hikari:
-      pool-name: GroupBuy_HikariCP
-      minimum-idle: 5
-      maximum-pool-size: 10
-      connection-timeout: 30000
   dynamic:
     tp:
       enabled: true
@@ -41,21 +34,3 @@ spring:
         task-wrapper-names:
           - mdc
         notify-enabled: false
-
-logging:
-  level:
-    com.yue.groupbuy: info
-
-app:
-  agent:
-    cache:
-      redis-default-ttl-seconds: 3600
-      caffeine-expire-after-write-seconds: 300
-      cache-fallback-strategy: CACHE_FIRST
-    features:
-      marketing-push-enabled: true
-      statistics-report-enabled: true
-    feign:
-      order-service:
-        connect-timeout-ms: 5000
-        read-timeout-ms: 10000

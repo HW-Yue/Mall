@@ -13,6 +13,6 @@ ENV TZ=PRC
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # 添加应用
-ADD target/xfg-dev-tech-app.jar /xfg-dev-tech-app.jar
+ADD target/springcloud-gateway-app.jar /springcloud-gateway-app.jar
 
-ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /xfg-dev-tech-app.jar $PARAMS"]
+ENTRYPOINT ["sh","-c","java $JAVA_OPTS -jar /springcloud-gateway-app.jar $PARAMS"]
