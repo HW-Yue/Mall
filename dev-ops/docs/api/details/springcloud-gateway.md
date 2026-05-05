@@ -4,7 +4,7 @@
 
 ### `/gw/api/v1/mall/**`
 
-- 下游：`lb://mall`
+- 下游：`lb://mall-service`
 - 过滤器：`StripPrefix=1`
 - 示例：
 
@@ -13,14 +13,14 @@
 -> /api/v1/mall/index/query_goods_page
 ```
 
-### `/gw/api/v1/login-pay/**`
+### `/gw/api/v1/pay/**`
 
-- 下游：`lb://login-pay`
+- 下游：`lb://pay-service`
 - 过滤器：`StripPrefix=1`
 
 ### `/gw/api/v1/alipay/**`
 
-- 下游：`lb://login-pay`
+- 下游：`lb://pay-service`
 - 过滤器：`StripPrefix=1`
 
 ### `/gw/api/v1/order/**`

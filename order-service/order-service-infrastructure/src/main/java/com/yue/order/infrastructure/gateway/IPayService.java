@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 /**
- * 支付服务 Feign 客户端（对应 login-pay 服务）
+ * 支付服务 Feign 客户端（对应 pay-service 服务）
  */
-@FeignClient(name = "login-pay")
+@FeignClient(name = "pay-service")
 public interface IPayService {
 
     @PostMapping("/api/v1/alipay/create_pay_order")

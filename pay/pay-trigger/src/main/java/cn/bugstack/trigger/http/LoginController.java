@@ -13,7 +13,7 @@ import jakarta.annotation.Resource;
 
 @Slf4j
 @RestController()
-@RequestMapping("/api/v1/login-pay/login/")
+@RequestMapping("/api/v1/pay/login/")
 public class LoginController implements IAuthService {
 
     @Resource

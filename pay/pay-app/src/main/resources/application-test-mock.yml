@@ -1,6 +1,6 @@
 spring:
   application:
-    name: login-pay
+    name: pay-service
   cloud:
     nacos:
       discovery:

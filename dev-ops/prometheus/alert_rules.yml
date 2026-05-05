@@ -222,28 +222,28 @@ groups:
 
   # ============================================================================
   # pay 服务专项告警（支付链路，异常零容忍）
-  # 注意：pay 服务的 spring.application.name 为 login-pay
+  # 注意：pay 服务的 spring.application.name 为 pay-service
   # ============================================================================
   - name: pay-service-specific
     rules:
       - alert: PayServiceExceptionHigh
-        expr: sentinel_exception_qps{app="login-pay"} / clamp_min(sentinel_pass_qps{app="login-pay"}, 1) > 0.01
+        expr: sentinel_exception_qps{app="pay-service"} / clamp_min(sentinel_pass_qps{app="pay-service"}, 1) > 0.01
         for: 1m
         labels:
           severity: critical
           category: sentinel
-          application: login-pay
+          application: pay-service
         annotations:
           summary: "pay 服务异常率过高"
           description: "资源 {{ $labels.resource }} 异常率 = {{ $value | humanizePercentage }}"
 
       - alert: PayServiceCreatePayOrderRtHigh
-        expr: sentinel_rt{app="login-pay", resource="/api/v1/alipay/create_pay_order"} > 500
+        expr: sentinel_rt{app="pay-service", resource="/api/v1/alipay/create_pay_order"} > 500
         for: 2m
         labels:
           severity: warning
           category: sentinel
-          application: login-pay
+          application: pay-service
         annotations:
           summary: "pay 服务创建支付订单 RT 过高"
           description: "create_pay_order RT = {{ $value }}ms"
@@ -254,12 +254,12 @@ groups:
   - name: mall-service-specific
     rules:
       - alert: MallServiceQueryGoodsPageBlockHigh
-        expr: sentinel_block_qps{app="mall", resource="/api/v1/mall/index/query_goods_page"} > 50
+        expr: sentinel_block_qps{app="mall-service", resource="/api/v1/mall/index/query_goods_page"} > 50
         for: 1m
         labels:
           severity: warning
           category: sentinel
-          application: mall
+          application: mall-service
         annotations:
           summary: "mall 商品查询限流频繁"
           description: "query_goods_page block QPS = {{ $value | humanize }}/s"

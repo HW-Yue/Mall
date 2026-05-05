@@ -1,0 +1,20 @@
+# pay：运行时配置（自定义线程池 / 日志等）
+# 本地：由 application-dev.yml / application-test.yml 通过 spring.config.import classpath 加载。
+# Nacos：发布为 DataId「pay-service-runtime-dev.yml」、Group「DEFAULT_GROUP」。
+#
+# thread.pool.executor.config 由 ThreadPoolConfig 在启动时创建 ThreadPoolExecutor。
+# 修改 Nacos 后不会自动重建已创建的线程池；如需生效，请重启或滚动发布 pay-service 实例。
+
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        policy: CallerRunsPolicy
+
+logging:
+  level:
+    root: info

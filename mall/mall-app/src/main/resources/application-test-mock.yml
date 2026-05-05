@@ -12,7 +12,7 @@ app:
 
 spring:
   application:
-    name: mall
+    name: mall-service
   cloud:
     nacos:
       discovery:

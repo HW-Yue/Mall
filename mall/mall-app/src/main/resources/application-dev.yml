@@ -37,11 +37,11 @@ spring:
     allow-bean-definition-overriding: true
   config:
     import:
-      - classpath:nacos/mall-dtp-dev.yml
-      - optional:nacos:mall-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
-      - optional:nacos:mall-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - classpath:nacos/mall-service-dtp-dev.yml
+      - optional:nacos:mall-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - optional:nacos:mall-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   application:
-    name: mall
+    name: mall-service
   cloud:
     nacos:
       discovery:

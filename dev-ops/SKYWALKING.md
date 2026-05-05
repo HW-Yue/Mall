@@ -25,7 +25,7 @@ yue:
 ## 2.1 IDEA 一键跑（推荐）
 
 - 将 Java Agent 解压到仓库 [dev-tools/skywalking/README.md](../dev-tools/skywalking/README.md) 要求的路径，或只改 Run 里 `-javaagent` 的绝对路径。
-- 在 IDEA 运行配置下拉里选择以 **`_SkyWalking`** 结尾的配置（项目根 [`.run/`](../../../.run/) 已预置 6 个服务），`service_name` 与各服务 `spring.application.name` 对齐（如 pay 为 `login-pay`）。
+- 在 IDEA 运行配置下拉里选择以 **`_SkyWalking`** 结尾的配置（项目根 [`.run/`](../../../.run/) 已预置 6 个服务），`service_name` 与各服务 `spring.application.name` 对齐（如 pay 为 `pay-service`，mall 为 `mall-service`）。
 - 若提示 **Module 未找到**，在「Edit Configurations…」中把 *Use classpath of module* 选成对应子模块（如 `mall.mall-app.main`），以本机实际模块名为准，不必强求 `Nexus.*` 前缀是否一致。
 
 ## 3. JVM 增加 Java Agent
@@ -35,7 +35,7 @@ yue:
 ```text
 -javaagent:/绝对路径/skywalking-agent/skywalking-agent.jar
 -Dskywalking.collector.backend_service=100.86.250.112:11800
--Dskywalking.agent.service_name=mall-app
+-Dskywalking.agent.service_name=mall-service
 ```
 
 **网关、各微服务**使用不同的 `service_name`，便于拓扑区分。

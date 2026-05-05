@@ -16,9 +16,9 @@
 
 | 前端路径前缀 | 下游服务 | 过滤说明 | 备注 |
 |--------------|----------|----------|------|
-| `/gw/api/v1/mall/**` | `mall` | `StripPrefix=1` | 商城与后台配置 |
-| `/gw/api/v1/login-pay/**` | `login-pay` | `StripPrefix=1` | 登录相关 |
-| `/gw/api/v1/alipay/**` | `login-pay` | `StripPrefix=1` | 支付相关 |
+| `/gw/api/v1/mall/**` | `mall-service` | `StripPrefix=1` | 商城与后台配置 |
+| `/gw/api/v1/pay/**` | `pay-service` | `StripPrefix=1` | 登录相关 |
+| `/gw/api/v1/alipay/**` | `pay-service` | `StripPrefix=1` | 支付相关 |
 | `/gw/api/v1/order/**` | `order-service` | `StripPrefix=1` | 订单服务 |
 | `/gw/api/v1/group-buy/**` | `group-buy-service` | `StripPrefix=1` | 拼团服务 |
 | `/gw/api/v1/seckill/**` | `seckill-service` | `StripPrefix=1` | 秒杀服务 |

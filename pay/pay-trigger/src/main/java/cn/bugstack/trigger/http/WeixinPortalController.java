@@ -19,7 +19,7 @@ import jakarta.annotation.Resource;
 @Slf4j
 @RestController()
 @CrossOrigin("*")
-@RequestMapping("/api/v1/login-pay/weixin/portal/")
+@RequestMapping("/api/v1/pay/weixin/portal/")
 public class WeixinPortalController {
 
     @Value("${weixin.config.originalid}")

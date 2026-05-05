@@ -38,18 +38,18 @@
 |-----------|-----|----------|------------------|--------------|
 | GroupBuyServiceCreatePayOrderBlockHigh | 1m | warning | group-buy-service | `sentinel_block_qps{app="group-buy-service", resource=~"/api/v1/group-buy/trade/.*"} > 30` |
 
-## pay 服务专项（`app="login-pay"`）
+## pay 服务专项（`app="pay-service"`）
 
 | alertname | for | severity | application 标签 | expr（摘要） |
 |-----------|-----|----------|------------------|--------------|
-| PayServiceExceptionHigh | 1m | critical | login-pay | `sentinel_exception_qps{app="login-pay"}/clamp_min(sentinel_pass_qps{app="login-pay"},1) > 0.01` |
-| PayServiceCreatePayOrderRtHigh | 2m | warning | login-pay | `sentinel_rt{app="login-pay", resource="/api/v1/alipay/create_pay_order"} > 500` |
+| PayServiceExceptionHigh | 1m | critical | pay-service | `sentinel_exception_qps{app="pay-service"}/clamp_min(sentinel_pass_qps{app="pay-service"},1) > 0.01` |
+| PayServiceCreatePayOrderRtHigh | 2m | warning | pay-service | `sentinel_rt{app="pay-service", resource="/api/v1/alipay/create_pay_order"} > 500` |
 
 ## mall 专项
 
 | alertname | for | severity | application 标签 | expr（摘要） |
 |-----------|-----|----------|------------------|--------------|
-| MallServiceQueryGoodsPageBlockHigh | 1m | warning | mall | `sentinel_block_qps{app="mall", resource="/api/v1/mall/index/query_goods_page"} > 50` |
+| MallServiceQueryGoodsPageBlockHigh | 1m | warning | mall-service | `sentinel_block_qps{app="mall-service", resource="/api/v1/mall/index/query_goods_page"} > 50` |
 
 ## 网关专项
 

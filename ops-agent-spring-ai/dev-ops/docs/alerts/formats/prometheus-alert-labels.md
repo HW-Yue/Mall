@@ -10,7 +10,7 @@
 |----|------|--------|
 | `severity` | 严重度 | `warning` / `critical` |
 | `category` | 运维域/策略域 | `sentinel` / `dynamictp` / `http` / `hikari` / `system` / `mysql` / `redis` / `rocketmq` |
-| `application` | 业务应用名或 `shared` | `order-service` / `mall` / `shared` / `login-pay` 等 |
+| `application` | 业务应用名或 `shared` | `order-service` / `mall-service` / `shared` / `pay-service` 等 |
 
 > Prometheus 还会自动附加 **`alertname`**（来自规则中的 `alert:` 字段）以及抓取目标上的标签（如 `instance`、`job` 等），具体以实际 firing 为准。
 

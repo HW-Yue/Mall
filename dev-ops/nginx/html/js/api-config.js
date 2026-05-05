@@ -60,9 +60,9 @@
             querySeckillOrder: "/gw/api/v1/order/query_seckill_order",
         },
         login: {
-            checkLogin: "/gw/api/v1/login-pay/login/check_login",
-            register: "/gw/api/v1/login-pay/login/register",
-            weixinQrcodeTicket: "/gw/api/v1/login-pay/login/weixin_qrcode_ticket",
+            checkLogin: "/gw/api/v1/pay/login/check_login",
+            register: "/gw/api/v1/pay/login/register",
+            weixinQrcodeTicket: "/gw/api/v1/pay/login/weixin_qrcode_ticket",
         },
     };
 

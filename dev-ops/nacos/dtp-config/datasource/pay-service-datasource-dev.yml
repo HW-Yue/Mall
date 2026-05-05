@@ -1,5 +1,5 @@
 # pay 服务 Hikari 连接池可调项（dev）
-# DataId: pay-datasource-dev.yml  Group: DEFAULT_GROUP
+# DataId: pay-service-datasource-dev.yml  Group: DEFAULT_GROUP
 # pool-name = Pay_HikariCP（命名见根 CLAUDE.md，ops-agent-spring-ai 在 hikari SOP 中按 pool→application 反查）
 
 spring:

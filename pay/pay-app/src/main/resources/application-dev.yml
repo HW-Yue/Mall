@@ -30,21 +30,15 @@ app:
       source: s01
       chanel: c01
 
-# 线程池配置
-thread:
-  pool:
-    executor:
-      config:
-        core-pool-size: 20
-        max-pool-size: 50
-        keep-alive-time: 5000
-        block-queue-size: 5000
-        policy: CallerRunsPolicy
-
 # 数据库配置；启动时配置数据库资源信息
 spring:
   application:
-    name: login-pay
+    name: pay-service
+  config:
+    import:
+      - classpath:nacos/pay-service-runtime-dev.yml
+      - optional:nacos:pay-service-runtime-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - optional:nacos:pay-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   cloud:
     nacos:
       discovery:
@@ -52,6 +46,10 @@ spring:
         server-addr: 100.86.250.112:8848
         locator:
           enabled: true
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        import-check:
+          enabled: false
     # Sentinel：支付宝回调 + 创建支付 URL 是外部网关类强依赖接口，必须有熔断保护
     sentinel:
       eager: true
@@ -99,16 +97,16 @@ spring:
     password: 123456
     url: jdbc:mysql://100.86.250.112:13306/s-pay-mall-ddd-market?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=true
     driver-class-name: com.mysql.cj.jdbc.Driver
-  hikari:
-    pool-name: Pay_HikariCP
-    minimum-idle: 15 #最小空闲连接数量
-    idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
-    maximum-pool-size: 25 #连接池最大连接数，默认是10
-    auto-commit: true  #此属性控制从池返回的连接的默认自动提交行为,默认值：true
-    max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
-    connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
-    connection-test-query: SELECT 1
-  type: com.zaxxer.hikari.HikariDataSource
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: Pay_HikariCP
+      minimum-idle: 15 #最小空闲连接数量
+      idle-timeout: 180000 #空闲连接存活最大时间，默认600000（10分钟）
+      maximum-pool-size: 25 #连接池最大连接数，默认是10
+      auto-commit: true  #此属性控制从池返回的连接的默认自动提交行为,默认值：true
+      max-lifetime: 1800000 #此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+      connection-timeout: 30000 #数据库连接超时时间,默认30秒，即30000
+      connection-test-query: SELECT 1
 
 
 # MyBatis 配置【如需使用记得打开】

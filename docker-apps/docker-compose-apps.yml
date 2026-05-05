@@ -28,7 +28,7 @@ services:
         ${MALL_JAVA_OPTS:--Xms256m -Xmx512m -server -XX:+HeapDumpOnOutOfMemoryError
         -javaagent:/opt/skywalking/skywalking-agent/skywalking-agent.jar
         -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800}
-        -Dskywalking.agent.service_name=mall}
+        -Dskywalking.agent.service_name=mall-service}
       PARAMS: >-
         --spring.profiles.active=${MALL_SPRING_PROFILES_ACTIVE:-dev}
         --rocketmq.name-server=${MALL_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}
@@ -121,14 +121,14 @@ services:
     build:
       context: ../pay/pay-app
       dockerfile: Dockerfile
-    container_name: nexus-pay
+    container_name: pay
     environment:
       TZ: Asia/Shanghai
       JAVA_OPTS: >-
         ${PAY_JAVA_OPTS:--Xms256m -Xmx512m -server -XX:+HeapDumpOnOutOfMemoryError
         -javaagent:/opt/skywalking/skywalking-agent/skywalking-agent.jar
         -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800}
-        -Dskywalking.agent.service_name=pay}
+        -Dskywalking.agent.service_name=pay-service}
       PARAMS: >-
         --spring.profiles.active=${PAY_SPRING_PROFILES_ACTIVE:-test}
         --rocketmq.name-server=${PAY_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}

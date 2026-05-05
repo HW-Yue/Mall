@@ -54,21 +54,21 @@ spring:
             maxAge: 3600
       routes:
         - id: mall
-          uri: lb://mall
+          uri: lb://mall-service
           order: 1
           predicates:
             - Path=/gw/api/v1/mall/**
           filters:
             - StripPrefix=1
-        - id: login-pay
-          uri: lb://login-pay
+        - id: pay
+          uri: lb://pay-service
           order: 1
           predicates:
-            - Path=/gw/api/v1/login-pay/**
+            - Path=/gw/api/v1/pay/**
           filters:
             - StripPrefix=1
-        - id: login-pay-alipay
-          uri: lb://login-pay
+        - id: pay-alipay
+          uri: lb://pay-service
           order: 1
           predicates:
             - Path=/gw/api/v1/alipay/**

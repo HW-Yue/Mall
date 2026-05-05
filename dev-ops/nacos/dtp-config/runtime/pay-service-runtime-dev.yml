@@ -1,0 +1,19 @@
+# pay 服务运行时配置（dev）
+# DataId: pay-service-runtime-dev.yml  Group: DEFAULT_GROUP
+#
+# thread.pool.executor.config 在启动时创建自定义 ThreadPoolExecutor。
+# 修改该文件后需重启或滚动发布 pay-service 实例，线程池参数才会生效。
+
+thread:
+  pool:
+    executor:
+      config:
+        core-pool-size: 20
+        max-pool-size: 50
+        keep-alive-time: 5000
+        block-queue-size: 5000
+        policy: CallerRunsPolicy
+
+logging:
+  level:
+    root: info

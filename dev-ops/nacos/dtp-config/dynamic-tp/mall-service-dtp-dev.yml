@@ -1,7 +1,6 @@
 # DynamicTp 1.1.x：配置前缀 spring.dynamic.tp
-# 本地：由 application-dev.yml 通过 spring.config.import classpath 加载。
-# Nacos：发布为 DataId「mall-dtp-dev.yml」、Group「DEFAULT_GROUP」，
-#       与 optional nacos import 同名即可覆盖 classpath，实现热更新。
+# 本地：由各服务 classpath:nacos 加载；本文件用于 Nacos 覆盖（Group=DEFAULT_GROUP）。
+# 源文件：mall/mall-app/src/main/resources/nacos/mall-service-dtp-dev.yml（变更时请保持同步）
 
 spring:
   dynamic:

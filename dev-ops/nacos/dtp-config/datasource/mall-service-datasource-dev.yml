@@ -1,5 +1,5 @@
 # 可选：仅覆盖 Hikari 运行时可调项（与 HikariPoolDynamicRefresher 配合）
-# DataId 与 application-dev.yml 中 optional:nacos:mall-datasource-dev.yml 一致
+# DataId 与 application-dev.yml 中 optional:nacos:mall-service-datasource-dev.yml 一致
 # 默认值见 mall application-dev.yml；可按环境在 Nacos 中调大/调小
 
 spring:

@@ -69,7 +69,7 @@ services:
     build:
       context: ../pay/pay-app
       dockerfile: ../pay/pay-app/Dockerfile
-    container_name: nexus-pay
+    container_name: pay
     environment:
       <<: *app-env
     ports:

@@ -9,8 +9,8 @@
 | order-service 专项 | `order-service` | 与 `app="order-service"` 同时使用 |
 | seckill-service 专项 | `seckill-service` | |
 | group-buy-service 专项 | `group-buy-service` | |
-| pay / 支付宝创建订单 | `login-pay` | **`spring.application.name`** 为 login-pay（规则文件注释） |
-| mall 商品列表 | `mall` | |
+| pay / 支付宝创建订单 | `pay-service` | **`spring.application.name`** 为 pay-service（规则文件注释） |
+| mall 商品列表 | `mall-service` | |
 | 网关 | `gateway` | 指标里 `app="springcloud-gateway"`，标签 application 为 `gateway` |
 | Exporter 全局 | `shared` | MySQL/Redis/RocketMQ 实例级 |
 

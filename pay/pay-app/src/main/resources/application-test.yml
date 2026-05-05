@@ -13,13 +13,22 @@ management:
 
 spring:
   application:
-    name: login-pay
+    name: pay-service
+  config:
+    import:
+      - classpath:nacos/pay-service-runtime-dev.yml
+      - optional:nacos:pay-service-runtime-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - optional:nacos:pay-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   cloud:
     nacos:
       discovery:
         server-addr: nacos:8848
         locator:
           enabled: true
+      config:
+        server-addr: ${spring.cloud.nacos.discovery.server-addr}
+        import-check:
+          enabled: false
     sentinel:
       eager: true
       transport:
@@ -66,15 +75,16 @@ spring:
     password: 123456
     url: jdbc:mysql://mysql:3306/test_pay?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     driver-class-name: com.mysql.cj.jdbc.Driver
-  hikari:
-    pool-name: Pay_HikariCP
-    minimum-idle: 15
-    idle-timeout: 180000
-    maximum-pool-size: 25
-    auto-commit: true
-    max-lifetime: 1800000
-    connection-timeout: 30000
-    connection-test-query: SELECT 1
+    type: com.zaxxer.hikari.HikariDataSource
+    hikari:
+      pool-name: Pay_HikariCP
+      minimum-idle: 15
+      idle-timeout: 180000
+      maximum-pool-size: 25
+      auto-commit: true
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
 
 app:
   config:

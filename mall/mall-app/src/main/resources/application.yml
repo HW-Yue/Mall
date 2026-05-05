@@ -1,5 +1,5 @@
 spring:
   application:
-    name: mall
+    name: mall-service
   profiles:
     active: dev

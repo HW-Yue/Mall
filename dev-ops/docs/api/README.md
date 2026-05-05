@@ -29,9 +29,9 @@
 
 当前前端主要通过这些网关前缀进入后端：
 
-- `/gw/api/v1/mall/** -> mall`
-- `/gw/api/v1/login-pay/** -> login-pay`
-- `/gw/api/v1/alipay/** -> login-pay`
+- `/gw/api/v1/mall/** -> mall-service`
+- `/gw/api/v1/pay/** -> pay-service`
+- `/gw/api/v1/alipay/** -> pay-service`
 - `/gw/api/v1/order/** -> order-service`
 - `/gw/api/v1/group-buy/** -> group-buy-service`
 - `/gw/api/v1/seckill/** -> seckill-service`

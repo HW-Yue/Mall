@@ -64,8 +64,8 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 **网关路由表（StripPrefix=1，去掉 `/gw`）：**
 | 前端路径前缀 | 转发服务 |
 |------------|--------|
-| `/gw/api/v1/mall/**` | `lb://mall` |
-| `/gw/api/v1/login-pay/**` | `lb://login-pay` |
+| `/gw/api/v1/mall/**` | `lb://mall-service` |
+| `/gw/api/v1/pay/**` | `lb://pay-service` |
 | `/gw/api/v1/order/**` | `lb://order-service` |
 | `/gw/api/v1/group-buy/**` | `lb://group-buy-service` |
 | `/gw/api/v1/seckill/**` | `lb://seckill-service` |
@@ -199,7 +199,7 @@ Profiles: `dev` / `test` / `prod`，配置在各 app 模块 `src/main/resources/
 | group-buy-service | `com.yue.groupbuy.GroupBuyServiceApplication` | `group-buy-service-app` |
 | seckill-service | `com.yue.seckill.SeckillServiceApplication` | `seckill-service-app` |
 | pay | `cn.bugstack.PayApplication` | `pay-app` |
-| gateway | `cn.bugstack.xfg.dev.tech.SpringcloudGatewayApplication` | `app` |
+| gateway | `cn.bugstack.gateway.SpringcloudGatewayApplication` | `app` |
 
 ### Build & Run
 
@@ -238,8 +238,8 @@ docker compose -f docker-apps/docker-compose-apps.yml up -d
 | Alertmanager 配置 | `dev-ops/prometheus/alertmanager.yml` |
 | Grafana compose | `dev-ops/docker-compose-grafana.yml` |
 | exporter compose（mysqld/redis/rocketmq） | `dev-ops/docker-compose-exporters.yml` |
-| Sentinel 规则 | `dev-ops/nacos/sentinel-rules/*-flow-rules.json` |
-| DTP 配置 | `dev-ops/nacos/dtp-config/*-dtp-dev.yml` |
+| Sentinel 规则 | `dev-ops/nacos/sentinel-rules/`（按 `flow/`、`degrade/`、`param-flow/`、`system/`、`authority/`、`gateway/` 分目录） |
+| DTP 配置 | `dev-ops/nacos/dtp-config/`（按 `dynamic-tp/`、`datasource/`、`runtime/`、`shared/` 分目录） |
 | Sentinel 指标绑定 | `Dependencies/common-log-starter/.../sentinel/SentinelMetricsBinder.java` |
 
 **Sentinel 规则 Nacos 格式：**

@@ -90,11 +90,11 @@ false
 
 ## 登录接口
 
-### `GET /api/v1/login-pay/login/weixin_qrcode_ticket`
+### `GET /api/v1/pay/login/weixin_qrcode_ticket`
 
 说明：生成默认场景扫码 ticket。
 
-### `GET /api/v1/login-pay/login/weixin_qrcode_ticket_scene`
+### `GET /api/v1/pay/login/weixin_qrcode_ticket_scene`
 
 查询参数：
 
@@ -102,7 +102,7 @@ false
 |------|------|------|
 | `sceneStr` | 是 | 场景标识 |
 
-### `GET /api/v1/login-pay/login/check_login`
+### `GET /api/v1/pay/login/check_login`
 
 查询参数：
 
@@ -110,7 +110,7 @@ false
 |------|------|------|
 | `ticket` | 是 | 登录 ticket |
 
-### `GET /api/v1/login-pay/login/check_login_scene`
+### `GET /api/v1/pay/login/check_login_scene`
 
 查询参数：
 
@@ -119,7 +119,7 @@ false
 | `ticket` | 是 | 登录 ticket |
 | `sceneStr` | 是 | 场景标识 |
 
-### `POST /api/v1/login-pay/login/register`
+### `POST /api/v1/pay/login/register`
 
 请求体参数：
 
@@ -141,7 +141,7 @@ false
 
 ## 微信门户
 
-### `GET /api/v1/login-pay/weixin/portal/receive`
+### `GET /api/v1/pay/weixin/portal/receive`
 
 说明：微信公众号验签。
 
@@ -154,7 +154,7 @@ false
 | `nonce` | 是 | 随机串 |
 | `echostr` | 是 | 回显串 |
 
-### `POST /api/v1/login-pay/weixin/portal/receive`
+### `POST /api/v1/pay/weixin/portal/receive`
 
 说明：接收微信扫码事件和消息体。
 

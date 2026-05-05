@@ -15,10 +15,10 @@ spring:
         import-check:
           enabled: false
     # Sentinel Gateway：针对网关路由做接口分组限流
-    # Dashboard 上会自动出现「xfg-dev-tech-springcloud-gateway」，并识别所有 Route
+    # Dashboard 上会自动出现「springcloud-gateway」，并识别所有 Route
     # 动态规则：Nacos 中编辑
-    #   - xfg-dev-tech-springcloud-gateway-gw-flow-rules.json   （GatewayFlowRule 集合）
-    #   - xfg-dev-tech-springcloud-gateway-gw-api-rules.json    （ApiDefinition 接口分组，可选）
+    #   - springcloud-gateway-gw-flow-rules.json   （GatewayFlowRule 集合）
+    #   - springcloud-gateway-gw-api-rules.json    （ApiDefinition 接口分组，可选）
     sentinel:
       eager: true
       filter:
@@ -60,13 +60,13 @@ spring:
             maxAge: 3600
       # 与静态页 AppConfig 基址（如 http://100.86.250.112:8090）+ js/api-config.js 路径一致：
       #   /gw/api/v1/ops-ai/** -> ops-agent-spring-ai（Nacos 服务名 ops-agent-spring-ai）
-      #   /gw/api/v1/mall/**   -> mall：create_normal_order、index、trade
+      #   /gw/api/v1/mall/**   -> mall-service：create_normal_order、index、trade
       #   /gw/api/v1/order/**  -> order-service：create_order、get_pay_url、query_seckill_order
       #   /gw/api/v1/group-buy/**、/gw/api/v1/seckill/** -> 各营销服务
       # StripPrefix=1 去掉首段 gw，下游收到 /api/v1/...
       routes:
         - id: 1
-          uri: lb://mall
+          uri: lb://mall-service
           order: 1
           predicates:
             - Path=/gw/api/v1/mall/**
@@ -78,15 +78,15 @@ spring:
 #                redis-rate-limiter.replenishRate: 1 # 生成令牌速率：个/秒
 #                redis-rate-limiter.burstCapacity: 3 # 令牌桶容量
 #                redis-rate-limiter.requestedTokens: 1 # 每次消费的Token数量
-        - id: 2
-          uri: lb://login-pay
+        - id: pay
+          uri: lb://pay-service
           order: 1
           predicates:
-            - Path=/gw/api/v1/login-pay/**
+            - Path=/gw/api/v1/pay/**
           filters:
             - StripPrefix=1
-        - id: login-pay-alipay
-          uri: lb://login-pay
+        - id: pay-alipay
+          uri: lb://pay-service
           order: 1
           predicates:
             - Path=/gw/api/v1/alipay/**

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# 将当前目录下与「运行时配置」相关的 YAML 批量发布到 Nacos（Group = DEFAULT_GROUP）。
+# 递归扫描当前目录及子目录下与「运行时配置」相关的 YAML，批量发布到 Nacos（Group = DEFAULT_GROUP）。
 # 包含：DynamicTp（*-dtp-dev.yml）、可选 Hikari 覆盖（*-datasource-dev.yml）、
-#       拼团合并配置（*-runtime-dev.yml，如 group-buy-service-runtime-dev.yml）。
+#       运行时参数（*-runtime-dev.yml，如 group-buy-service-runtime-dev.yml / pay-service-runtime-dev.yml）。
 #
 # 覆盖的 DataId（文件名即 DataId，与各服务 application-dev.yml 中 optional:nacos:... 一致）：
 #   *-dtp-dev.yml           — spring.dynamic.tp（DynamicTp + Tomcat 适配）
 #   *-datasource-dev.yml    — spring.datasource.hikari.*（可选，配合 HikariPoolDynamicRefresher）
-#   *-runtime-dev.yml       — 拼团等：DynamicTp + Agent 等合并配置（见 group-buy-service）
+#   *-runtime-dev.yml       — 日志 / Agent / Feign / 自定义线程池等运行时参数
 #
 # 用法：
 #   NACOS_ADDR=100.86.250.112:8848 ./init-nacos-dtp.sh
@@ -47,18 +47,19 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${SCRIPT_DIR}"
 
-shopt -s nullglob
-FILES=( *-dtp-dev.yml *-datasource-dev.yml *-runtime-dev.yml )
+mapfile -t FILES < <(
+  find . -type f \( -name '*-dtp-dev.yml' -o -name '*-datasource-dev.yml' -o -name '*-runtime-dev.yml' \) | sort
+)
 if (( ${#FILES[@]} == 0 )); then
-  echo "[warn] 当前目录没有 *-dtp-dev.yml、*-datasource-dev.yml 或 *-runtime-dev.yml"
+  echo "[warn] 当前目录及子目录没有 *-dtp-dev.yml、*-datasource-dev.yml 或 *-runtime-dev.yml"
   exit 0
 fi
 
 for f in "${FILES[@]}"; do
   [[ -f "${f}" ]] || continue
-  dataId="${f}"
+  dataId="$(basename "${f}")"
   content=$(cat "${f}")
-  echo "[pub] ${dataId}  group=${GROUP}  ns=${NAMESPACE}  type=yaml"
+  echo "[pub] ${dataId}  path=${f#./}  group=${GROUP}  ns=${NAMESPACE}  type=yaml"
   curl -s -o /dev/null -w "  -> HTTP %{http_code}\n" -X POST "${BASE_URL}" \
     "${CURL_TOKEN[@]}" \
     --data-urlencode "namespaceId=${NAMESPACE}" \
