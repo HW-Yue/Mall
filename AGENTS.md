@@ -82,6 +82,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 
 - 总览：`dev-ops/docs/api/README.md`
 - 服务分文档：`dev-ops/docs/api/services/`
+- 详细接口文档：`dev-ops/docs/api/details/`
 
 事实来源：
 
@@ -96,6 +97,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 - gateway 路由
 - 对应服务接口文档
 - `dev-ops/docs/api/README.md` 中的总览说明
+- 需要时同步更新详细接口文档中的参数表和样例
 
 ## 业务流程
 

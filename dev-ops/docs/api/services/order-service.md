@@ -4,6 +4,8 @@
 
 `order-service` 负责统一订单创建、支付链接获取、订单查询、普通订单退款，以及营销订单的退款执行。
 
+详细参数和请求/响应样例见：[order-service 详细接口](../details/order-service.md)
+
 ## Base Path
 
 - 前端入口：`/gw/api/v1/order/**`

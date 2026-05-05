@@ -4,6 +4,8 @@
 
 `seckill-service` 负责秒杀商品市场查询、秒杀下单、秒杀退款，以及后台库存预热管理。
 
+详细参数和请求/响应样例见：[seckill-service 详细接口](../details/seckill-service.md)
+
 ## Base Path
 
 - 前端入口：`/gw/api/v1/seckill/**`

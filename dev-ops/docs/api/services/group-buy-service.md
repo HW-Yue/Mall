@@ -4,6 +4,8 @@
 
 `group-buy-service` 负责拼团商品市场查询、拼团下单、拼团退款，以及将试算、参团记录、统计聚合成拼团市场配置响应。
 
+详细参数和请求/响应样例见：[group-buy-service 详细接口](../details/group-buy-service.md)
+
 ## Base Path
 
 - 前端入口：`/gw/api/v1/group-buy/**`

@@ -57,6 +57,16 @@
 - [pay](./services/pay.md)
 - [springcloud-gateway](./services/springcloud-gateway.md)
 
+## 详细接口文档
+
+- [详细接口索引](./details/README.md)
+- [mall 详细接口](./details/mall.md)
+- [order-service 详细接口](./details/order-service.md)
+- [group-buy-service 详细接口](./details/group-buy-service.md)
+- [seckill-service 详细接口](./details/seckill-service.md)
+- [pay 详细接口](./details/pay.md)
+- [springcloud-gateway 详细接口](./details/springcloud-gateway.md)
+
 ## 维护规则
 
 接口文档以代码为准，优先读取：

@@ -10,6 +10,8 @@
 - 全局 CORS
 - Sentinel gateway fallback
 
+详细路由示例和路径重写说明见：[gateway 详细接口](../details/springcloud-gateway.md)
+
 ## 对外入口
 
 | 前端路径前缀 | 下游服务 | 过滤说明 | 备注 |
