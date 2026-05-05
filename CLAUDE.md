@@ -9,9 +9,12 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 所有架构图、流程图、技术图、MQ 路由图等可视化产物，统一归档到 `dev-ops/docs/` 下，不要散落到其他目录。
 
 约定：
-- 生成的 SVG / PNG / Mermaid / 说明文档，优先放在 `dev-ops/docs/`
-- 新增图表时，按主题继续细分子目录，例如 `dev-ops/docs/mq/`、`dev-ops/docs/architecture/`
-- 如果是和某个业务域强相关的说明图，也可以放在对应子目录下，但根目录仍以 `dev-ops/docs/` 为入口
+- 生成的 SVG / PNG / Mermaid / Markdown 说明文档，统一放在 `dev-ops/docs/`
+- 文档按主题分层归档：
+  - `dev-ops/docs/api/`：接口文档
+  - `dev-ops/docs/testing/`：测试方案与测试策略
+  - `dev-ops/docs/diagrams/`：流程图、MQ 图、交易链路图
+- 不要把接口清单、流程图、测试说明再散落到根目录 `docs/` 或服务子目录，正式文档都以 `dev-ops/docs/` 为入口
 
 **Services:**
 - `springcloud-gateway` — API Gateway（:8090），StripPrefix=1 去掉路径前缀 `/gw`
@@ -73,61 +76,26 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 - [ ] 新增服务 → 网关 yml 加路由，`api-config.js` 注册路径
 - [ ] 改 DTO 字段名 → 检查前端 JS 字段引用（`mall.js`/`payment.js` 等）
 
-## 接口清单
+## 接口文档
 
-### mall
-| 接口路径 | 方法 | 说明 |
-|----------|------|------|
-| `/api/v1/mall/index/query_category_type_list` | GET | 分类列表 |
-| `/api/v1/mall/index/query_goods_page` | POST | 商品分页 |
-| `/api/v1/mall/index/query_sku_detail` | POST | SKU 详情 |
-| `/api/v1/mall/index/query_activity_goods` | GET | 活动商品入口 |
-| `/api/v1/sku/lock_stock` | POST | 锁库存（order-service Feign 调用） |
-| `/api/v1/sku/unlock_stock` | POST | 解锁库存 |
-| `/api/v1/mall/trade/create_normal_order` | POST | 普通下单入口（防刷→锁库→异步落单） |
-| `/api/v1/gbm/config/activity_type*` | CRUD | 活动类型后台管理 |
-| `/api/v1/gbm/config/category*` | CRUD | 分类后台管理 |
-| `/api/v1/gbm/config/sku*` | CRUD | SKU 后台管理 |
-| `/api/v1/gbm/dcc/update_config` | GET | 动态配置更新 |
+接口清单不再内嵌在本文件，统一维护在：
 
-### order-service
-| 接口路径 | 方法 | 说明 |
-|----------|------|------|
-| `/api/v1/order/create_order` | POST | 创建订单（普通/拼团/秒杀通用） |
-| `/api/v1/order/create_order_normal_from_mall` | POST | 普通品已锁库后落单（服务间调用，可选 `X-Internal-Token`） |
-| `/api/v1/order/get_pay_url` | POST | 获取支付 URL |
-| `/api/v1/order/query_seckill_order` | POST | 秒杀建单结果轮询 |
-| `/api/v1/order/refund` | POST | 普通订单退款 |
-| `/api/v1/order/refund_execute` | POST | 营销订单退款执行（拼团/秒杀调用） |
-| `/api/v1/order/query_user_order_list` | POST | 用户订单列表（游标分页，`lastId`） |
+- 总览：`dev-ops/docs/api/README.md`
+- 服务分文档：`dev-ops/docs/api/services/`
 
-### group-buy-service
-| 接口路径 | 方法 | 说明 |
-|----------|------|------|
-| `/api/v1/group-buy/market/query_goods_list` | GET | 拼团商品列表 |
-| `/api/v1/group-buy/market/query_group_buy_market_config` | POST | 拼团市场配置（含进行中的团） |
-| `/api/v1/group-buy/market/trial` | POST | 拼团试算 |
-| `/api/v1/group-buy/market/query_orders` | POST | 进行中参团记录 |
-| `/api/v1/group-buy/market/team_statistics` | POST | 活动维度拼团统计 |
-| `/api/v1/group-buy/trade/create_pay_order` | POST | 拼团下单 |
-| `/api/v1/group-buy/trade/refund` | POST | 拼团退款 |
+事实来源：
 
-### seckill-service
-| 接口路径 | 方法 | 说明 |
-|----------|------|------|
-| `/api/v1/seckill/market/query_goods_list` | GET | 秒杀商品列表 |
-| `/api/v1/seckill/trade/create_pay_order` | POST | 秒杀下单 |
-| `/api/v1/seckill/trade/refund` | POST | 秒杀退款 |
+- `*-trigger/src/main/java/**/http/**`
+- `*-api/src/main/java/**`
+- `dev-ops/nginx/html/js/api-config.js`
+- `springcloud-gateway/app/src/main/resources/application-*.yml`
 
-### pay
-| 接口路径 | 方法 | 说明 |
-|----------|------|------|
-| `/api/v1/alipay/create_pay_order` | POST | 创建支付订单 |
-| `/api/v1/alipay/alipay_notify_url` | POST | 支付宝回调 |
-| `/api/v1/alipay/active_pay_notify` | POST | 主动查询支付状态（测试） |
-| `/api/v1/login-pay/login/check_login` | GET | 登录状态 |
-| `/api/v1/login-pay/login/register` | POST | 注册 |
-| `/api/v1/login-pay/login/weixin_qrcode_ticket` | GET | 微信登录二维码 |
+接口改动时，除了改代码，还必须同步更新：
+
+- `api-config.js`
+- gateway 路由
+- 对应服务接口文档
+- `dev-ops/docs/api/README.md` 中的总览说明
 
 ## 业务流程
 
