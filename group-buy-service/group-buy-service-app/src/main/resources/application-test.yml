@@ -19,6 +19,8 @@ spring:
       - classpath:nacos/group-buy-service-dtp-dev.yml
       - optional:nacos:group-buy-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - optional:nacos:group-buy-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - classpath:nacos/group-buy-service-mq-dev.yml
+      - optional:nacos:group-buy-service-mq-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - classpath:nacos/group-buy-service-runtime-dev.yml
       - optional:nacos:group-buy-service-runtime-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   main:

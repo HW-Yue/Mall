@@ -1,0 +1,20 @@
+# RocketMQ 消费线程池动态配置
+# 本地：由 application-dev.yml 通过 spring.config.import classpath 加载。
+# Nacos：发布为 DataId「seckill-service-mq-dev.yml」、Group「DEFAULT_GROUP」。
+
+app:
+  rocketmq:
+    consumer-thread-pool:
+      consumers:
+        CG_ORDER_PAID_SECKILL:
+          consume-thread-number: 20
+          consume-thread-max: 64
+        CG_ORDER_CLOSE_SECKILL_MARKET:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_SECKILL_STOCK_DEDUCT:
+          consume-thread-number: 20
+          consume-thread-max: 64
+        CG_SECKILL_PAY_REFUND:
+          consume-thread-number: 10
+          consume-thread-max: 32

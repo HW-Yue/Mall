@@ -8,6 +8,7 @@
 - [Sentinel 规则动态更新](./sentinel-rules.md)
 - [Hikari 连接池动态更新](./hikari-refresh.md)
 - [DynamicTp / Tomcat 动态更新](./dynamic-tp-refresh.md)
+- [RocketMQ 消费线程池动态更新](./rocketmq-consumer-refresh.md)
 - [运行时属性热更新](./runtime-properties-refresh.md)
 
 ## 维护规则

@@ -1,0 +1,26 @@
+# pay-service：RocketMQ 消费线程池动态配置
+# 本地：由 application-dev.yml / application-test.yml 通过 spring.config.import classpath 加载。
+# Nacos：发布为 DataId「pay-service-mq-dev.yml」、Group「DEFAULT_GROUP」。
+
+app:
+  rocketmq:
+    consumer-thread-pool:
+      consumers:
+        CG_PAY_ORDER_CLOSE_NORMAL:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_PAY_ORDER_CLOSE_GROUP_BUY:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_PAY_ORDER_CLOSE_SECKILL:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_PAY_PAY_REFUND_NORMAL:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_PAY_PAY_REFUND_GROUP_BUY:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_PAY_PAY_REFUND_SECKILL:
+          consume-thread-number: 10
+          consume-thread-max: 32

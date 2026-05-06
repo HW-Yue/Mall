@@ -19,6 +19,8 @@ spring:
       - classpath:nacos/order-service-dtp-dev.yml
       - optional:nacos:order-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - optional:nacos:order-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - classpath:nacos/order-service-mq-dev.yml
+      - optional:nacos:order-service-mq-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   cloud:
     nacos:
       discovery:

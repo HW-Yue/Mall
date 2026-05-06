@@ -254,6 +254,7 @@ Prometheus、Alertmanager、Sentinel、DynamicTP、ELK、SkyWalking、启动顺�
 - Sentinel 规则动态更新：`dev-ops/docs/config/sentinel-rules.md`
 - Hikari 连接池动态更新：`dev-ops/docs/config/hikari-refresh.md`
 - DynamicTp / Tomcat 动态更新：`dev-ops/docs/config/dynamic-tp-refresh.md`
+- RocketMQ 消费线程池动态更新：`dev-ops/docs/config/rocketmq-consumer-refresh.md`
 - 运行时属性热更新：`dev-ops/docs/config/runtime-properties-refresh.md`
 
 相关事实来源：

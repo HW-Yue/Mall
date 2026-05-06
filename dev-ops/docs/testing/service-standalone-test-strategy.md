@@ -64,6 +64,20 @@ MQ 测试：
 - listener 直接调用 `onMessage(...)`
 - 必须覆盖成功、重复消息、下游异常、非法消息
 
+动态配置测试：
+
+- 不连真实配置中心，直接构造配置对象和刷新事件
+- 对 `HikariPoolDynamicRefresher`、`RocketMqConsumerThreadPoolRefresher`、`@RefreshScope` 属性类这类代码，优先写纯单测
+- 必须打印或断言刷新前后关键值，避免只验证“没报错”
+- 如果刷新逻辑涉及运行中的执行器，至少断言：
+  - 配置对象视角的值已变化
+  - 底层线程池 / consumer / datasource 的运行时值也已变化
+
+当前示例：
+
+- `order-service/order-service-app/src/test/java/com/yue/order/config/RocketMqConsumerThreadPoolRefresherTest.java`
+  通过真实 `DefaultMQPushConsumer` + `ConsumeMessageConcurrentlyService` 验证 RocketMQ 消费线程池在刷新前后确实变化，并输出前后参数
+
 Feign 测试：
 
 - 业务层测试 DTO 组装、空响应、失败码、异常补偿

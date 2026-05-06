@@ -14,14 +14,14 @@
 
 ## 服务支持矩阵
 
-| 服务 | Sentinel 规则动态更新 | DynamicTp / Tomcat | Hikari 连接池 | 运行时属性热更新 |
-|---|---|---|---|---|
-| `springcloud-gateway` | 支持网关 `gw-flow`；规则源为 Nacos `SENTINEL_GROUP` | 不涉及 | 不涉及 | 不涉及 |
-| `mall` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 当前未单独拆 runtime 热更新 |
-| `order-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 当前未单独拆 runtime 热更新 |
-| `group-buy-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 支持 `logging.level.*`、`app.agent.*`，Feign 超时需重启实例 |
-| `seckill-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 当前未单独拆 runtime 热更新 |
-| `pay` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 当前未拆 `dtp` DataId | 支持部分字段 | 有 `pay-service-runtime-dev.yml` 入口，当前以运行时配置承载为主 |
+| 服务 | Sentinel 规则动态更新 | DynamicTp / Tomcat | Hikari 连接池 | RocketMQ 消费线程池 | 运行时属性热更新 |
+|---|---|---|---|---|---|
+| `springcloud-gateway` | 支持网关 `gw-flow`；规则源为 Nacos `SENTINEL_GROUP` | 不涉及 | 不涉及 | 不涉及 | 不涉及 |
+| `mall` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 当前无 MQ 消费者 | 当前未单独拆 runtime 热更新 |
+| `order-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 当前未单独拆 runtime 热更新 |
+| `group-buy-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 支持 `logging.level.*`、`app.agent.*`，Feign 超时需重启实例 |
+| `seckill-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 当前未单独拆 runtime 热更新 |
+| `pay` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 当前未拆 `dtp` DataId | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 有 `pay-service-runtime-dev.yml` 入口，当前以运行时配置承载为主 |
 
 说明：
 
@@ -38,9 +38,11 @@
    用于 `spring.datasource.hikari.*`。
 3. `*-runtime-dev.yml`
    用于日志级别、业务开关、部分运行时参数。
-4. `*-flow-rules.json`、`*-degrade-rules.json`、`*-param-flow-rules.json`、`*-system-rules.json`、`*-authority-rules.json`
+4. `*-mq-dev.yml`
+   用于 RocketMQ 消费线程池配置。
+5. `*-flow-rules.json`、`*-degrade-rules.json`、`*-param-flow-rules.json`、`*-system-rules.json`、`*-authority-rules.json`
    用于业务服务 Sentinel 规则。
-5. `springcloud-gateway-gw-flow-rules.json`、`springcloud-gateway-gw-api-rules.json`
+6. `springcloud-gateway-gw-flow-rules.json`、`springcloud-gateway-gw-api-rules.json`
    用于网关 Sentinel Gateway 规则。
 
 这样拆分的目的：
@@ -54,6 +56,7 @@
 - Sentinel 规则动态更新：[sentinel-rules.md](./sentinel-rules.md)
 - Hikari 连接池动态更新：[hikari-refresh.md](./hikari-refresh.md)
 - DynamicTp / Tomcat 动态更新：[dynamic-tp-refresh.md](./dynamic-tp-refresh.md)
+- RocketMQ 消费线程池动态更新：[rocketmq-consumer-refresh.md](./rocketmq-consumer-refresh.md)
 - 运行时属性热更新：[runtime-properties-refresh.md](./runtime-properties-refresh.md)
 
 ## 当前热更新边界摘要
@@ -112,7 +115,22 @@ spring:
 - 服务启动后会持续监听对应 DataId
 - 修改后通常不需要重启应用实例
 
-### 4. 业务运行时配置
+### 4. RocketMQ 消费线程池
+
+`order-service`、`group-buy-service`、`seckill-service`、`pay` 现在都拆出了 `*-mq-dev.yml`：
+
+- `order-service-mq-dev.yml`
+- `group-buy-service-mq-dev.yml`
+- `seckill-service-mq-dev.yml`
+- `pay-service-mq-dev.yml`
+
+这一类配置的特点是：
+
+- 按 `consumerGroup` 维度配置 `consumeThreadNumber` 和 `consumeThreadMax`
+- Nacos 刷新后，项目内的 refresher 会找到对应 `DefaultRocketMQListenerContainer`
+- 再把新值应用到运行中的 `DefaultMQPushConsumer` 和消费线程池
+
+### 5. 业务运行时配置
 
 `group-buy-service` 额外支持 `group-buy-service-runtime-dev.yml`：
 

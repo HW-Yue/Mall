@@ -14,6 +14,7 @@ management:
 # 运行时配置：
 # - DynamicTp：classpath:nacos/group-buy-service-dtp-dev.yml + optional:nacos 同名 DataId
 # - Hikari：optional:nacos:group-buy-service-datasource-dev.yml 运行时覆盖
+# - RocketMQ 消费线程池：classpath:nacos/group-buy-service-mq-dev.yml + optional:nacos 同名 DataId
 # - Agent / 日志 / Feign：classpath:nacos/group-buy-service-runtime-dev.yml + optional:nacos 同名 DataId
 spring:
   config:
@@ -21,6 +22,8 @@ spring:
       - classpath:nacos/group-buy-service-dtp-dev.yml
       - optional:nacos:group-buy-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - optional:nacos:group-buy-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - classpath:nacos/group-buy-service-mq-dev.yml
+      - optional:nacos:group-buy-service-mq-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - classpath:nacos/group-buy-service-runtime-dev.yml
       - optional:nacos:group-buy-service-runtime-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   datasource:

@@ -1,0 +1,48 @@
+# RocketMQ 消费线程池动态配置
+# 本地：由 application-dev.yml / application-test.yml 通过 spring.config.import classpath 加载。
+# Nacos：发布为 DataId「order-service-mq-dev.yml」、Group「DEFAULT_GROUP」。
+# 说明：按 consumerGroup 调整 consumeThreadNumber / consumeThreadMax，刷新后直接作用于运行中的消费线程池。
+
+app:
+  rocketmq:
+    consumer-thread-pool:
+      consumers:
+        CG_PAY_SUCCESS_NORMAL:
+          consume-thread-number: 20
+          consume-thread-max: 64
+        CG_PAY_SUCCESS_GROUP_BUY:
+          consume-thread-number: 20
+          consume-thread-max: 64
+        CG_PAY_SUCCESS_SECKILL:
+          consume-thread-number: 20
+          consume-thread-max: 64
+        CG_ORDER_CLOSE_NORMAL:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_ORDER_CLOSE_GROUP_BUY:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_ORDER_CLOSE_SECKILL:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_PAY_REFUND_NORMAL_RESULT:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_PAY_REFUND_GROUP_BUY_RESULT:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_PAY_REFUND_SECKILL_RESULT:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_GROUP_BUY_SUCCESS_NOTIFY:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_ORDER_SHIP_TASK:
+          consume-thread-number: 10
+          consume-thread-max: 32
+        CG_SECKILL_ORDER_CREATE_ORDER:
+          consume-thread-number: 20
+          consume-thread-max: 64
+        CG_NORMAL_ORDER_CREATE:
+          consume-thread-number: 20
+          consume-thread-max: 64

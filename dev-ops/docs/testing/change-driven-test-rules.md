@@ -51,6 +51,19 @@
 - 必须同步检查 `mockito-extensions/org.mockito.plugins.MockMaker`
 - 必须同步检查本服务测试基类和 test config
 
+## 改 `动态配置刷新 / 配置中心监听器 / 运行时线程池刷新`
+
+- 同步修改或新增 `*RefresherTest`、`*PropertiesTest`
+- 不连真实 Nacos / RocketMQ / Sentinel Dashboard
+- 可以直接构造 `EnvironmentChangeEvent` 或手工调用启动钩子验证刷新逻辑
+- 必须断言“刷新前”和“刷新后”的关键配置值，不只断言方法被调用
+- 如果代码会改运行中的线程池、连接池、consumer 容器，必须同时断言外层配置对象和底层运行时对象都已变化
+
+当前示例：
+
+- `order-service/order-service-app/src/test/java/com/yue/order/config/RocketMqConsumerThreadPoolRefresherTest.java`
+  断言 RocketMQ consumer `consumeThreadMin / consumeThreadMax` 与内部 `consumeExecutor core/max` 在 startup + refresh 两个阶段都发生变化
+
 ## 相关入口
 
 - 服务内自治单测策略：`service-standalone-test-strategy.md`

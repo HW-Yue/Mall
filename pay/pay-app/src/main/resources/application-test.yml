@@ -19,6 +19,8 @@ spring:
       - classpath:nacos/pay-service-runtime-dev.yml
       - optional:nacos:pay-service-runtime-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - optional:nacos:pay-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - classpath:nacos/pay-service-mq-dev.yml
+      - optional:nacos:pay-service-mq-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   cloud:
     nacos:
       discovery:

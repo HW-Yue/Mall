@@ -21,6 +21,8 @@ spring:
       - classpath:nacos/seckill-service-dtp-dev.yml
       - optional:nacos:seckill-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - optional:nacos:seckill-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - classpath:nacos/seckill-service-mq-dev.yml
+      - optional:nacos:seckill-service-mq-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://100.86.250.112:13306/seckill_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
