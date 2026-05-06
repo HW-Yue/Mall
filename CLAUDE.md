@@ -12,6 +12,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 - 生成的 SVG / PNG / Mermaid / Markdown 说明文档，统一放在 `dev-ops/docs/`
 - 文档按主题分层归档：
   - `dev-ops/docs/api/`：接口文档
+  - `dev-ops/docs/config/`：配置中心、运行时配置、动态更新文档
   - `dev-ops/docs/testing/`：测试方案与测试策略
   - `dev-ops/docs/diagrams/`：流程图、MQ 图、交易链路图
 - 不要把接口清单、流程图、测试说明再散落到根目录 `docs/` 或服务子目录，正式文档都以 `dev-ops/docs/` 为入口
@@ -101,24 +102,33 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 
 ## 业务流程
 
-> **核心原则**：order-service 发 MQ 必须用 RocketMQ **事务消息**（发半消息 → 本地事务更新订单状态 → 提交半消息）。
+> **当前实现要点：**
+> - `order-service` 不是所有 MQ 都走事务消息。当前 `pay-refund-*`、`order-ship-task` 走事务消息；`order-paid-*`、`normal-order-create` 走普通消息。
+> - 普通单是 mall 锁库后，由 `order-service` 投递 `normal-order-create` 异步落库。
+> - 秒杀下单先返回 `seckillToken`，前端轮询拿到 `orderId` 后再走支付流程。
 
 ### 普通下单
-前端 → mall `create_normal_order`（防刷→锁库）→ Feign order-service `create_order_normal_from_mall`（MQ 异步落单）→ 前端拿 `orderId` → order-service `get_pay_url` → Feign pay → 支付宝
+前端 → mall `create_normal_order`（防刷→锁可售库存） → Feign order-service `create_order_normal_from_mall` → order-service 发布 `normal-order-create` → order-service 消费后异步落库 `t_order` → 前端拿 `orderId` / `outTradeNo` → order-service `get_pay_url`（必要时短暂重试等待订单落库）→ Feign pay `create_pay_order` → 支付宝
 
-支付后：支付宝回调 pay → `pay-success-normal` → order-service 事务消息更新订单状态
+支付后：支付宝回调 pay → pay 更新支付单状态 → `pay-success-normal` → order-service 更新订单状态 → 发布 `order-paid-normal` 与事务消息 `order-ship-task`
 
 ### 拼团下单
-前端 → group-buy-service `create_pay_order`（校验+占库存）→ Feign order-service `create_order` → 返回 `orderId` → 同普通支付流程
+前端 → group-buy-service `create_pay_order`（校验活动、占 `lock_count`、必要时创建 team）→ Feign order-service `create_order` → 返回 `orderId` / `teamId` / `outTradeNo` → order-service `get_pay_url` → Feign pay → 支付宝
 
-支付后：pay → `pay-success-group-buy` → order-service 事务消息 → `order-paid-group_buy` → group-buy-service 更新组队状态 → 成团后 → group-buy-service 调 order-service 结算
+新开团时：group-buy-service 还会发送 `group-buy-timeout-refund` 定时消息，用于队伍超时后的关单 / 退款补偿。
+
+支付后：pay → `pay-success-group-buy` → order-service 更新订单状态 → 发布 `order-paid-group_buy` → group-buy-service 结算拼团订单并更新组队状态 → 成团后由 group-buy-service 再发 `group-buy-success-notify` 给 order-service 推进后续处理
 
 ### 秒杀下单
-前端 → seckill-service `create_pay_order`（校验+扣库存）→ Feign order-service `create_order` → 返回 `orderId` → 同普通支付流程
+前端 → seckill-service `create_pay_order`（校验活动、Lua 扣 Redis 可售库存、生成 `seckillToken` / `outTradeNo`）→ seckill-service 发布 `seckill-order-create` → order-service 异步建单 → 前端轮询 order-service `query_seckill_order` 拿到 `orderId` → order-service `get_pay_url` → Feign pay → 支付宝
 
-支付后：pay → `pay-success-seckill` → order-service 事务消息 → `order-paid-seckill` → seckill-service 更新订单状态
+支付后：pay → `pay-success-seckill` → order-service 更新订单状态 → 发布 `order-paid-seckill` 与事务消息 `order-ship-task` → seckill-service 扣 Redis 真实库存并发布 `seckill-stock-deduct` 异步回写 MySQL 库存
 
-退款：前端 → 各营销服务 `refund` → HTTP 调 order-service `refund_execute`
+退款：
+
+- 普通单：前端 → order-service `refund` → order-service 发布事务消息 `pay-refund-normal`
+- 拼团 / 秒杀：前端 → 各营销服务 `refund` → HTTP 调 order-service `refund_execute` → order-service 发布事务消息 `pay-refund-group-buy` / `pay-refund-seckill`
+- pay 完成退款后，再回写 `pay-refund-*-result` 给 order-service；营销服务侧分别消费 `pay-refund-group-buy` / `pay-refund-seckill` 做本地状态与库存补偿
 
 ## MQ 文档
 
@@ -234,6 +244,24 @@ Prometheus、Alertmanager、Sentinel、DynamicTP、ELK、SkyWalking、启动顺�
 - `dev-ops/nacos/sentinel-rules/README.md`
 - `dev-ops/SKYWALKING.md`
 - 告警 → SOP → ReAct 流水线：`ops-agent-spring-ai/README.md`
+
+## 配置文档
+
+配置中心接入、运行时配置拆分、动态更新边界统一维护在：
+
+- 总览：`dev-ops/docs/config/README.md`
+- 配置更新总览：`dev-ops/docs/config/dynamic-refresh.md`
+- Sentinel 规则动态更新：`dev-ops/docs/config/sentinel-rules.md`
+- Hikari 连接池动态更新：`dev-ops/docs/config/hikari-refresh.md`
+- DynamicTp / Tomcat 动态更新：`dev-ops/docs/config/dynamic-tp-refresh.md`
+- 运行时属性热更新：`dev-ops/docs/config/runtime-properties-refresh.md`
+
+相关事实来源：
+
+- 各服务 `application-{profile}.yml`
+- 各服务 `src/main/resources/nacos/*.yml`
+- 各服务 `HikariPoolDynamicRefresher`
+- `@RefreshScope` 配置类与运行时配置装配类
 
 ## 服务单测约定
 
