@@ -77,6 +77,8 @@ MQ 测试：
 
 - `order-service/order-service-app/src/test/java/com/yue/order/config/RocketMqConsumerThreadPoolRefresherTest.java`
   通过真实 `DefaultMQPushConsumer` + `ConsumeMessageConcurrentlyService` 验证 RocketMQ 消费线程池在刷新前后确实变化，并输出前后参数
+- `mall/mall-app/src/test/java/com/yue/config/HikariPoolDynamicRefresherTest.java`
+  通过真实 `HikariDataSource` + `EnvironmentChangeEvent` 验证连接池参数在刷新前后确实变化，并输出前后参数
 
 Feign 测试：
 

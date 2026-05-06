@@ -63,6 +63,10 @@
 
 - `order-service/order-service-app/src/test/java/com/yue/order/config/RocketMqConsumerThreadPoolRefresherTest.java`
   断言 RocketMQ consumer `consumeThreadMin / consumeThreadMax` 与内部 `consumeExecutor core/max` 在 startup + refresh 两个阶段都发生变化
+- `mall/mall-app/src/test/java/com/yue/config/HikariPoolDynamicRefresherTest.java`
+  断言 Hikari 连接池 `maximumPoolSize / minimumIdle` 在刷新前后发生变化
+- `group-buy-service/group-buy-service-app/src/test/java/com/yue/groupbuy/config/HikariPoolDynamicRefresherTest.java`
+  断言 Hikari 连接池 `maximumPoolSize / minimumIdle / connectionTimeout` 在刷新前后发生变化
 
 ## 相关入口
 
