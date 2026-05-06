@@ -67,6 +67,8 @@
   断言 Hikari 连接池 `maximumPoolSize / minimumIdle` 在刷新前后发生变化
 - `group-buy-service/group-buy-service-app/src/test/java/com/yue/groupbuy/config/HikariPoolDynamicRefresherTest.java`
   断言 Hikari 连接池 `maximumPoolSize / minimumIdle / connectionTimeout` 在刷新前后发生变化
+- `mall/mall-app/src/test/java/com/yue/config/DynamicTpRefreshTest.java`
+  断言 `DynamicTp` 业务线程池和 `tomcatTp` 线程池在刷新前后 `corePoolSize / maximumPoolSize / keepAliveTime` 都发生变化
 
 ## 相关入口
 
