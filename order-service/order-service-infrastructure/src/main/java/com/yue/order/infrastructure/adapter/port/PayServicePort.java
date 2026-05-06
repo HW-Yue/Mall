@@ -1,48 +1,46 @@
 package com.yue.order.infrastructure.adapter.port;
 
+import cn.bugstack.api.IPayDubboService;
+import cn.bugstack.api.dto.CreatePayRequestDTO;
 import com.alibaba.fastjson.JSON;
 import com.yue.order.domain.order.adapter.port.IPayPort;
-import com.yue.order.infrastructure.gateway.IPayService;
-import com.yue.order.infrastructure.gateway.dto.CreatePayRequestDTO;
-import com.yue.order.infrastructure.gateway.response.GatewayResponse;
 import com.yue.order.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Service;
 
-import jakarta.annotation.Resource;
 import java.math.BigDecimal;
 
 @Slf4j
 @Service
 public class PayServicePort implements IPayPort {
 
-    @Resource
-    private IPayService payService;
+    @DubboReference
+    private IPayDubboService payDubboService;
 
     @Override
     public String getPayUrl(String userId, String outTradeNo, String goodsId, String goodsName,
                             BigDecimal originalPrice, BigDecimal deductionPrice,
                             BigDecimal payPrice, String marketType) {
-        CreatePayRequestDTO requestDTO = CreatePayRequestDTO.builder()
-                .userId(userId)
-                .outTradeNo(outTradeNo)
-                .productId(goodsId)
-                .productName(goodsName)
-                .originalPrice(originalPrice)
-                .deductionPrice(deductionPrice)
-                .payPrice(payPrice)
-                .marketType(marketType)
-                .build();
+        CreatePayRequestDTO requestDTO = new CreatePayRequestDTO();
+        requestDTO.setUserId(userId);
+        requestDTO.setOutTradeNo(outTradeNo);
+        requestDTO.setProductId(goodsId);
+        requestDTO.setProductName(goodsName);
+        requestDTO.setOriginalPrice(originalPrice);
+        requestDTO.setDeductionPrice(deductionPrice);
+        requestDTO.setPayPrice(payPrice);
+        requestDTO.setMarketType(marketType);
 
         log.info("调支付服务 userId:{} outTradeNo:{} req:{}", userId, outTradeNo, JSON.toJSONString(requestDTO));
-        GatewayResponse<String> response = payService.createPayOrder(requestDTO);
-        log.info("支付服务响应 userId:{} outTradeNo:{} resp:{}", userId, outTradeNo, JSON.toJSONString(response));
-
-        if (response == null || !"0000".equals(response.getCode())) {
-            String errInfo = response != null ? response.getInfo() : "null response";
-            throw new AppException("PAY_FAILED", "获取支付链接失败: " + errInfo);
+        try {
+            String payUrl = payDubboService.createPayOrder(requestDTO);
+            log.info("支付服务响应 userId:{} outTradeNo:{} payUrl:{}", userId, outTradeNo, payUrl);
+            return payUrl;
+        } catch (Exception e) {
+            log.error("支付服务调用失败 userId:{} outTradeNo:{}", userId, outTradeNo, e);
+            throw new AppException("PAY_FAILED", "获取支付链接失败: " + e.getMessage());
         }
-        return response.getData();
     }
 
     @Override

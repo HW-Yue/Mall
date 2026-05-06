@@ -2,10 +2,13 @@ package cn.bugstack.api.dto;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 
 @Data
-public class CreatePayRequestDTO {
+public class CreatePayRequestDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     // 用户ID 【实际产生中会通过登录模块获取，不需要透彻】
     private String userId;

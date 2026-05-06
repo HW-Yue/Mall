@@ -1,7 +1,9 @@
 server:
-  port: 8093
+  port: 8094
+  tomcat:
+    accept-count: 2000
+    max-connections: 10000
 
-# Actuator：供 Prometheus 抓取（与现有 Prometheus/Grafana 栈对接）；生产请按需收紧暴露端点与安全策略
 management:
   endpoints:
     web:
@@ -12,29 +14,23 @@ management:
       application: ${spring.application.name}
 
 spring:
-  application:
-    name: group-buy-service
   config:
     import:
-      - classpath:nacos/group-buy-service-dtp-dev.yml
-      - optional:nacos:group-buy-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
-      - optional:nacos:group-buy-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
-      - classpath:nacos/group-buy-service-mq-dev.yml
-      - optional:nacos:group-buy-service-mq-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
-      - classpath:nacos/group-buy-service-runtime-dev.yml
-      - optional:nacos:group-buy-service-runtime-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
-  main:
-    allow-bean-definition-overriding: true
+      - classpath:nacos/seckill-service-dtp-dev.yml
+      - optional:nacos:seckill-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - optional:nacos:seckill-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
+      - classpath:nacos/seckill-service-mq-dev.yml
+      - optional:nacos:seckill-service-mq-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    type: com.zaxxer.hikari.HikariDataSource
-    url: jdbc:mysql://mysql:3306/test_group_buy_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://mysql:3306/test_seckill_service?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: 123456
+    type: com.zaxxer.hikari.HikariDataSource
     hikari:
-      pool-name: GroupBuy_HikariCP
+      pool-name: Seckill_HikariCP
       minimum-idle: 5
-      maximum-pool-size: 15
+      maximum-pool-size: 20
       idle-timeout: 180000
       max-lifetime: 1800000
       connection-timeout: 30000
@@ -45,16 +41,16 @@ spring:
       port: 6379
       database: 0
       timeout: 3000ms
-      client-name: groupbuy-redisson
+      client-name: seckill-redisson
   redis:
     redisson:
       config: |
         singleServerConfig:
           address: "redis://redis:6379"
           database: 0
-          clientName: groupbuy-redisson
-          connectionPoolSize: 10
-          connectionMinimumIdleSize: 5
+          clientName: seckill-redisson
+          connectionPoolSize: 100
+          connectionMinimumIdleSize: 10
           idleConnectionTimeout: 30000
           pingConnectionInterval: 60000
           retryAttempts: 3
@@ -74,7 +70,7 @@ spring:
       eager: true
       transport:
         dashboard: sentinel-dashboard:8858
-        port: 8721
+        port: 8722
       datasource:
         flow:
           nacos:
@@ -118,24 +114,23 @@ mybatis:
 rocketmq:
   name-server: rmq-namesrv:9876
   producer:
-    group: group-buy-service-producer
+    group: seckill-service-producer
+    send-message-timeout: 3000
 
 app:
-  config:
-    order-service:
-      api-url: http://order-service:8092
   rocketmq:
     topic:
-      orderPaidGroupBuy: order-paid-group_buy
-      groupBuySuccessNotify: group-buy-success-notify
-      groupBuyTimeoutRefund: group-buy-timeout-refund
-      orderCloseGroupBuy: order-close-group-buy
-      payRefundGroupBuy: pay-refund-group-buy
+      seckillOrderCreate: seckill-order-create
+      orderPaidSeckill: order-paid-seckill
+      orderCloseSeckill: order-close-seckill
+      seckillStockDeduct: seckill-stock-deduct
+      payRefundSeckill: pay-refund-seckill
     consumerGroup:
-      orderPaidGroupBuy: CG_GROUP_BUY_ORDER_PAID
-      groupBuyTimeoutRefund: CG_GROUP_BUY_TIMEOUT_REFUND
-      payRefundGroupBuy: CG_GROUP_BUY_PAY_REFUND
-      orderCloseGroupBuy: CG_GROUP_BUY_ORDER_CLOSE
+      seckillOrderCreate: CG_SECKILL_ORDER_CREATE
+      orderPaidSeckill: CG_ORDER_PAID_SECKILL
+      orderCloseSeckill: CG_ORDER_CLOSE_SECKILL_MARKET
+      seckillStockDeduct: CG_SECKILL_STOCK_DEDUCT
+      payRefundSeckill: CG_SECKILL_PAY_REFUND
 
 logstash:
   enabled: true
@@ -144,7 +139,7 @@ logstash:
 
 logging:
   level:
-    com.yue.groupbuy: info
+    com.yue.seckill: info
 
 yue:
   log:
@@ -159,7 +154,7 @@ dubbo:
     register-mode: instance
   protocol:
     name: tri
-    port: 20884
+    port: 20883
   consumer:
     timeout: 5000
     retries: 2

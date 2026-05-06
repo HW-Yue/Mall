@@ -108,19 +108,19 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 > - 秒杀下单先返回 `seckillToken`，前端轮询拿到 `orderId` 后再走支付流程。
 
 ### 普通下单
-前端 → mall `create_normal_order`（防刷→锁可售库存） → Feign order-service `create_order_normal_from_mall` → order-service 发布 `normal-order-create` → order-service 消费后异步落库 `t_order` → 前端拿 `orderId` / `outTradeNo` → order-service `get_pay_url`（必要时短暂重试等待订单落库）→ Feign pay `create_pay_order` → 支付宝
+前端 → mall `create_normal_order`（防刷→锁可售库存） → Dubbo order-service `create_order_normal_from_mall` → order-service 发布 `normal-order-create` → order-service 消费后异步落库 `t_order` → 前端拿 `orderId` / `outTradeNo` → order-service `get_pay_url`（必要时短暂重试等待订单落库）→ Dubbo pay `create_pay_order` → 支付宝
 
 支付后：支付宝回调 pay → pay 更新支付单状态 → `pay-success-normal` → order-service 更新订单状态 → 发布 `order-paid-normal` 与事务消息 `order-ship-task`
 
 ### 拼团下单
-前端 → group-buy-service `create_pay_order`（校验活动、占 `lock_count`、必要时创建 team）→ Feign order-service `create_order` → 返回 `orderId` / `teamId` / `outTradeNo` → order-service `get_pay_url` → Feign pay → 支付宝
+前端 → group-buy-service `create_pay_order`（校验活动、占 `lock_count`、必要时创建 team）→ Dubbo order-service `create_order` → 返回 `orderId` / `teamId` / `outTradeNo` → order-service `get_pay_url` → Dubbo pay → 支付宝
 
 新开团时：group-buy-service 还会发送 `group-buy-timeout-refund` 定时消息，用于队伍超时后的关单 / 退款补偿。
 
 支付后：pay → `pay-success-group-buy` → order-service 更新订单状态 → 发布 `order-paid-group_buy` → group-buy-service 结算拼团订单并更新组队状态 → 成团后由 group-buy-service 再发 `group-buy-success-notify` 给 order-service 推进后续处理
 
 ### 秒杀下单
-前端 → seckill-service `create_pay_order`（校验活动、Lua 扣 Redis 可售库存、生成 `seckillToken` / `outTradeNo`）→ seckill-service 发布 `seckill-order-create` → order-service 异步建单 → 前端轮询 order-service `query_seckill_order` 拿到 `orderId` → order-service `get_pay_url` → Feign pay → 支付宝
+前端 → seckill-service `create_pay_order`（校验活动、Lua 扣 Redis 可售库存、生成 `seckillToken` / `outTradeNo`）→ seckill-service 发布 `seckill-order-create` → order-service 异步建单 → 前端轮询 order-service `query_seckill_order` 拿到 `orderId` → order-service `get_pay_url` → Dubbo pay → 支付宝
 
 支付后：pay → `pay-success-seckill` → order-service 更新订单状态 → 发布 `order-paid-seckill` 与事务消息 `order-ship-task` → seckill-service 扣 Redis 真实库存并发布 `seckill-stock-deduct` 异步回写 MySQL 库存
 
@@ -180,8 +180,10 @@ MQ topic、生产者、消费者、消费者组、参数说明统一维护在：
 - Cache：Redisson Spring Boot Starter `3.26.0`
 - MQ：RocketMQ Spring Boot Starter `2.3.1` + RocketMQ Client `5.3.0`
 - 注册发现 / 配置：Spring Cloud Alibaba `2023.0.1.0`
-- 服务间调用：OpenFeign `4.1.2`
+- 服务间调用：Dubbo `3.0.7`（Triple 协议，由 DynamicTp BOM 统一管理）
 - 动态线程池：DynamicTp `1.1.9.1-3.x`
+- Spring Cloud Context：`4.1.4`（`@RefreshScope` 依赖；`infrastructure` 模块需手动声明，因 BOM 未 manage 此依赖）
+- ⚠️ Dubbo 版本由 DynamicTp BOM 管理（`3.0.7`），**不要**在各服务 pom 中声明高于此的版本，否则 starter 与核心产生冲突
 
 补充：
 

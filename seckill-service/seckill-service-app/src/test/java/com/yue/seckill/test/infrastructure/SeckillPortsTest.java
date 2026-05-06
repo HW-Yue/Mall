@@ -1,14 +1,13 @@
 package com.yue.seckill.test.infrastructure;
 
+import com.yue.order.api.IOrderDubboService;
+import com.yue.order.api.dto.CreateOrderResponseDTO;
+import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
+import com.yue.order.api.dto.RefundRequestDTO;
 import com.yue.seckill.infrastructure.adapter.port.OrderServicePort;
 import com.yue.seckill.infrastructure.adapter.port.SeckillOrderTaskPort;
 import com.yue.seckill.infrastructure.adapter.port.SeckillStockDeductPort;
 import com.yue.seckill.infrastructure.adapter.port.SeckillStockPort;
-import com.yue.seckill.infrastructure.gateway.IOrderService;
-import com.yue.seckill.infrastructure.gateway.dto.CreateOrderResponseDTO;
-import com.yue.seckill.infrastructure.gateway.dto.GatewayResponse;
-import com.yue.seckill.infrastructure.gateway.dto.QueryOrderByOutTradeNoRequestDTO;
-import com.yue.seckill.infrastructure.gateway.dto.RefundRequestDTO;
 import com.yue.seckill.types.exception.AppException;
 import com.yue.seckill.types.model.SeckillOrderTaskMessage;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +38,7 @@ class SeckillPortsTest {
     @Mock
     private RocketMQTemplate rocketMQTemplate;
     @Mock
-    private IOrderService orderService;
+    private IOrderDubboService orderDubboService;
     @Mock
     private StringRedisTemplate stringRedisTemplate;
     @Mock
@@ -63,7 +62,7 @@ class SeckillPortsTest {
         ReflectionTestUtils.setField(seckillStockDeductPort, "topic", "seckill-stock-deduct");
 
         orderServicePort = new OrderServicePort();
-        ReflectionTestUtils.setField(orderServicePort, "orderService", orderService);
+        ReflectionTestUtils.setField(orderServicePort, "orderDubboService", orderDubboService);
 
         seckillStockPort = new SeckillStockPort();
         ReflectionTestUtils.setField(seckillStockPort, "stringRedisTemplate", stringRedisTemplate);
@@ -101,37 +100,29 @@ class SeckillPortsTest {
 
     @Test
     void orderServicePortMapsQueryAndRefundResponses() {
-        GatewayResponse<CreateOrderResponseDTO> queryResponse = new GatewayResponse<>();
-        queryResponse.setCode("0000");
-        CreateOrderResponseDTO data = new CreateOrderResponseDTO();
-        data.setOrderId("OID-1");
-        queryResponse.setData(data);
-        when(orderService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenReturn(queryResponse);
+        CreateOrderResponseDTO queryDto = CreateOrderResponseDTO.builder().orderId("OID-1").build();
+        when(orderDubboService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenReturn(queryDto);
 
         String orderId = orderServicePort.queryOrderIdByOutTradeNo("u1", "OTN-1");
 
         assertThat(orderId).isEqualTo("OID-1");
-        GatewayResponse<Boolean> refundResponse = new GatewayResponse<>();
-        refundResponse.setCode("0000");
-        refundResponse.setData(true);
-        when(orderService.refundExecute(any(RefundRequestDTO.class))).thenReturn(refundResponse);
+
+        when(orderDubboService.refundExecute(any(RefundRequestDTO.class))).thenReturn(true);
         orderServicePort.refundExecute("u1", "OID-1");
 
         ArgumentCaptor<QueryOrderByOutTradeNoRequestDTO> queryCaptor = ArgumentCaptor.forClass(QueryOrderByOutTradeNoRequestDTO.class);
-        verify(orderService).queryOrderByOutTradeNo(queryCaptor.capture());
+        verify(orderDubboService).queryOrderByOutTradeNo(queryCaptor.capture());
         assertThat(queryCaptor.getValue().getUserId()).isEqualTo("u1");
         assertThat(queryCaptor.getValue().getOutTradeNo()).isEqualTo("OTN-1");
     }
 
     @Test
     void orderServicePortReturnsNullOrThrowsOnBadResponses() {
-        when(orderService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenThrow(new IllegalStateException("downstream"));
+        when(orderDubboService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenThrow(new IllegalStateException("downstream"));
 
         assertThat(orderServicePort.queryOrderIdByOutTradeNo("u1", "OTN-2")).isNull();
 
-        GatewayResponse<Boolean> refundResponse = new GatewayResponse<>();
-        refundResponse.setCode("9999");
-        when(orderService.refundExecute(any(RefundRequestDTO.class))).thenReturn(refundResponse);
+        when(orderDubboService.refundExecute(any(RefundRequestDTO.class))).thenThrow(new RuntimeException("refund rpc error"));
 
         assertThatThrownBy(() -> orderServicePort.refundExecute("u1", "OID-2"))
                 .isInstanceOf(AppException.class)

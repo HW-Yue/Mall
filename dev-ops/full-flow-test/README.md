@@ -179,3 +179,56 @@ MySQL 官方镜像只在数据目录为空时执行 `/docker-entrypoint-initdb.d
 - `nacos:8848`
 - `sentinel-dashboard:8858`
 - `logstash:4560`
+
+## 9. IDEA 一键执行版
+
+> IDEA 点击 Markdown 代码块的 Run 按钮时，工作目录是本文件所在目录（`dev-ops/full-flow-test/`），不是项目根目录。
+> 以下命令均以 `cd "$(git rev-parse --show-toplevel)" &&` 开头，点击即可直接运行。
+
+启动基础环境：
+
+```bash
+cd "$(git rev-parse --show-toplevel)" && docker compose -f dev-ops/docker-compose-environment.yml up -d && docker compose -f dev-ops/docker-compose-rocketmq.yml up -d
+```
+
+构建所有应用镜像（含 Maven 打包）：
+
+```bash
+cd "$(git rev-parse --show-toplevel)" && ./docker-apps/build-app-images.sh
+```
+
+只重建 Docker 镜像，跳过 Maven：
+
+```bash
+cd "$(git rev-parse --show-toplevel)" && SKIP_MAVEN=true ./docker-apps/build-app-images.sh
+```
+
+只重建单个服务（以 group-buy-service 为例）：
+
+```bash
+cd "$(git rev-parse --show-toplevel)" && mvn -pl group-buy-service/group-buy-service-app -am clean package -DskipTests && docker compose -f docker-apps/docker-compose-apps.yml build group-buy-service
+```
+
+启动所有业务应用：
+
+```bash
+cd "$(git rev-parse --show-toplevel)" && ./docker-apps/up-apps.sh
+```
+
+强制重启单个容器（以 group-buy-service 为例）：
+
+```bash
+cd "$(git rev-parse --show-toplevel)" && docker compose -f docker-apps/docker-compose-apps.yml up -d --force-recreate group-buy-service
+```
+
+执行拼团全链路测试：
+
+```bash
+cd "$(git rev-parse --show-toplevel)" && bash dev-ops/app/group-buy-full-flow-test.sh
+```
+
+查看关键服务日志：
+
+```bash
+cd "$(git rev-parse --show-toplevel)" && ./docker-apps/logs-apps.sh gateway group-buy-service order-service pay
+```

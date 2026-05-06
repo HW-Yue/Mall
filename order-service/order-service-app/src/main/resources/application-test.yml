@@ -180,3 +180,19 @@ yue:
   log:
     trace:
       provider: skywalking
+
+dubbo:
+  application:
+    name: ${spring.application.name}
+  registry:
+    address: nacos://nacos:8848
+    register-mode: instance
+  protocol:
+    name: tri
+    port: 20881
+  consumer:
+    timeout: 5000
+    retries: 2
+    check: false
+  provider:
+    timeout: 5000

@@ -2,7 +2,7 @@ package com.yue.test.trigger;
 
 import com.yue.api.dto.SkuStockRequestDTO;
 import com.yue.api.response.Response;
-import com.yue.infrastructure.feign.IOrderServiceForMallFeign;
+import com.yue.order.api.IOrderDubboService;
 import com.yue.order.api.dto.CreateOrderRequestDTO;
 import com.yue.order.api.dto.CreateOrderResponseDTO;
 import com.yue.trigger.http.OrderTradeController;
@@ -31,7 +31,7 @@ class OrderTradeControllerTest {
     @Mock
     private SkuStockAppService skuStockAppService;
     @Mock
-    private IOrderServiceForMallFeign orderServiceForMallFeign;
+    private IOrderDubboService orderDubboService;
 
     private OrderTradeController controller;
 
@@ -40,7 +40,7 @@ class OrderTradeControllerTest {
         controller = new OrderTradeController();
         ReflectionTestUtils.setField(controller, "normalOrderAntiFraudService", normalOrderAntiFraudService);
         ReflectionTestUtils.setField(controller, "skuStockAppService", skuStockAppService);
-        ReflectionTestUtils.setField(controller, "orderServiceForMallFeign", orderServiceForMallFeign);
+        ReflectionTestUtils.setField(controller, "orderDubboService", orderDubboService);
     }
 
     @Test
@@ -71,7 +71,7 @@ class OrderTradeControllerTest {
 
         assertThat(response.getCode()).isEqualTo(ResponseCode.RATE_LIMITER.getCode());
         assertThat(response.getInfo()).isEqualTo("blocked");
-        verifyNoInteractions(skuStockAppService, orderServiceForMallFeign);
+        verifyNoInteractions(skuStockAppService, orderDubboService);
     }
 
     @Test
@@ -85,42 +85,14 @@ class OrderTradeControllerTest {
 
         assertThat(response.getCode()).isEqualTo(ResponseCode.E0009.getCode());
         assertThat(response.getInfo()).isEqualTo("锁库失败");
-        verifyNoInteractions(orderServiceForMallFeign);
+        verifyNoInteractions(orderDubboService);
     }
 
     @Test
     void createNormalOrderUnlocksWhenOrderServiceReturnsNull() {
         CreateOrderRequestDTO request = baseRequest();
         mockLockSuccess(request);
-        when(orderServiceForMallFeign.createOrderNormalFromMall(any())).thenReturn(null);
-
-        Response<CreateOrderResponseDTO> response = controller.createNormalOrder(request);
-
-        assertThat(response.getCode()).isEqualTo(ResponseCode.HTTP_EXCEPTION.getCode());
-        assertThat(response.getInfo()).isEqualTo("订单服务无响应");
-        verify(skuStockAppService).unlockStock(any(SkuStockRequestDTO.class));
-    }
-
-    @Test
-    void createNormalOrderUnlocksWhenOrderServiceFails() {
-        CreateOrderRequestDTO request = baseRequest();
-        mockLockSuccess(request);
-        when(orderServiceForMallFeign.createOrderNormalFromMall(any()))
-                .thenReturn(com.yue.order.api.response.Response.error("E1000", "创建订单失败"));
-
-        Response<CreateOrderResponseDTO> response = controller.createNormalOrder(request);
-
-        assertThat(response.getCode()).isEqualTo("E1000");
-        assertThat(response.getInfo()).isEqualTo("创建订单失败");
-        verify(skuStockAppService).unlockStock(any(SkuStockRequestDTO.class));
-    }
-
-    @Test
-    void createNormalOrderUnlocksWhenOrderIdMissing() {
-        CreateOrderRequestDTO request = baseRequest();
-        mockLockSuccess(request);
-        when(orderServiceForMallFeign.createOrderNormalFromMall(any()))
-                .thenReturn(com.yue.order.api.response.Response.success(new CreateOrderResponseDTO()));
+        when(orderDubboService.createOrderNormalFromMall(any())).thenReturn(null);
 
         Response<CreateOrderResponseDTO> response = controller.createNormalOrder(request);
 
@@ -130,10 +102,38 @@ class OrderTradeControllerTest {
     }
 
     @Test
-    void createNormalOrderUnlocksWhenFeignThrows() {
+    void createNormalOrderUnlocksWhenOrderServiceFails() {
         CreateOrderRequestDTO request = baseRequest();
         mockLockSuccess(request);
-        when(orderServiceForMallFeign.createOrderNormalFromMall(any())).thenThrow(new IllegalStateException("downstream"));
+        when(orderDubboService.createOrderNormalFromMall(any()))
+                .thenThrow(new RuntimeException("创建订单失败"));
+
+        Response<CreateOrderResponseDTO> response = controller.createNormalOrder(request);
+
+        assertThat(response.getCode()).isEqualTo(ResponseCode.HTTP_EXCEPTION.getCode());
+        assertThat(response.getInfo()).contains("创建订单失败");
+        verify(skuStockAppService).unlockStock(any(SkuStockRequestDTO.class));
+    }
+
+    @Test
+    void createNormalOrderUnlocksWhenOrderIdMissing() {
+        CreateOrderRequestDTO request = baseRequest();
+        mockLockSuccess(request);
+        when(orderDubboService.createOrderNormalFromMall(any()))
+                .thenReturn(new CreateOrderResponseDTO());
+
+        Response<CreateOrderResponseDTO> response = controller.createNormalOrder(request);
+
+        assertThat(response.getCode()).isEqualTo(ResponseCode.UN_ERROR.getCode());
+        assertThat(response.getInfo()).contains("orderId");
+        verify(skuStockAppService).unlockStock(any(SkuStockRequestDTO.class));
+    }
+
+    @Test
+    void createNormalOrderUnlocksWhenDubboThrows() {
+        CreateOrderRequestDTO request = baseRequest();
+        mockLockSuccess(request);
+        when(orderDubboService.createOrderNormalFromMall(any())).thenThrow(new IllegalStateException("downstream"));
 
         Response<CreateOrderResponseDTO> response = controller.createNormalOrder(request);
 
@@ -147,15 +147,14 @@ class OrderTradeControllerTest {
         CreateOrderRequestDTO request = baseRequest();
         mockLockSuccess(request);
         CreateOrderResponseDTO order = CreateOrderResponseDTO.builder().orderId("OID-1").outTradeNo("OTN-1").build();
-        when(orderServiceForMallFeign.createOrderNormalFromMall(any()))
-                .thenReturn(com.yue.order.api.response.Response.success(order));
+        when(orderDubboService.createOrderNormalFromMall(any())).thenReturn(order);
 
         Response<CreateOrderResponseDTO> response = controller.createNormalOrder(request);
 
         assertThat(response.getCode()).isEqualTo(ResponseCode.SUCCESS.getCode());
         assertThat(response.getData()).isSameAs(order);
         ArgumentCaptor<CreateOrderRequestDTO> captor = ArgumentCaptor.forClass(CreateOrderRequestDTO.class);
-        verify(orderServiceForMallFeign).createOrderNormalFromMall(captor.capture());
+        verify(orderDubboService).createOrderNormalFromMall(captor.capture());
         assertThat(captor.getValue().getMarketType()).isEqualTo("normal");
         verify(skuStockAppService, never()).unlockStock(any(SkuStockRequestDTO.class));
     }

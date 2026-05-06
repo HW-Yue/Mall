@@ -19,7 +19,7 @@
 - `infrastructure`
   - `SkuDetailRepository`
   - `ConfigRepository`
-  - `IOrderServiceForMallFeign`
+  - `IOrderDubboService`（Dubbo RPC，mock）
 
 ## Required Scenarios
 
@@ -37,12 +37,12 @@
 - MySQL：真实测试库
 - Redis：真实测试 Redis
 - MQ：如果触达相关配置或 producer，统一 mock
-- Feign：
-  - `IOrderServiceForMallFeign` 必须 mock
+- Dubbo：
+  - `IOrderDubboService` 必须 mock（`@DubboReference`，通过 `ReflectionTestUtils.setField` 注入）
   - `OrderTradeController` 重点验证下单请求 DTO、失败补偿、解锁逻辑
 
 ## Priority
 
 - `P0`：`OrderTradeController`、`NormalOrderAntiFraudService`、`SkuDetailService`
-- `P1`：后台配置、首页聚合、库存服务、Feign 下游异常路径
+- `P1`：后台配置、首页聚合、库存服务、Dubbo 下游异常路径
 - `P2`：DCC 和管理类查询接口

@@ -6,9 +6,8 @@ import com.yue.order.domain.order.model.valobj.MarketTypeVO;
 import com.yue.order.domain.order.model.valobj.OrderStatusVO;
 import com.yue.order.infrastructure.dao.IOrderDao;
 import com.yue.order.infrastructure.dao.po.OrderPO;
-import com.yue.order.infrastructure.gateway.IMallService;
-import com.yue.order.infrastructure.gateway.dto.SkuStockRequestDTO;
-import com.yue.order.infrastructure.gateway.response.GatewayResponse;
+import com.yue.api.IMallDubboService;
+import com.yue.api.dto.SkuStockRequestDTO;
 import com.yue.order.types.enums.ResponseCode;
 import com.yue.order.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +18,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.annotation.Resource;
+import org.apache.dubbo.config.annotation.DubboReference;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -30,20 +30,24 @@ public class OrderRepository implements IOrderRepository {
     @Resource
     private IOrderDao orderDao;
 
-    @Resource
-    private IMallService mallService;
+    @DubboReference
+    private IMallDubboService mallDubboService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String saveOrder(OrderEntity order) {
         // 普通商品：调用 mall 服务锁定库存
         if (MarketTypeVO.NORMAL == order.getMarketType()) {
-            GatewayResponse<Boolean> lockResult = mallService.lockStock(
-                    new SkuStockRequestDTO(order.getGoodsId(), 1));
-            if (lockResult == null || !"0000".equals(lockResult.getCode()) || Boolean.FALSE.equals(lockResult.getData())) {
-                String info = lockResult != null ? lockResult.getInfo() : "mall 服务无响应";
-                log.warn("lockStock 失败 goodsId:{} reason:{}", order.getGoodsId(), info);
-                throw new AppException(ResponseCode.STOCK_INSUFFICIENT.getCode(), "库存锁定失败: " + info);
+            try {
+                Boolean locked = mallDubboService.lockStock(new SkuStockRequestDTO(order.getGoodsId(), 1));
+                if (!Boolean.TRUE.equals(locked)) {
+                    throw new AppException(ResponseCode.STOCK_INSUFFICIENT.getCode(), "库存锁定失败");
+                }
+            } catch (AppException e) {
+                throw e;
+            } catch (Exception e) {
+                log.warn("lockStock 失败 goodsId:{}", order.getGoodsId(), e);
+                throw new AppException(ResponseCode.STOCK_INSUFFICIENT.getCode(), "库存锁定失败: " + e.getMessage());
             }
         }
 
@@ -184,11 +188,10 @@ public class OrderRepository implements IOrderRepository {
     @Override
     public void unlockStock(OrderEntity order) {
         if (MarketTypeVO.NORMAL == order.getMarketType()) {
-            GatewayResponse<Boolean> unlockResult = mallService.unlockStock(
-                    new SkuStockRequestDTO(order.getGoodsId(), 1));
-            if (unlockResult == null || !"0000".equals(unlockResult.getCode()) || Boolean.FALSE.equals(unlockResult.getData())) {
-                String info = unlockResult != null ? unlockResult.getInfo() : "mall 服务无响应";
-                log.warn("unlockStock 失败 goodsId:{} reason:{}", order.getGoodsId(), info);
+            try {
+                mallDubboService.unlockStock(new SkuStockRequestDTO(order.getGoodsId(), 1));
+            } catch (Exception e) {
+                log.warn("unlockStock 失败 goodsId:{}", order.getGoodsId(), e);
             }
         }
     }

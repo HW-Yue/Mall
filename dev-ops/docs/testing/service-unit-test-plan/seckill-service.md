@@ -38,13 +38,13 @@
 - MySQL：真实测试库
 - Redis：真实测试 Redis
 - MQ：mock `RocketMQTemplate`
-- Feign：
+- Dubbo：
   - `OrderServicePort` 保留实现
-  - 内部 `IOrderService` Feign Client mock
-  - 验证创建订单、查询订单、退款执行的 DTO 映射与异常处理
+  - 内部 `IOrderDubboService` mock（`@DubboReference`，通过 `ReflectionTestUtils.setField` 注入）
+  - 验证查询订单、退款执行的 DTO 映射与异常处理
 
 ## Priority
 
 - `P0`：`SeckillTradeServiceImpl`、库存链路、消息发送
-- `P1`：market/admin controller、listener、Feign port
+- `P1`：market/admin controller、listener、Dubbo port
 - `P2`：预热 job 和边缘缓存分支

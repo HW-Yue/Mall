@@ -17,7 +17,6 @@
 - `logging.level.*`
 - `app.agent.cache.*`
 - `app.agent.features.*`
-- `app.agent.feign.order-service.*`
 
 `pay-service` 也拆出了 `pay-service-runtime-dev.yml`，但线程池部分已经迁移到 `pay-service-dtp-dev.yml`；本文只记录非线程池运行时配置边界。
 
@@ -44,23 +43,9 @@
 
 `logging.level.*` 属于 Spring Cloud Refresh 可处理的运行时配置，适合排障时快速升降日志级别。
 
-### 3. Feign 超时的边界
+### 3. 调用下游超时的边界
 
-`group-buy-service` 的 `app.agent.feign.order-service.*` 最终会装配到：
-
-- `OrderServiceFeignAgentConfig`
-
-这里生成的是 Feign `Request.Options` Bean。
-
-当前代码注释已经明确：
-
-- 不能在这个 Feign 配置类上直接使用 `@RefreshScope`
-- 因为它运行在 `NamedContextFactory` 子上下文中
-- 该子上下文没有注册 `refresh` scope，直接使用会启动失败
-
-所以这类参数虽然存放在 runtime 配置里，但不等于“改完马上对现有 Feign 客户端实例生效”。实践口径仍然是：
-
-- 修改后重启或滚动发布实例验证
+`group-buy-service` 调 `order-service` 已从 Feign 迁移到 Dubbo（`@DubboReference`），Dubbo 超时通过 Nacos 中的 Dubbo 配置管理，不再走 `app.agent.*` 下的 Feign 超时字段。
 
 ## 生效边界
 
@@ -72,5 +57,4 @@
 
 - `group-buy-service/group-buy-service-app/src/main/resources/nacos/group-buy-service-runtime-dev.yml`
 - `group-buy-service/group-buy-service-infrastructure/src/main/java/com/yue/groupbuy/infrastructure/config/AgentRuntimeProperties.java`
-- `group-buy-service/group-buy-service-infrastructure/src/main/java/com/yue/groupbuy/infrastructure/gateway/config/OrderServiceFeignAgentConfig.java`
 - `pay/pay-app/src/main/resources/nacos/pay-service-runtime-dev.yml`

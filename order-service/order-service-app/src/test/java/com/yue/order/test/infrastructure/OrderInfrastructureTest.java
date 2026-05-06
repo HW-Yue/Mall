@@ -3,10 +3,9 @@ package com.yue.order.test.infrastructure;
 import com.yue.order.domain.order.adapter.repository.IOrderRepository;
 import com.yue.order.domain.order.model.entity.OrderEntity;
 import com.yue.order.domain.order.model.valobj.OrderStatusVO;
+import cn.bugstack.api.IPayDubboService;
 import com.yue.order.infrastructure.adapter.port.PayServicePort;
 import com.yue.order.infrastructure.event.*;
-import com.yue.order.infrastructure.gateway.IPayService;
-import com.yue.order.infrastructure.gateway.response.GatewayResponse;
 import com.yue.order.types.exception.AppException;
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -36,16 +35,15 @@ class OrderInfrastructureTest {
     @Mock
     private RocketMQTemplate rocketMQTemplate;
     @Mock
-    private IPayService payService;
+    private IPayDubboService payDubboService;
     @Mock
     private IOrderRepository orderRepository;
 
     @Test
     void payServicePortBuildsRequestAndReturnsUrl() {
         PayServicePort port = new PayServicePort();
-        ReflectionTestUtils.setField(port, "payService", payService);
-        when(payService.createPayOrder(any()))
-                .thenReturn(GatewayResponse.<String>builder().code("0000").data("pay-url").build());
+        ReflectionTestUtils.setField(port, "payDubboService", payDubboService);
+        when(payDubboService.createPayOrder(any())).thenReturn("pay-url");
 
         String result = port.getPayUrl("u1", "OUT-1", "g1", "goods",
                 new BigDecimal("100"), new BigDecimal("10"), new BigDecimal("90"), "normal");
@@ -56,9 +54,8 @@ class OrderInfrastructureTest {
     @Test
     void payServicePortThrowsForFailedResponse() {
         PayServicePort port = new PayServicePort();
-        ReflectionTestUtils.setField(port, "payService", payService);
-        when(payService.createPayOrder(any()))
-                .thenReturn(GatewayResponse.<String>builder().code("9999").info("boom").build());
+        ReflectionTestUtils.setField(port, "payDubboService", payDubboService);
+        when(payDubboService.createPayOrder(any())).thenThrow(new RuntimeException("boom"));
 
         assertThatThrownBy(() -> port.getPayUrl("u1", "OUT-1", "g1", "goods",
                 new BigDecimal("100"), BigDecimal.ZERO, new BigDecimal("100"), "normal"))

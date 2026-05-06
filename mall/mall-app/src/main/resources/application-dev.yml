@@ -195,3 +195,20 @@ logging:
   level:
     root: info
   config: classpath:logback-spring.xml
+
+# Dubbo RPC（Triple 协议，Nacos 注册）
+dubbo:
+  application:
+    name: ${spring.application.name}
+  registry:
+    address: nacos://100.86.250.112:8848
+    register-mode: instance
+  protocol:
+    name: tri
+    port: 20882
+  consumer:
+    timeout: 5000
+    retries: 2
+    check: false
+  provider:
+    timeout: 5000

@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * 退款请求 DTO
  * /refund         - 普通订单，前端直接调用，包含业务规则验证
@@ -14,7 +16,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class RefundRequestDTO {
+public class RefundRequestDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private String userId;
     private String orderId;

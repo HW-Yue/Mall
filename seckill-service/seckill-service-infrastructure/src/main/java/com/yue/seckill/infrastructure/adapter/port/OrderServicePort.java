@@ -1,17 +1,14 @@
 package com.yue.seckill.infrastructure.adapter.port;
 
+import com.yue.order.api.IOrderDubboService;
+import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
+import com.yue.order.api.dto.RefundRequestDTO;
 import com.yue.seckill.domain.trade.adapter.port.IOrderServicePort;
-import com.yue.seckill.infrastructure.gateway.IOrderService;
-import com.yue.seckill.infrastructure.gateway.dto.CreateOrderResponseDTO;
-import com.yue.seckill.infrastructure.gateway.dto.GatewayResponse;
-import com.yue.seckill.infrastructure.gateway.dto.QueryOrderByOutTradeNoRequestDTO;
-import com.yue.seckill.infrastructure.gateway.dto.RefundRequestDTO;
 import com.yue.seckill.types.enums.ResponseCode;
 import com.yue.seckill.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.stereotype.Service;
-
-import jakarta.annotation.Resource;
 
 /**
  * 订单服务端口实现
@@ -20,8 +17,8 @@ import jakarta.annotation.Resource;
 @Service
 public class OrderServicePort implements IOrderServicePort {
 
-    @Resource
-    private IOrderService orderService;
+    @DubboReference
+    private IOrderDubboService orderDubboService;
 
     @Override
     public String queryOrderIdByOutTradeNo(String userId, String outTradeNo) {
@@ -29,13 +26,12 @@ public class OrderServicePort implements IOrderServicePort {
         request.setUserId(userId);
         request.setOutTradeNo(outTradeNo);
         try {
-            GatewayResponse<CreateOrderResponseDTO> response = orderService.queryOrderByOutTradeNo(request);
-            if (response == null || !ResponseCode.SUCCESS.getCode().equals(response.getCode()) || response.getData() == null) {
-                log.warn("order-service queryOrderByOutTradeNo 未查到订单 userId:{} outTradeNo:{} resp:{}",
-                        userId, outTradeNo, response);
+            var response = orderDubboService.queryOrderByOutTradeNo(request);
+            if (response == null) {
+                log.warn("order-service queryOrderByOutTradeNo 未查到订单 userId:{} outTradeNo:{}", userId, outTradeNo);
                 return null;
             }
-            return response.getData().getOrderId();
+            return response.getOrderId();
         } catch (Exception e) {
             log.warn("order-service queryOrderByOutTradeNo 调用异常 userId:{} outTradeNo:{}", userId, outTradeNo, e);
             return null;
@@ -48,10 +44,10 @@ public class OrderServicePort implements IOrderServicePort {
                 .userId(userId)
                 .orderId(orderId)
                 .build();
-
-        GatewayResponse<Boolean> response = orderService.refundExecute(request);
-        if (response == null || !ResponseCode.SUCCESS.getCode().equals(response.getCode())) {
-            log.error("order-service refundExecute 失败: {}", response);
+        try {
+            orderDubboService.refundExecute(request);
+        } catch (Exception e) {
+            log.error("order-service refundExecute 失败 userId:{} orderId:{}", userId, orderId, e);
             throw new AppException(ResponseCode.UN_ERROR.getCode(), "退款执行失败");
         }
     }

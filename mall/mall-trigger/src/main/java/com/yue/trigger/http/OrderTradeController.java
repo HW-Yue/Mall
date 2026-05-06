@@ -2,7 +2,7 @@ package com.yue.trigger.http;
 
 import com.yue.api.dto.SkuStockRequestDTO;
 import com.yue.api.response.Response;
-import com.yue.infrastructure.feign.IOrderServiceForMallFeign;
+import com.yue.order.api.IOrderDubboService;
 import com.yue.order.api.dto.CreateOrderRequestDTO;
 import com.yue.order.api.dto.CreateOrderResponseDTO;
 import com.yue.trigger.service.order.NormalOrderAntiFraudService;
@@ -10,13 +10,13 @@ import com.yue.trigger.service.sku.SkuStockAppService;
 import com.yue.types.enums.ResponseCode;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.annotation.Resource;
-import java.math.BigDecimal;
 
 /**
  * 普通商品 C 端下单：Redis 防刷 → 锁可售库存 → 订单服务异步落单
@@ -30,8 +30,8 @@ public class OrderTradeController {
     private NormalOrderAntiFraudService normalOrderAntiFraudService;
     @Resource
     private SkuStockAppService skuStockAppService;
-    @Resource
-    private IOrderServiceForMallFeign orderServiceForMallFeign;
+    @DubboReference
+    private IOrderDubboService orderDubboService;
 
     @PostMapping("create_normal_order")
     public Response<CreateOrderResponseDTO> createNormalOrder(@RequestBody CreateOrderRequestDTO request) {
@@ -69,24 +69,8 @@ public class OrderTradeController {
         }
 
         try {
-            com.yue.order.api.response.Response<CreateOrderResponseDTO> orderResp = orderServiceForMallFeign.createOrderNormalFromMall(request);
-            if (orderResp == null) {
-                unlockQuietly(request.getProductId());
-                return Response.<CreateOrderResponseDTO>builder()
-                        .code(ResponseCode.HTTP_EXCEPTION.getCode())
-                        .info("订单服务无响应")
-                        .build();
-            }
-            if (!"0000".equals(orderResp.getCode()) || orderResp.getData() == null) {
-                String info = orderResp.getInfo() != null ? orderResp.getInfo() : "创建订单失败";
-                unlockQuietly(request.getProductId());
-                return Response.<CreateOrderResponseDTO>builder()
-                        .code(orderResp.getCode() != null ? orderResp.getCode() : ResponseCode.UN_ERROR.getCode())
-                        .info(info)
-                        .build();
-            }
-            CreateOrderResponseDTO data = orderResp.getData();
-            if (StringUtils.isBlank(data.getOrderId())) {
+            CreateOrderResponseDTO data = orderDubboService.createOrderNormalFromMall(request);
+            if (data == null || StringUtils.isBlank(data.getOrderId())) {
                 unlockQuietly(request.getProductId());
                 return Response.<CreateOrderResponseDTO>builder()
                         .code(ResponseCode.UN_ERROR.getCode())

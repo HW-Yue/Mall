@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * 创建订单响应 DTO
  */
@@ -12,7 +14,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateOrderResponseDTO {
+public class CreateOrderResponseDTO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /** 订单ID（返回给前端，用于后续支付/查询） */
     private String orderId;

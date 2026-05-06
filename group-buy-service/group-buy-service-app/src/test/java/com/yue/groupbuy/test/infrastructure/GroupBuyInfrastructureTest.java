@@ -9,10 +9,9 @@ import com.yue.groupbuy.infrastructure.event.GroupBuyEventPublisher;
 import com.yue.groupbuy.infrastructure.event.GroupBuyRefundMqProducer;
 import com.yue.groupbuy.infrastructure.event.GroupBuyTimeoutRefundProducer;
 import com.yue.groupbuy.infrastructure.event.dto.TeamSuccessNotifyMessage;
-import com.yue.groupbuy.infrastructure.gateway.IOrderService;
-import com.yue.groupbuy.infrastructure.gateway.dto.CreateOrderResponseDTO;
-import com.yue.groupbuy.infrastructure.gateway.dto.GatewayResponse;
-import com.yue.groupbuy.infrastructure.gateway.dto.QueryOrderByOutTradeNoRequestDTO;
+import com.yue.order.api.IOrderDubboService;
+import com.yue.order.api.dto.CreateOrderResponseDTO;
+import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
 import com.yue.groupbuy.domain.trade.model.entity.NotifyTaskEntity;
 import com.yue.groupbuy.domain.trade.model.valobj.NotifyTypeEnumVO;
 import com.yue.groupbuy.types.enums.NotifyTaskHTTPEnumVO;
@@ -38,7 +37,7 @@ class GroupBuyInfrastructureTest {
     @Mock
     private RocketMQTemplate rocketMQTemplate;
     @Mock
-    private IOrderService orderService;
+    private IOrderDubboService orderDubboService;
     @Mock
     private ITOrderGroupDao orderGroupDao;
 
@@ -84,17 +83,12 @@ class GroupBuyInfrastructureTest {
     @Test
     void orderServicePortFallsBackToQueryByOutTradeNoAndPersistsOrderGroup() {
         OrderServicePort port = new OrderServicePort();
-        ReflectionTestUtils.setField(port, "orderService", orderService);
+        ReflectionTestUtils.setField(port, "orderDubboService", orderDubboService);
         ReflectionTestUtils.setField(port, "tOrderGroupDao", orderGroupDao);
-        GatewayResponse<CreateOrderResponseDTO> createFail = new GatewayResponse<>();
-        createFail.setCode("9999");
-        when(orderService.createOrder(any())).thenReturn(createFail);
-        GatewayResponse<CreateOrderResponseDTO> querySuccess = new GatewayResponse<>();
-        querySuccess.setCode("0000");
-        CreateOrderResponseDTO dto = new CreateOrderResponseDTO();
-        dto.setOrderId("OID-9");
-        querySuccess.setData(dto);
-        when(orderService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenReturn(querySuccess);
+        // createOrder 返回 null orderId 触发 fallback
+        when(orderDubboService.createOrder(any())).thenReturn(CreateOrderResponseDTO.builder().build());
+        CreateOrderResponseDTO queryDto = CreateOrderResponseDTO.builder().orderId("OID-9").build();
+        when(orderDubboService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenReturn(queryDto);
 
         String orderId = port.createOrder("u1", "g1", "goods", "img",
                 new BigDecimal("100"), new BigDecimal("10"), new BigDecimal("90"),

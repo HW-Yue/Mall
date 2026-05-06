@@ -156,18 +156,14 @@ spring:
 | `group-buy-service-dtp-dev.yml` | DynamicTp / Tomcat |
 | `pay-service-dtp-dev.yml` | DynamicTp / Tomcat |
 | `group-buy-service-datasource-dev.yml` | Hikari 连接池 |
-| `group-buy-service-runtime-dev.yml` | 日志级别、`app.agent.*`、Feign 超时 |
+| `group-buy-service-runtime-dev.yml` | 日志级别、`app.agent.*` |
 
-它同时还有一个实现边界需要注意：
-
-- `OrderServiceFeignAgentConfig` 明确不能使用 `@RefreshScope`，因为 Feign 客户端配置运行在 `NamedContextFactory` 子上下文中，直接加 `refresh` 作用域会启动失败。
-
-所以对拼团服务来说：
+对拼团服务来说：
 
 - 调线程池：改 `group-buy-service-dtp-dev.yml`
 - 调数据库池：改 `group-buy-service-datasource-dev.yml`
 - 调日志和 Agent 开关：改 `group-buy-service-runtime-dev.yml`
-- 调 Feign 超时：改完配置后重启或滚动发布实例
+- 调 Dubbo 超时：修改 Dubbo 配置（`@DubboReference` 属性或 Nacos Dubbo 配置中心）
 
 ## 事实来源
 
@@ -182,4 +178,3 @@ spring:
 - `dev-ops/nacos/sentinel-rules/README.md`
 - 各服务 `HikariPoolDynamicRefresher`
 - `group-buy-service/group-buy-service-infrastructure/src/main/java/com/yue/groupbuy/infrastructure/config/AgentRuntimeProperties.java`
-- `group-buy-service/group-buy-service-infrastructure/src/main/java/com/yue/groupbuy/infrastructure/gateway/config/OrderServiceFeignAgentConfig.java`

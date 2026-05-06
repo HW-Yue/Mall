@@ -1,9 +1,9 @@
-# group-buy-service：运行时配置（日志、app.agent、Feign 等）
+# group-buy-service：运行时配置（日志、app.agent.*）
 # 本地：classpath；Nacos：DataId「group-buy-service-runtime-dev.yml」、Group「DEFAULT_GROUP」，与 optional:nacos import 同名即可覆盖并热更新。
 #
 # 日志：logging.level.* 由 Spring Cloud Refresh 重绑。
 # app.agent.*：@RefreshScope 的 AgentRuntimeProperties。
-# app.agent.feign.order-service.*：由 OrderServiceFeignAgentConfig 绑定为 Feign Request.Options（进程启动时生效；仅改 Nacos 不重启不会更新已创建的 Feign 超时）。
+# 注意：order-service 已从 Feign 迁移到 Dubbo，无需配置 Feign 超时。
 
 logging:
   level:
@@ -18,7 +18,3 @@ app:
     features:
       marketing-push-enabled: true
       statistics-report-enabled: true
-    feign:
-      order-service:
-        connect-timeout-ms: 5000
-        read-timeout-ms: 10000

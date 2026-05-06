@@ -27,8 +27,8 @@
 
 ## 下游调用与适配
 
-- 调 `order-service` 的 Feign：
-  - `mall/mall-infrastructure/src/main/java/com/yue/infrastructure/feign/IOrderServiceForMallFeign.java`
+- 调 `order-service` 的 Dubbo RPC（`IOrderDubboService`）：
+  - `mall/mall-trigger/src/main/java/com/yue/trigger/http/OrderTradeController.java`（`@DubboReference IOrderDubboService`）
 - 库存 / repository / mapper：
   - `mall/mall-infrastructure/src/main/java/com/yue/infrastructure/`
 
