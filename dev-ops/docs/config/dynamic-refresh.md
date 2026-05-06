@@ -21,7 +21,7 @@
 | `order-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 当前未单独拆 runtime 热更新 |
 | `group-buy-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 支持 `logging.level.*`、`app.agent.*`，Feign 超时需重启实例 |
 | `seckill-service` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 当前未单独拆 runtime 热更新 |
-| `pay` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 当前未拆 `dtp` DataId | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 有 `pay-service-runtime-dev.yml` 入口，当前以运行时配置承载为主 |
+| `pay` | 支持 `flow` / `degrade` / `param-flow` / `system` / `authority` | 支持 | 支持部分字段 | 支持，按 consumerGroup 动态更新 | 有 `pay-service-runtime-dev.yml` 入口，当前以非线程池运行时配置承载为主 |
 
 说明：
 
@@ -63,7 +63,7 @@
 
 ### 1. DynamicTp / Tomcat
 
-`mall`、`order-service`、`group-buy-service`、`seckill-service` 都引入了 `classpath:nacos/*-dtp-dev.yml`，并叠加同名 Nacos DataId：
+`mall`、`order-service`、`group-buy-service`、`seckill-service`、`pay` 都引入了 `classpath:nacos/*-dtp-dev.yml`，并叠加同名 Nacos DataId：
 
 ```yaml
 spring:
@@ -145,7 +145,7 @@ spring:
 - `logging.level.*` 由 Spring Cloud Refresh 重绑，可在线调整日志级别。
 - `app.agent.feign.order-service.*` 虽然来自运行时配置，但最终会装配成 Feign `Request.Options` Bean；该 Bean 创建后不会因单次配置刷新自动重建，所以改完超时参数后应重启或滚动发布实例验证。
 
-`pay-service` 也拆出了 `pay-service-runtime-dev.yml` 作为运行时配置入口，但本文以项目当前已明确实现的刷新边界为准；如果后续新增 `@RefreshScope` 属性类或刷新监听器，需要同步补文档。
+`pay-service` 也保留了 `pay-service-runtime-dev.yml` 作为非线程池运行时配置入口；线程池部分已经迁移到 `pay-service-dtp-dev.yml`。
 
 ## group-buy-service 特殊说明
 
@@ -154,6 +154,7 @@ spring:
 | DataId | 用途 |
 |---|---|
 | `group-buy-service-dtp-dev.yml` | DynamicTp / Tomcat |
+| `pay-service-dtp-dev.yml` | DynamicTp / Tomcat |
 | `group-buy-service-datasource-dev.yml` | Hikari 连接池 |
 | `group-buy-service-runtime-dev.yml` | 日志级别、`app.agent.*`、Feign 超时 |
 

@@ -32,6 +32,14 @@
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.dromara.dynamictp</groupId>
+            <artifactId>dynamic-tp-spring-cloud-starter-nacos</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.dromara.dynamictp</groupId>
+            <artifactId>dynamic-tp-spring-boot-starter-adapter-webserver</artifactId>
+        </dependency>
         <!-- Sentinel：流控/熔断/降级；规则以 Nacos 为动态数据源（见 application-dev.yml） -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>

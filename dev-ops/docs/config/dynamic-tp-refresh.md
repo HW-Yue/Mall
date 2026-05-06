@@ -10,6 +10,7 @@
 - `order-service`
 - `group-buy-service`
 - `seckill-service`
+- `pay`
 
 这些服务都通过：
 
@@ -40,7 +41,7 @@ DynamicTp 本身负责接管线程池配置与运行时刷新：
 
 - 只对已接入 DynamicTp 管理的线程池和 `tomcat-tp` 生效。
 - 没有挂到 DynamicTp 管理的自定义线程池，不会因为改 `*-dtp-dev.yml` 自动刷新。
-- `pay` 当前没有同类 `*-dtp-dev.yml` 拆分入口，至少从当前仓库事实看不是这一套实现。
+- `pay` 现在也通过 `pay-service-dtp-dev.yml` 接入同一套 DynamicTp 配置。
 
 ## 事实来源
 
@@ -48,5 +49,6 @@ DynamicTp 本身负责接管线程池配置与运行时刷新：
 - `order-service/order-service-app/src/main/resources/application-dev.yml`
 - `group-buy-service/group-buy-service-app/src/main/resources/application-dev.yml`
 - `seckill-service/seckill-service-app/src/main/resources/application-dev.yml`
+- `pay/pay-app/src/main/resources/application-dev.yml`
 - 各服务 `src/main/resources/nacos/*-dtp-dev.yml`
 - `dev-ops/docs/monitoring/dynamic-tp.md`

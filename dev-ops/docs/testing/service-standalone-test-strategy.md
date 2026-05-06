@@ -83,8 +83,8 @@ MQ 测试：
   通过真实 `DtpExecutor` + `TomcatDtpAdapter` 验证业务线程池与 `tomcatTp` 在线刷新前后确实变化，并输出前后参数
 - `group-buy-service/group-buy-service-app/src/test/java/com/yue/groupbuy/config/AgentRuntimePropertiesTest.java`
   通过两组绑定值验证 `@RefreshScope` 运行时属性类在配置变更前后读到的缓存策略、业务开关、Feign 超时确实变化
-- `pay/pay-app/src/test/java/cn/bugstack/config/ThreadPoolConfigTest.java`
-  通过 `pay-service-runtime-dev.yml` + `ThreadPoolConfig` 验证 pay 当前自定义线程池配置能正确绑定并创建运行时线程池
+- `pay/pay-app/src/test/java/cn/bugstack/config/DynamicTpRefreshTest.java`
+  通过真实 `DtpExecutor` + `TomcatDtpAdapter` 验证 pay 的业务线程池与 `tomcatTp` 在线刷新前后确实变化，并输出前后参数
 - `springcloud-gateway/app/src/test/java/cn/bugstack/gateway/config/GatewaySentinelConfigTest.java`
   通过网关 profile 配置验证 Sentinel fallback 与 `gw-flow` 数据源约定
 - `*/src/test/java/**/SentinelDatasourceConfigTest.java`

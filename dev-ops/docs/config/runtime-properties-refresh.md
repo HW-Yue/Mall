@@ -19,7 +19,7 @@
 - `app.agent.features.*`
 - `app.agent.feign.order-service.*`
 
-`pay-service` 也拆出了 `pay-service-runtime-dev.yml`，但本文只记录仓库里已经明确看到热更新装配实现边界的部分。
+`pay-service` 也拆出了 `pay-service-runtime-dev.yml`，但线程池部分已经迁移到 `pay-service-dtp-dev.yml`；本文只记录非线程池运行时配置边界。
 
 ## 实现原理
 

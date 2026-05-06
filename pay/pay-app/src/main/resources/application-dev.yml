@@ -36,6 +36,8 @@ spring:
     name: pay-service
   config:
     import:
+      - classpath:nacos/pay-service-dtp-dev.yml
+      - optional:nacos:pay-service-dtp-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - classpath:nacos/pay-service-runtime-dev.yml
       - optional:nacos:pay-service-runtime-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true
       - optional:nacos:pay-service-datasource-dev.yml?group=DEFAULT_GROUP&refreshEnabled=true

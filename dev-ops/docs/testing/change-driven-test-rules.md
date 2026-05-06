@@ -71,8 +71,8 @@
   断言 `DynamicTp` 业务线程池和 `tomcatTp` 线程池在刷新前后 `corePoolSize / maximumPoolSize / keepAliveTime` 都发生变化
 - `group-buy-service/group-buy-service-app/src/test/java/com/yue/groupbuy/config/AgentRuntimePropertiesTest.java`
   断言 `@RefreshScope` 运行时属性类在配置变更前后绑定出的业务开关、缓存 TTL、Feign 超时值都发生变化
-- `pay/pay-app/src/test/java/cn/bugstack/config/ThreadPoolConfigTest.java`
-  断言 `pay-service-runtime-dev.yml` 中的自定义线程池配置能够正确绑定并创建 `ThreadPoolExecutor`
+- `pay/pay-app/src/test/java/cn/bugstack/config/DynamicTpRefreshTest.java`
+  断言 `pay` 的 `DynamicTp` 业务线程池和 `tomcatTp` 线程池在刷新前后 `corePoolSize / maximumPoolSize / keepAliveTime` 都发生变化
 - `springcloud-gateway/app/src/test/java/cn/bugstack/gateway/config/GatewaySentinelConfigTest.java`
   断言网关 Sentinel fallback 和 `gw-flow` 数据源配置符合约定
 - `*/src/test/java/**/SentinelDatasourceConfigTest.java`
