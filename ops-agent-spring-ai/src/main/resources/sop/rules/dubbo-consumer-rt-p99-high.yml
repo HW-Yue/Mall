@@ -1,0 +1,26 @@
+# category: dubbo
+match-alertname: DubboConsumerRtP99High
+match-category: dubbo
+sop-markdown: |
+  DubboConsumerRtP99High Consumer P99 RT 高:
+
+  1 指标 metrics_ops:
+  查询 dubbo_consumer_rt_milliseconds_p99、consumer QPS、失败率，定位调用方、interface、method。
+
+  2 下游定位:
+  对比 provider 侧同接口 RT；若 provider RT 不高，优先怀疑网络、注册路由或客户端排队。
+
+  3 日志 elasticsearch_ops:
+  查 timeout、retry、No provider、连接异常以及调用链 trace。
+
+  4 实例 nacos_config:
+  查询调用方和 provider 健康实例数、IP 端口与发布时间。
+
+  5 FINAL:
+  区分 provider 慢、网络慢、consumer 本地资源不足、重试放大；给出下一步证据。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "dubbo_consumer_rt_milliseconds_p99"

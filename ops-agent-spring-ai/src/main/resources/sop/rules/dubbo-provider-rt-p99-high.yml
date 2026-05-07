@@ -1,0 +1,26 @@
+# category: dubbo
+match-alertname: DubboProviderRtP99High
+match-category: dubbo
+sop-markdown: |
+  DubboProviderRtP99High Provider P99 RT 高:
+
+  1 指标 metrics_ops:
+  查询 dubbo_provider_rt_milliseconds_p99、dubbo_provider_qps_total、失败率，判断慢是否伴随流量突增或错误升高。
+
+  2 日志 elasticsearch_ops:
+  按 interface/method 搜慢调用、timeout、SQL/Redis/MQ 慢点。
+
+  3 资源与线程:
+  联查 DubboThreadPoolActiveHigh、DynamicTP、JVM GC、CPU；慢调用可能来自线程池排队。
+
+  4 下游:
+  日志或指标指向数据库、Redis、MQ 时再进入对应 inspect 工具。
+
+  5 FINAL:
+  写清慢在 provider 内部还是下游，是否集中单接口/单实例，给出扩容、限流或优化建议。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "dubbo_provider_rt_milliseconds_p99"

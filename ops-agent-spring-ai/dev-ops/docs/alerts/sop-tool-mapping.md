@@ -12,6 +12,7 @@
 |----------|----------|---------------------------|
 | `sentinel` | 限流、RT 高、异常率高 | **metrics_ops**（`sentinel_metrics` 等 + 自定义 `promql`）→ **elasticsearch_ops**（日志/Trace 索引）→ **nacos_config**（Sentinel 规则 dataId，**写需审批**） |
 | `dynamictp` | 线程池忙、队列满、拒绝任务 | **metrics_ops**（`dynamictp_metrics` / `jvm_metrics`）→ **nacos_config**（DTP yml）→ 必要时 **mysql_inspect** / **redis_inspect**（排除下游慢） |
+| `dubbo` | RPC 错误率高、P99 高、线程池拒绝、注册/元数据失败 | **metrics_ops**（Dubbo PromQL）→ **elasticsearch_ops**（RPC 异常/超时日志）→ **nacos_config**（实例与注册配置只读）→ 证据指向时查 **mysql_inspect** / **redis_inspect** / **rocketmq_inspect** |
 | `http` | 5xx 比例高 | **metrics_ops** → **elasticsearch_ops**（`es_search`/`es_aggregation`）→ **docker_ops**（若仅个别实例） |
 | `hikari` | 连接池满、pending、获取慢 | **metrics_ops**（`jvm_metrics`/`business_metrics` 辅助看资源）+ **hikaricp** 指标用 PromQL → **mysql_inspect** → **nacos_config**（数据源 yml） |
 | `system` | JVM 堆、GC、`up==0` | **metrics_ops** → **docker_ops**（容器/资源）→ **elasticsearch_ops**（日志）；**ServiceDown** 时核对 **Prometheus targets** 与 **Nacos 注册 IP** |

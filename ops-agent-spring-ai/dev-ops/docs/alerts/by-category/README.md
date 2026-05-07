@@ -9,6 +9,7 @@
 |----------|----------|----------------------|
 | `sentinel` | [`sentinel.md`](sentinel.md) | 全局 5 + 业务专项多条 |
 | `dynamictp` | [`dynamictp.md`](dynamictp.md) | 4 |
+| `dubbo` | [`dubbo.md`](dubbo.md) | 9 |
 | `http` | [`http.md`](http.md) | 1 |
 | `hikari` | [`hikari.md`](hikari.md) | 3 |
 | `system` | [`jvm-system.md`](jvm-system.md) | 3（含 `up`） |
@@ -22,6 +23,7 @@
 
 - **sentinel**：GatewayBlockRateHigh, GroupBuyServiceCreatePayOrderBlockHigh, MallServiceQueryGoodsPageBlockHigh, OrderServiceCreateOrderBlockHigh, OrderServiceCreateOrderRtHigh, OrderServiceGetPayUrlRtHigh, PayServiceCreatePayOrderRtHigh, PayServiceExceptionHigh, SeckillServiceBlockHigh, SeckillServiceRtHigh, SentinelBlockRateHigh, SentinelExceptionRateHigh, SentinelPeakRtHigh, SentinelRtHigh, SentinelThreadCountHigh  
 - **dynamictp**：OrderServiceThreadPoolBusy, ThreadPoolActiveRatioHigh, ThreadPoolAtMaxCapacity, ThreadPoolQueueUsageHigh, ThreadPoolRejectedTasks  
+- **dubbo**：DubboConsumerErrorRateHigh, DubboConsumerRtP99High, DubboMetadataFailure, DubboProviderErrorRateHigh, DubboProviderNoTraffic, DubboProviderRtP99High, DubboRegistryFailure, DubboThreadPoolActiveHigh, DubboThreadPoolRejected  
 - **http**：Http5xxErrorRateHigh  
 - **hikari**：HikariConnectionAcquireSlow, HikariConnectionsPending, HikariConnectionsSaturated  
 - **system**：JvmGcPauseHigh, JvmHeapUsageHigh, ServiceDown  

@@ -15,6 +15,7 @@
 - Sentinel 指标需要服务先有真实请求流量，首次请求前 Dashboard 和 Prometheus 中可能还没有相关时序。
 - Dubbo RPC 指标同样需要先发生 Dubbo 调用，首次调用前只会看到应用、线程池、注册中心等基础指标。
 - Prometheus 默认通过 `/actuator/prometheus` 抓取 Spring Boot 服务。
+- Dubbo 预警规则统一归类为 `category=dubbo`，由 `ops-agent-spring-ai` 通过 `metrics_ops` + 日志 / Nacos / 下游依赖工具排查。
 - Exporter 指标与业务服务指标分开采集，Exporter 统一打 `application=shared`。
 
 ## 事实来源

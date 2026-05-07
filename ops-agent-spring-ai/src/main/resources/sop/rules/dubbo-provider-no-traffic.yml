@@ -1,0 +1,30 @@
+# category: dubbo
+match-alertname: DubboProviderNoTraffic
+match-category: dubbo
+sop-markdown: |
+  DubboProviderNoTraffic Provider 流量归零:
+
+  1 指标 metrics_ops:
+  查询 dubbo_provider_requests_total 与 up，确认是业务流量消失还是 Prometheus 采集异常。
+
+  2 注册 nacos_config:
+  nacos_list_instances 查询 ${application} 健康实例；核对 provider 是否还注册在 Nacos。
+
+  3 调用方:
+  查 consumer 侧是否出现 No provider、路由变更、降级或流量切走。
+
+  4 发布与配置:
+  若实例存在但无流量，核对网关/调用方配置、Dubbo registry 地址、服务接口版本/分组。
+
+  5 FINAL:
+  说明是正常无流量、服务下线、注册异常、调用方切流，还是采集缺失。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "dubbo_provider_requests_total"
+  - skill: nacos_config
+    tool: nacos_list_instances
+    args:
+      serviceName: "${application}"

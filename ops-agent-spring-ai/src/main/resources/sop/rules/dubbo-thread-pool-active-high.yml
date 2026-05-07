@@ -1,0 +1,26 @@
+# category: dubbo
+match-alertname: DubboThreadPoolActiveHigh
+match-category: dubbo
+sop-markdown: |
+  DubboThreadPoolActiveHigh Dubbo 线程池活跃率高:
+
+  1 指标 metrics_ops:
+  查询 dubbo_thread_pool_active_size、dubbo_thread_pool_max_size、dubbo_thread_pool_queue_size 和 RPC RT/QPS。
+
+  2 慢点定位:
+  如果线程池活跃高伴随 provider RT 高，查慢接口和下游依赖；如果只活跃高但 RT 正常，判断是否流量突增。
+
+  3 日志 elasticsearch_ops:
+  搜线程池耗尽、timeout、RejectedExecution、业务慢日志。
+
+  4 配置 nacos_config:
+  只读核对 Dubbo 线程池、协议端口、实例数。调整线程池或扩容需变更审批。
+
+  5 FINAL:
+  给出容量不足、下游慢、流量突刺或阈值过紧的判断。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "dubbo_thread_pool_active_size / clamp_min(dubbo_thread_pool_max_size, 1)"

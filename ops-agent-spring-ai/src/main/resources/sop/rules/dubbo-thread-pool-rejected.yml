@@ -1,0 +1,26 @@
+# category: dubbo
+match-alertname: DubboThreadPoolRejected
+match-category: dubbo
+sop-markdown: |
+  DubboThreadPoolRejected Dubbo 线程池拒绝:
+
+  1 指标 metrics_ops:
+  查询 dubbo_thread_pool_reject_thread_count、active/max、队列和 provider RT。
+
+  2 日志 elasticsearch_ops:
+  查 RejectedExecution、thread pool exhausted、Dubbo timeout；按实例和接口聚合。
+
+  3 根因:
+  线程池拒绝通常来自突发流量、provider 处理慢、下游依赖慢或实例数下降。按证据查 Nacos、MySQL、Redis、RocketMQ。
+
+  4 应急:
+  临时扩容实例、限流或调整线程池都需变更审批；Agent 只给建议不直接写配置。
+
+  5 FINAL:
+  写清拒绝发生的服务、线程池、接口、主要诱因和建议动作优先级。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "increase(dubbo_thread_pool_reject_thread_count[1m])"

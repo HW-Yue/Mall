@@ -281,6 +281,123 @@ groups:
           description: "网关资源 {{ $labels.resource }} block QPS = {{ $value | humanize }}/s，可能影响全链路"
 
   # ============================================================================
+  # Dubbo RPC 告警（Dubbo 3.3.2 metrics，经 /actuator/prometheus 暴露）
+  # 说明：
+  # - Dubbo 原始指标名 dubbo.provider.requests.total 会被 Prometheus 转成 dubbo_provider_requests_total。
+  # - Dubbo 自带 application.name 标签会转成 application_name；规则侧补 labels.application 便于 Alertmanager 分组。
+  # - RPC 指标需先发生 Dubbo 调用，冷启动或无流量时方法级指标可能不存在。
+  # ============================================================================
+  - name: dubbo-global
+    rules:
+      - alert: DubboProviderErrorRateHigh
+        expr: |
+          sum(rate(dubbo_provider_requests_failed_total[1m])) by (application_name, interface, method)
+          /
+          clamp_min(sum(rate(dubbo_provider_requests_total[1m])) by (application_name, interface, method), 0.001) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo Provider 错误率过高"
+          description: "服务 {{ $labels.application_name }} 接口 {{ $labels.interface }}#{{ $labels.method }} provider 错误率 = {{ $value | humanizePercentage }}"
+
+      - alert: DubboConsumerErrorRateHigh
+        expr: |
+          sum(rate(dubbo_consumer_requests_failed_total[1m])) by (application_name, interface, method)
+          /
+          clamp_min(sum(rate(dubbo_consumer_requests_total[1m])) by (application_name, interface, method), 0.001) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo Consumer 错误率过高"
+          description: "服务 {{ $labels.application_name }} 调用 {{ $labels.interface }}#{{ $labels.method }} consumer 错误率 = {{ $value | humanizePercentage }}"
+
+      - alert: DubboProviderRtP99High
+        expr: dubbo_provider_rt_milliseconds_p99 > 1000
+        for: 2m
+        labels:
+          severity: warning
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo Provider P99 RT 过高"
+          description: "服务 {{ $labels.application_name }} 接口 {{ $labels.interface }}#{{ $labels.method }} provider P99 RT = {{ $value }}ms"
+
+      - alert: DubboConsumerRtP99High
+        expr: dubbo_consumer_rt_milliseconds_p99 > 1000
+        for: 2m
+        labels:
+          severity: warning
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo Consumer P99 RT 过高"
+          description: "服务 {{ $labels.application_name }} 调用 {{ $labels.interface }}#{{ $labels.method }} consumer P99 RT = {{ $value }}ms"
+
+      - alert: DubboProviderNoTraffic
+        expr: |
+          sum(rate(dubbo_provider_requests_total[5m])) by (application_name, interface, method) == 0
+          and on (application_name, interface, method)
+          sum(rate(dubbo_provider_requests_total[5m] offset 10m)) by (application_name, interface, method) > 0
+        for: 5m
+        labels:
+          severity: warning
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo Provider 流量归零"
+          description: "服务 {{ $labels.application_name }} 接口 {{ $labels.interface }}#{{ $labels.method }} 最近 5 分钟无 provider 请求，但 10 分钟前仍有流量"
+
+      - alert: DubboThreadPoolActiveHigh
+        expr: dubbo_thread_pool_active_size / clamp_min(dubbo_thread_pool_max_size, 1) > 0.8
+        for: 2m
+        labels:
+          severity: warning
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo 线程池活跃率过高"
+          description: "服务 {{ $labels.application_name }} Dubbo 线程池 {{ $labels.thread_pool_name }} 活跃率 = {{ $value | humanizePercentage }}"
+
+      - alert: DubboThreadPoolRejected
+        expr: increase(dubbo_thread_pool_reject_thread_count[1m]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo 线程池出现拒绝"
+          description: "服务 {{ $labels.application_name }} Dubbo 线程池 {{ $labels.thread_pool_name }} 过去 1 分钟拒绝 {{ $value }} 次"
+
+      - alert: DubboRegistryFailure
+        expr: sum(increase({__name__=~"dubbo_registry_.*_failed_total"}[5m])) by (application_name) > 0
+        for: 2m
+        labels:
+          severity: warning
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo 注册中心操作失败"
+          description: "服务 {{ $labels.application_name }} 近 5 分钟 Dubbo 注册/订阅失败 {{ $value }} 次"
+
+      - alert: DubboMetadataFailure
+        expr: sum(increase({__name__=~"dubbo_metadata_.*failed_total"}[5m])) by (application_name) > 0
+        for: 2m
+        labels:
+          severity: warning
+          category: dubbo
+          application: "{{ $labels.application_name }}"
+        annotations:
+          summary: "Dubbo 元数据操作失败"
+          description: "服务 {{ $labels.application_name }} 近 5 分钟 Dubbo 元数据 push/subscribe/store 失败 {{ $value }} 次"
+
+  # ============================================================================
   # HTTP 层错误率告警（Micrometer 自动暴露的 http_server_requests）
   # 替代 Spring Boot 当前未暴露的 tomcat_threads_busy 类告警
   # ============================================================================

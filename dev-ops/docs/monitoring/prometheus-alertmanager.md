@@ -9,6 +9,7 @@
 - 规则文件：`dev-ops/prometheus/alert_rules.yml`
 - Compose：`dev-ops/docker-compose-grafana.yml`
 - 业务抓取方式：通过 Nacos HTTP SD 拉取服务实例，默认 `metrics_path=/actuator/prometheus`
+- Dubbo RPC 告警：复用业务服务 `/actuator/prometheus` 中的 Dubbo Micrometer 指标，规则分类为 `category=dubbo`
 - 特殊处理：若目标地址注册成 `127.0.0.1:port`，通过 relabel 替换为 `host.docker.internal:${port}`，避免容器内 Prometheus 抓不到宿主机服务
 
 ## Alertmanager

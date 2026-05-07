@@ -1,0 +1,30 @@
+# category: dubbo
+match-alertname: DubboRegistryFailure
+match-category: dubbo
+sop-markdown: |
+  DubboRegistryFailure 注册中心操作失败:
+
+  1 指标 metrics_ops:
+  查询 dubbo_registry_register_requests_failed_total、dubbo_registry_subscribe_num_failed_total 及 up。
+
+  2 Nacos nacos_config:
+  nacos_list_instances 查询 ${application}，确认是否注册失败、健康实例异常、注册中心不可达。
+
+  3 日志 elasticsearch_ops:
+  搜 Nacos、registry、subscribe、register、timeout、connection refused。
+
+  4 网络/容器 docker_ops:
+  如果所有服务同时失败，优先查 Nacos 容器或网络；如果单服务失败，查该服务实例配置和日志。
+
+  5 FINAL:
+  区分 Nacos 故障、网络隔离、服务配置错误、版本/分组不一致。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "{__name__=~\"dubbo_registry_.*_failed_total\"}"
+  - skill: nacos_config
+    tool: nacos_list_instances
+    args:
+      serviceName: "${application}"

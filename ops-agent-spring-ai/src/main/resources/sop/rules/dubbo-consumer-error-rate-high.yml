@@ -1,0 +1,31 @@
+# category: dubbo
+match-alertname: DubboConsumerErrorRateHigh
+match-category: dubbo
+sop-markdown: |
+  DubboConsumerErrorRateHigh Consumer 错误率高:
+
+  1 指标 metrics_ops:
+  business_metrics 查询 consumer 侧失败率，重点看 application_name、interface、method 是否集中在单一下游接口。
+
+  2 下游可用性:
+  用 nacos_config 查询告警 labels.interface 对应 provider 服务是否有健康实例；若无法从 interface 推断服务名，在 FINAL 写明。
+
+  3 日志 elasticsearch_ops:
+  查 consumer 侧 No provider、timeout、network、codec、serialization、RpcException。
+
+  4 依赖:
+  如果 provider 存在但 RT 同步升高，结合 provider 日志和 MySQL/Redis/MQ 证据继续排查。
+
+  5 FINAL:
+  区分无 provider、网络/注册、provider 慢、业务异常；给出证据和责任服务。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "dubbo_consumer_requests_failed_total"
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      查询 ${application} 及相关 Dubbo provider 的 Nacos 实例状态。若无法从标签推断 provider 服务名，只说明无法确认。
+    context: {}

@@ -1,0 +1,26 @@
+# category: dubbo
+match-alertname: DubboMetadataFailure
+match-category: dubbo
+sop-markdown: |
+  DubboMetadataFailure 元数据操作失败:
+
+  1 指标 metrics_ops:
+  查询 dubbo_metadata_push_num_failed_total、dubbo_metadata_subscribe_num_failed_total、dubbo_metadata_store_provider_failed_total。
+
+  2 注册/配置 nacos_config:
+  查询 ${application} 实例和相关 Nacos 配置，确认 metadata/report/registry 地址是否异常。
+
+  3 日志 elasticsearch_ops:
+  搜 metadata、MetadataReport、ServiceNotFound、NacosException、serialization。
+
+  4 影响判断:
+  元数据失败可能不立即中断存量调用，但会影响新实例发现、接口元信息和路由；结合 consumer/provider 错误率确认影响。
+
+  5 FINAL:
+  写清是否影响新发布/新调用、失败集中服务、建议恢复动作。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "{__name__=~\"dubbo_metadata_.*failed_total\"}"

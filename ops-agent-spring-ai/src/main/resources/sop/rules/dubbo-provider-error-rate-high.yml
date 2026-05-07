@@ -1,0 +1,31 @@
+# category: dubbo
+match-alertname: DubboProviderErrorRateHigh
+match-category: dubbo
+sop-markdown: |
+  DubboProviderErrorRateHigh Provider 错误率高:
+
+  1 指标 metrics_ops:
+  business_metrics 查询告警接口的 dubbo_provider_requests_total 与 dubbo_provider_requests_failed_total，按 application_name、interface、method 对齐错误率与 QPS。
+
+  2 日志 elasticsearch_ops:
+  查 provider 侧 ERROR、RpcException、业务异常、timeout，时间窗与告警 startsAt 对齐。
+
+  3 实例与注册 nacos_config:
+  nacos_list_instances 查询 ${application} 健康实例数；确认是否发布、扩缩容或注册 IP 异常。
+
+  4 依赖:
+  日志指向 DB、Redis、MQ 时再分别查 mysql_inspect、redis_inspect、rocketmq_inspect，不做无证据 fan-out。
+
+  5 FINAL:
+  结论区分 provider 业务异常、下游依赖、实例异常、调用方流量突增；列出接口、方法、主要异常和下一步。
+
+steps:
+  - skill: metrics_ops
+    tool: business_metrics
+    args:
+      promql: "dubbo_provider_requests_failed_total"
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      查询 Nacos 中 ${application} 的健康实例，核对是否存在实例数下降、注册 IP/端口异常。
+    context: {}

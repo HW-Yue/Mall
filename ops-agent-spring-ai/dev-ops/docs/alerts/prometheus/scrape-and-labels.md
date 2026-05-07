@@ -45,6 +45,7 @@
 ## 6. 标签在告警规则中的使用
 
 - **业务 Micrometer**：常见 **`application`**（Spring 应用名）、Sentinel 规则中同时使用 **`app`**（SentinelMetricsBinder）与注释中说明的 **`application`**（DTP 等）。
+- **Dubbo Micrometer**：Dubbo 自带标签 **`application.name`** 会转为 **`application_name`**，规则侧补 `labels.application` 用于 Alertmanager 分组。
 - **Exporter 全局**：显式打上 **`application: shared`** + **`category: mysql|redis|rocketmq`**，便于 Agent 按域路由。
 
 ## 7. 相关文档
