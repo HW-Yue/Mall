@@ -161,6 +161,25 @@ public class ElasticsearchToolkit {
         }
     }
 
+    /**
+     * 以 logs 集群发起 _search，返回原始响应 JSON，供需要完整 hits 的调用方使用。
+     */
+    public String searchRawJson(String index, String jsonQuery) {
+        if (index == null || index.isBlank()) {
+            throw new IllegalArgumentException("index 不能为空");
+        }
+        String bodyIn = (jsonQuery == null || jsonQuery.isBlank())
+                ? "{\"query\":{\"match_all\":{}},\"size\":10}"
+                : jsonQuery;
+        String path = "/" + index.trim() + "/_search";
+        return logsClient.post()
+                .uri(URI.create(path))
+                .header("Content-Type", "application/json")
+                .body(bodyIn)
+                .retrieve()
+                .body(String.class);
+    }
+
     public ToolResult search(String index, String jsonQuery) {
         return search("logs", index, jsonQuery);
     }

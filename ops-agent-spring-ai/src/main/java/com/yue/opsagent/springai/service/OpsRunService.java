@@ -9,6 +9,9 @@ import com.yue.opsagent.springai.domain.opsroute.RouteInputType;
 import com.yue.opsagent.springai.domain.opsroute.RouteRequest;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import net.logstash.logback.argument.StructuredArguments;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -27,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class OpsRunService {
+
+    private static final Logger log = LoggerFactory.getLogger(OpsRunService.class);
 
     private final ObjectMapper objectMapper;
     private final Map<String, MutableRun> runs = new ConcurrentHashMap<>();
@@ -165,6 +170,12 @@ public class OpsRunService {
         for (SseEmitter emitter : subscribers.getOrDefault(runId, new CopyOnWriteArrayList<>())) {
             send(emitter, event);
         }
+        log.info("[OpsRunEvent] {} {} {}",
+                StructuredArguments.kv("runId", runId),
+                StructuredArguments.kv("eventType", type),
+                StructuredArguments.kv("node", node),
+                StructuredArguments.kv("eventMessage", message),
+                StructuredArguments.kv("data", data == null ? Map.of() : data));
     }
 
     private void send(SseEmitter emitter, Object payload) {
