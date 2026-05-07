@@ -24,6 +24,7 @@
         <spring-cloud-alibaba.version>2023.0.1.0</spring-cloud-alibaba.version>
         <!-- sentinel-spring-webmvc-v6x-adapter 1.8.6 不存在，需 1.8.8+ -->
         <sentinel.version>1.8.8</sentinel.version>
+        <dubbo.version>3.3.2</dubbo.version>
     </properties>
 
     <dependencyManagement>
@@ -128,6 +129,14 @@
             <version>${skywalking.version}</version>
         </dependency>
 
+        <!-- Dubbo Filter SPI：provided，只在业务服务已引入 Dubbo 时生效 -->
+        <dependency>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo</artifactId>
+            <version>${dubbo.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -182,6 +191,7 @@
                     <include>**/*.imports</include>
                     <include>**/*.factories</include>
                     <include>**/*.json</include>
+                    <include>META-INF/dubbo/**</include>
                 </includes>
             </resource>
             <resource>

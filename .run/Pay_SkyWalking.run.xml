@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="LoginPay_SkyWalking" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+  <configuration default="false" name="Pay_SkyWalking" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="dev" />
     <module name="pay-app" />
     <option name="SPRING_BOOT_MAIN_CLASS" value="cn.bugstack.PayApplication" />

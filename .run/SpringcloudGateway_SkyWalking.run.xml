@@ -2,7 +2,7 @@
   <configuration default="false" name="SpringcloudGateway_SkyWalking" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
     <option name="ACTIVE_PROFILES" value="dev" />
     <module name="app" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="cn.bugstack.xfg.dev.tech.SpringcloudGatewayApplication" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="cn.bugstack.gateway.SpringcloudGatewayApplication" />
     <option name="VM_PARAMETERS" value="-javaagent:$PROJECT_DIR$/dev-tools/skywalking/apache-skywalking-java-agent-9.6.0/skywalking-agent/skywalking-agent.jar -Dskywalking.collector.backend_service=100.86.250.112:11800 -Dskywalking.agent.service_name=springcloud-gateway -Dskywalking.trace.ignore_path=*:/actuator/**,SpringScheduled/**,HikariCP/**" />
     <method v="2">
       <option name="Make" enabled="true" />
