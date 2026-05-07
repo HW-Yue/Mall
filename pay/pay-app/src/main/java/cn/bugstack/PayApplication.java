@@ -1,5 +1,6 @@
 package cn.bugstack;
 
+import org.apache.dubbo.config.spring.context.annotation.EnableDubbo;
 import org.dromara.dynamictp.core.spring.EnableDynamicTp;
 import org.springframework.beans.factory.annotation.Configurable;
 import org.springframework.boot.SpringApplication;
@@ -11,6 +12,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @Configurable
 @EnableScheduling
 @EnableDynamicTp
+@EnableDubbo
 @EnableDiscoveryClient
 public class PayApplication {
 
