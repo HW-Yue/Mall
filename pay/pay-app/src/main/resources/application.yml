@@ -3,3 +3,22 @@ spring:
     name: s-pay-mall-ddd-app
   profiles:
     active: dev
+
+management:
+  metrics:
+    # Dubbo metrics use Micrometer global registry so /actuator/prometheus can scrape them together.
+    use-global-registry: true
+
+dubbo:
+  metrics:
+    protocol: prometheus
+    enable-rpc: true
+    rpc-level: METHOD
+    enable-threadpool: true
+    enable-registry: true
+    enable-metadata: true
+    use-global-registry: true
+    collector-sync-period: 15
+    prometheus:
+      exporter:
+        enabled: true
