@@ -144,6 +144,7 @@ app:
       orderShipTask: order-ship-task
       seckillOrderCreate: seckill-order-create
       normalOrderCreate: normal-order-create
+      groupBuyOrderCreate: group-buy-order-create
     consumerGroup:
       paySuccessNormal: CG_PAY_SUCCESS_NORMAL
       paySuccessGroupBuy: CG_PAY_SUCCESS_GROUP_BUY
@@ -161,6 +162,7 @@ app:
       orderShipTask: CG_ORDER_SHIP_TASK
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE_ORDER
       normalOrderCreate: CG_NORMAL_ORDER_CREATE
+      groupBuyOrderCreate: CG_GROUP_BUY_ORDER_CREATE
 
 mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml

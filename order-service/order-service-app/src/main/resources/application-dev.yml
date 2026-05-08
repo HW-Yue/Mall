@@ -157,6 +157,8 @@ app:
       seckillOrderCreate: seckill-order-create
       # 生产 / 自消费：普通商品 mall 已锁库后异步 INSERT
       normalOrderCreate: normal-order-create
+      # 生产 / 自消费：拼团下单异步 INSERT
+      groupBuyOrderCreate: group-buy-order-create
     consumerGroup:
       paySuccessNormal: CG_PAY_SUCCESS_NORMAL
       paySuccessGroupBuy: CG_PAY_SUCCESS_GROUP_BUY
@@ -174,6 +176,7 @@ app:
       orderShipTask: CG_ORDER_SHIP_TASK
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE_ORDER
       normalOrderCreate: CG_NORMAL_ORDER_CREATE
+      groupBuyOrderCreate: CG_GROUP_BUY_ORDER_CREATE
 
 # MyBatis
 mybatis:

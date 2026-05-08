@@ -144,6 +144,15 @@ mybatis:
   mapper-locations: classpath:/mybatis/mapper/*.xml
   config-location: classpath:/mybatis/config/mybatis-config.xml
 
+# 扳手工程；动态配置中心在 test compose 下走容器内 Redis
+xfg:
+  wrench:
+    config:
+      system: group-buy-market
+      register:
+        host: redis
+        port: 6379
+
 logstash:
   enabled: true
   host: logstash

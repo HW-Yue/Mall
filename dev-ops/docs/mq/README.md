@@ -25,6 +25,7 @@
 | `order-service` | `pay-refund-group-buy` | `pay`、`group-buy-service` | `CG_PAY_PAY_REFUND_GROUP_BUY`、`CG_GROUP_BUY_PAY_REFUND` | 事务消息 | [pay-refund-group-buy](./topics/pay-refund-group-buy.md) |
 | `order-service` | `pay-refund-seckill` | `pay`、`seckill-service` | `CG_PAY_PAY_REFUND_SECKILL`、`CG_SECKILL_PAY_REFUND` | 事务消息 | [pay-refund-seckill](./topics/pay-refund-seckill.md) |
 | `order-service` | `normal-order-create` | `order-service` | `CG_NORMAL_ORDER_CREATE` | 同步投递普通消息 | [normal-order-create](./topics/normal-order-create.md) |
+| `order-service` | `group-buy-order-create` | `order-service` | `CG_GROUP_BUY_ORDER_CREATE` | 同步投递普通消息 | [group-buy-order-create](./topics/group-buy-order-create.md) |
 | `order-service` | `order-ship-task` | `order-service` | `CG_ORDER_SHIP_TASK` | 事务消息 | [order-ship-task](./topics/order-ship-task.md) |
 | `group-buy-service` | `group-buy-success-notify` | `order-service` | `CG_GROUP_BUY_SUCCESS_NOTIFY` | 普通 | [group-buy-success-notify](./topics/group-buy-success-notify.md) |
 | `group-buy-service` | `group-buy-timeout-refund` | `group-buy-service` | `CG_GROUP_BUY_TIMEOUT_REFUND` | 定时消息 | [group-buy-timeout-refund](./topics/group-buy-timeout-refund.md) |
@@ -47,6 +48,7 @@
 | `order-service` | `pay-refund-group-buy-result` | `pay` | `CG_PAY_REFUND_GROUP_BUY_RESULT` | `PayRefundGroupBuyListener` | [pay-refund-group-buy-result](./topics/pay-refund-group-buy-result.md) |
 | `order-service` | `pay-refund-seckill-result` | `pay` | `CG_PAY_REFUND_SECKILL_RESULT` | `PayRefundSeckillListener` | [pay-refund-seckill-result](./topics/pay-refund-seckill-result.md) |
 | `order-service` | `normal-order-create` | `order-service` | `CG_NORMAL_ORDER_CREATE` | `NormalOrderCreateListener` | [normal-order-create](./topics/normal-order-create.md) |
+| `order-service` | `group-buy-order-create` | `order-service` | `CG_GROUP_BUY_ORDER_CREATE` | `GroupBuyOrderCreateListener` | [group-buy-order-create](./topics/group-buy-order-create.md) |
 | `order-service` | `seckill-order-create` | `seckill-service` | `CG_SECKILL_ORDER_CREATE_ORDER` | `SeckillOrderCreateListener` | [seckill-order-create](./topics/seckill-order-create.md) |
 | `order-service` | `order-ship-task` | `order-service` | `CG_ORDER_SHIP_TASK` | `OrderShipTaskListener` | [order-ship-task](./topics/order-ship-task.md) |
 | `order-service` | `group-buy-success-notify` | `group-buy-service` | `CG_GROUP_BUY_SUCCESS_NOTIFY` | `GroupBuySuccessNotifyListener` | [group-buy-success-notify](./topics/group-buy-success-notify.md) |

@@ -36,6 +36,7 @@ docker compose -f dev-ops/docker-compose-elk.yml up -d
 关键约定：
 
 - 基础环境统一来自根目录 `dev-ops/`。
+- `mysql-business-sync` 会在 MySQL 健康后自动重放业务真实库 SQL 与测试库 SQL；如果你刚改了 `dev-ops/mysql/sql/*.sql` 或 `dev-ops/mysql/sql/test/*.sql`，重新执行 `docker compose -f dev-ops/docker-compose-environment.yml up -d` 即可让库表和种子数据重新对齐。
 - MySQL、Redis、Nacos、RocketMQ、Sentinel、Logstash 都通过 Docker 网络内服务名访问。
 - MySQL 初始化 SQL 位于 `dev-ops/mysql/sql/`。
 - 测试库 SQL 位于 `dev-ops/mysql/sql/test/`，由 `dev-ops/mysql/sql/zz-init-test-sql.sh` 在 MySQL 首次初始化时导入。

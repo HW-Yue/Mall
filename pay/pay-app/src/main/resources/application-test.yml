@@ -122,7 +122,7 @@ alipay:
   alipay_public_key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAxQnlTHWARNnL28x9ggM5zRGFfQCIHMqk9q3l8hbv3x9HeVloyTc8OP/rI5lYifWzlRgPsW0wcN6H7V2iErxEDjGbxg51gIIZlV71THr9uMpA8R+b5xj4eIuL+uAGQa8mneW+TJ3ZVBrXeYUgexrC/591WoFCqiwzw3CMf/wHiZHamVyCe1kYNgbzneGHadsxBBXL3zgrsH3PsKXTq6PpS4K2VrIxxBSRS2G+PAjInh0rMqVsdJizCTPRdKgpUY2qNspzm4CuKZc19kqp99ApLecvOqz+/unNxLP7HrBF4OMyBstdRzRFyGqS0kOVr/Wfczu1kfWwnuS86bLjI4RoIwIDAQAB
   notify_url: http://pay:8095/api/v1/alipay/alipay_notify_url
   return_url: http://127.0.0.1/
-  gatewayUrl: http://host.docker.internal:7000/gateway.do
+  gatewayUrl: http://localhost:7000/gateway.do
   mock-refund: true
 
 sc:

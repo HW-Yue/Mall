@@ -103,8 +103,8 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 ## 业务流程
 
 > **当前实现要点：**
-> - `order-service` 不是所有 MQ 都走事务消息。当前 `pay-refund-*`、`order-ship-task` 走事务消息；`order-paid-*`、`normal-order-create` 走普通消息。
-> - 普通单是 mall 锁库后，由 `order-service` 投递 `normal-order-create` 异步落库。
+> - `order-service` 不是所有 MQ 都走事务消息。当前 `pay-refund-*`、`order-ship-task` 走事务消息；`order-paid-*`、`normal-order-create`、`group-buy-order-create` 走普通消息。
+> - 普通单与拼团单都通过 MQ 异步落库（`normal-order-create` / `group-buy-order-create`），发 MQ 前在 Redis 写存在标记 `order:exists:{userId}:{orderId}`，`get_pay_url` 命中标记后才走 6×50ms DB 重试兜底，未命中标记直接 `ORDER_NOT_FOUND` 快速失败。
 > - 秒杀下单先返回 `seckillToken`，前端轮询拿到 `orderId` 后再走支付流程。
 
 ### 普通下单
@@ -113,7 +113,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 支付后：支付宝回调 pay → pay 更新支付单状态 → `pay-success-normal` → order-service 更新订单状态 → 发布 `order-paid-normal` 与事务消息 `order-ship-task`
 
 ### 拼团下单
-前端 → group-buy-service `create_pay_order`（校验活动、占 `lock_count`、必要时创建 team）→ Dubbo order-service `create_order` → 返回 `orderId` / `teamId` / `outTradeNo` → order-service `get_pay_url` → Dubbo pay → 支付宝
+前端 → group-buy-service `create_pay_order`（校验活动、占 `lock_count`、必要时创建 team）→ Dubbo order-service `create_order` → order-service 写 Redis 存在标记并发布 `group-buy-order-create` → 立即返回 `orderId` / `teamId` / `outTradeNo` → order-service 消费后异步落库 `t_order` → order-service `get_pay_url`（命中存在标记后做 DB 重试兜底）→ Dubbo pay → 支付宝
 
 新开团时：group-buy-service 还会发送 `group-buy-timeout-refund` 定时消息，用于队伍超时后的关单 / 退款补偿。
 
@@ -227,7 +227,7 @@ docker compose -f dev-ops/docker-compose-apps-test.yml up -d
 **Docker 环境约定：**
 - 所有基础环境都通过根目录 `dev-ops/` 下的 Docker Compose 文件构建和启动，不再从子模块目录找环境配置。
 - MySQL、Redis、Nacos、RocketMQ、Sentinel、ELK、Prometheus/Grafana 等端口、容器名、网络名、挂载目录均以 `dev-ops/` 内的 compose 与配置文件为准。
-- MySQL 初始化 SQL 统一放在 `dev-ops/mysql/sql/`；只有 `dev-ops/mysql/data/` 为空时官方镜像才会执行 `/docker-entrypoint-initdb.d`，测试库 SQL 由 `zz-init-test-sql.sh` 递归加载 `test/*.sql`。
+- MySQL 初始化 SQL 统一放在 `dev-ops/mysql/sql/`；首次空数据目录初始化仍由官方镜像执行 `/docker-entrypoint-initdb.d`，此外 `mysql-business-sync` 会在每次 `docker compose up` 时重放业务真实库 SQL 与 `test/*.sql`，确保真实库和测试库表结构/种子数据自动补齐。
 - 业务应用镜像和容器入口统一以 `dev-ops/docker-compose-apps-test.yml` 与 `dev-ops/docker-compose-apps-dev.yml` 为准，`docker-apps/` 仅保留脚本入口；需要确认应用依赖的环境地址时，先查 `dev-ops/`，再查各服务 `application-{profile}.yml`。
 - 涉及订单、拼团、支付、网关、Nacos、MySQL 初始化或 Docker 启停的重大变更，提交前必须先完成一次完整全链路测试，流程见 `dev-ops/full-flow-test/README.md`，脚本入口为 `bash dev-ops/app/group-buy-full-flow-test.sh`。
 

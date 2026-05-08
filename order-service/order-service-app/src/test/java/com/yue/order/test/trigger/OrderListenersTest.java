@@ -1,8 +1,10 @@
 package com.yue.order.test.trigger;
 
+import com.yue.order.domain.order.adapter.repository.IOrderCacheRepository;
 import com.yue.order.domain.order.adapter.repository.IOrderRepository;
 import com.yue.order.domain.order.model.entity.OrderEntity;
 import com.yue.order.domain.order.service.IOrderDomainService;
+import com.yue.order.trigger.listener.GroupBuyOrderCreateListener;
 import com.yue.order.trigger.listener.GroupBuySuccessNotifyListener;
 import com.yue.order.trigger.listener.NormalOrderCreateListener;
 import com.yue.order.trigger.listener.SeckillOrderCreateListener;
@@ -30,14 +32,31 @@ class OrderListenersTest {
     @Test
     void normalOrderCreateListenerIgnoresInvalidMessageAndInsertsValidOrder() {
         IOrderRepository repository = mock(IOrderRepository.class);
+        IOrderCacheRepository cache = mock(IOrderCacheRepository.class);
         NormalOrderCreateListener listener = new NormalOrderCreateListener();
         ReflectionTestUtils.setField(listener, "orderRepository", repository);
+        ReflectionTestUtils.setField(listener, "orderCacheRepository", cache);
 
         listener.onMessage("{\"userId\":\"u1\"}");
         verify(repository, never()).insertOrderWithoutMallLock(any());
 
         listener.onMessage("{\"orderId\":\"OID-1\",\"userId\":\"u1\",\"outTradeNo\":\"OUT-1\",\"payPrice\":99,\"goodsId\":\"g1\"}");
         verify(repository).insertOrderWithoutMallLock(any(OrderEntity.class));
+        verify(cache).clearPending("u1", "OID-1");
+    }
+
+    @Test
+    void groupBuyOrderCreateListenerInsertsAndClearsMarker() {
+        IOrderRepository repository = mock(IOrderRepository.class);
+        IOrderCacheRepository cache = mock(IOrderCacheRepository.class);
+        GroupBuyOrderCreateListener listener = new GroupBuyOrderCreateListener();
+        ReflectionTestUtils.setField(listener, "orderRepository", repository);
+        ReflectionTestUtils.setField(listener, "orderCacheRepository", cache);
+
+        listener.onMessage("{\"orderId\":\"OID-GB\",\"userId\":\"u1\",\"outTradeNo\":\"OUT-GB\",\"payPrice\":99,\"goodsId\":\"g1\"}");
+
+        verify(repository).insertOrderWithoutMallLock(any(OrderEntity.class));
+        verify(cache).clearPending("u1", "OID-GB");
     }
 
     @Test

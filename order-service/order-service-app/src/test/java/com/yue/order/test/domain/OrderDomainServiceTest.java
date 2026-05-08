@@ -1,6 +1,7 @@
 package com.yue.order.test.domain;
 
 import com.yue.order.domain.order.adapter.port.*;
+import com.yue.order.domain.order.adapter.repository.IOrderCacheRepository;
 import com.yue.order.domain.order.adapter.repository.IOrderRepository;
 import com.yue.order.domain.order.model.entity.CreateOrderCommand;
 import com.yue.order.domain.order.model.entity.NormalOrderEnqueueResult;
@@ -41,6 +42,10 @@ class OrderDomainServiceTest {
     @Mock
     private INormalOrderPendingPublisher normalOrderPendingPublisher;
     @Mock
+    private IGroupBuyOrderPendingPublisher groupBuyOrderPendingPublisher;
+    @Mock
+    private IOrderCacheRepository orderCacheRepository;
+    @Mock
     private IOrderShipTaskPublisher orderShipTaskPublisher;
 
     private OrderDomainService service;
@@ -54,10 +59,13 @@ class OrderDomainServiceTest {
         ReflectionTestUtils.setField(service, "orderClosePublisher", orderClosePublisher);
         ReflectionTestUtils.setField(service, "refundPublisher", refundPublisher);
         ReflectionTestUtils.setField(service, "normalOrderPendingPublisher", normalOrderPendingPublisher);
+        ReflectionTestUtils.setField(service, "groupBuyOrderPendingPublisher", groupBuyOrderPendingPublisher);
+        ReflectionTestUtils.setField(service, "orderCacheRepository", orderCacheRepository);
         ReflectionTestUtils.setField(service, "orderShipTaskPublisher", orderShipTaskPublisher);
         ReflectionTestUtils.setField(service, "allowDirectNormalCreateOrder", true);
         ReflectionTestUtils.setField(service, "getPayUrlPendingRetries", 1);
         ReflectionTestUtils.setField(service, "getPayUrlPendingWaitMs", 1L);
+        ReflectionTestUtils.setField(service, "pendingMarkerTtlMinutes", 30L);
     }
 
     @Test
@@ -147,6 +155,83 @@ class OrderDomainServiceTest {
         verify(orderRepository).updatePaySuccess(eq("OUT-5"), any(Date.class));
         verify(orderPaidPublisher).publishOrderPaid(eq("u2"), eq("OID-5"), eq("OUT-5"), eq("normal"), any(Date.class));
         verify(orderShipTaskPublisher).publishOrderShipTask("u2", "OID-5", "OUT-5");
+    }
+
+    @Test
+    void createOrderGroupBuyMarksRedisAndPublishesMq() {
+        CreateOrderCommand command = createCommand("group_buy");
+        command.setOutTradeNo("OUT-GB");
+
+        String orderId = service.createOrder(command);
+
+        assertThat(orderId).isNotBlank();
+        verify(orderCacheRepository).markPending(eq("u1"), eq(orderId), eq("OUT-GB"), any());
+        verify(groupBuyOrderPendingPublisher).publishInsertSync(contains("\"marketType\":\"group_buy\""));
+        verify(orderRepository, never()).saveOrder(any());
+    }
+
+    @Test
+    void createOrderGroupBuyClearsMarkerWhenMqFails() {
+        CreateOrderCommand command = createCommand("group_buy");
+        command.setOutTradeNo("OUT-GB-FAIL");
+        doThrow(new RuntimeException("mq down")).when(groupBuyOrderPendingPublisher).publishInsertSync(anyString());
+
+        assertThatThrownBy(() -> service.createOrder(command))
+                .isInstanceOf(RuntimeException.class);
+
+        verify(orderCacheRepository).markPending(eq("u1"), anyString(), eq("OUT-GB-FAIL"), any());
+        verify(orderCacheRepository).clearPending(eq("u1"), anyString());
+    }
+
+    @Test
+    void submitNormalOrderFromMallClearsMarkerWhenMqFails() {
+        CreateOrderCommand command = createCommand("normal");
+        command.setOutTradeNo("OUT-NM-FAIL");
+        doThrow(new RuntimeException("mq down")).when(normalOrderPendingPublisher).publishInsertSync(anyString());
+
+        assertThatThrownBy(() -> service.submitNormalOrderFromMall(command))
+                .isInstanceOf(RuntimeException.class);
+
+        verify(orderCacheRepository).markPending(eq("u1"), anyString(), eq("OUT-NM-FAIL"), any());
+        verify(orderCacheRepository).clearPending(eq("u1"), anyString());
+    }
+
+    @Test
+    void getPayUrlFailsFastWhenNoMarkerAndDbMiss() {
+        when(orderRepository.queryByUserIdAndOrderId("u1", "MISSING")).thenReturn(null);
+        when(orderCacheRepository.existsPending("u1", "MISSING")).thenReturn(false);
+
+        assertThatThrownBy(() -> service.getPayUrl("u1", "MISSING"))
+                .isInstanceOf(AppException.class)
+                .hasMessageContaining("订单不存在");
+
+        verify(orderRepository, times(1)).queryByUserIdAndOrderId("u1", "MISSING");
+    }
+
+    @Test
+    void getPayUrlRetriesDbWhenMarkerExists() {
+        ReflectionTestUtils.setField(service, "getPayUrlPendingRetries", 3);
+        when(orderRepository.queryByUserIdAndOrderId("u1", "OID-LATE"))
+                .thenReturn(null)
+                .thenReturn(null)
+                .thenReturn(OrderEntity.builder()
+                        .userId("u1")
+                        .orderId("OID-LATE")
+                        .outTradeNo("OUT-LATE")
+                        .goodsId("g1")
+                        .originalPrice(new BigDecimal("100"))
+                        .deductionPrice(new BigDecimal("10"))
+                        .payPrice(new BigDecimal("90"))
+                        .status(OrderStatusVO.LOCK)
+                        .marketType(MarketTypeVO.GROUP_BUY)
+                        .payUrl("cached-url")
+                        .build());
+        when(orderCacheRepository.existsPending("u1", "OID-LATE")).thenReturn(true);
+
+        String result = service.getPayUrl("u1", "OID-LATE");
+
+        assertThat(result).isEqualTo("cached-url");
+        verify(orderRepository, times(3)).queryByUserIdAndOrderId("u1", "OID-LATE");
     }
 
     private static CreateOrderCommand createCommand(String marketType) {

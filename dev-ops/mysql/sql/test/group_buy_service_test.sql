@@ -1,5 +1,6 @@
 CREATE DATABASE IF NOT EXISTS `test_group_buy_service` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 USE `test_group_buy_service`;
+SET NAMES utf8mb4;
 
 DROP TABLE IF EXISTS `group_buy_discount`;
 CREATE TABLE `group_buy_discount` (
@@ -18,7 +19,9 @@ CREATE TABLE `group_buy_discount` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='折扣配置';
 
 INSERT INTO `group_buy_discount` (`discount_id`, `discount_name`, `discount_desc`, `discount_type`, `market_plan`, `market_expr`, `tag_id`)
-VALUES ('25120207', '测试拼团直减20', '测试拼团立减20元', 0, 'ZJ', '20', NULL);
+VALUES
+  ('25120207', '测试拼团直减20', '测试拼团立减20元', 0, 'ZJ', '20', NULL),
+  ('25120208', '测试拼团直减30', '测试拼团立减30元', 0, 'ZJ', '30', NULL);
 
 DROP TABLE IF EXISTS `group_buy_activity`;
 CREATE TABLE `group_buy_activity` (
@@ -42,7 +45,9 @@ CREATE TABLE `group_buy_activity` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='拼团活动';
 
 INSERT INTO `group_buy_activity` (`activity_id`, `activity_name`, `discount_id`, `group_type`, `take_limit_count`, `target`, `valid_time`, `status`, `start_time`, `end_time`)
-VALUES (100123, '测试拼团活动', '25120207', 0, 1, 3, 15, 1, '2000-01-01 00:00:00', '2099-12-31 23:59:59');
+VALUES
+  (100123, '测试拼团活动', '25120207', 0, 1, 3, 15, 1, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
+  (100124, '测试存储拼团活动', '25120208', 0, 2, 2, 20, 1, '2000-01-01 00:00:00', '2099-12-31 23:59:59');
 
 DROP TABLE IF EXISTS `sc_sku_activity`;
 CREATE TABLE `sc_sku_activity` (
@@ -59,7 +64,10 @@ CREATE TABLE `sc_sku_activity` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='渠道商品活动映射（拼团）';
 
 INSERT INTO `sc_sku_activity` (`source`, `channel`, `activity_id`, `activity_type`, `goods_id`)
-VALUES ('s01', 'c01', 100123, 'group_buy', '1001');
+VALUES
+  ('s01', 'c01', 100123, 'group_buy', '1001'),
+  ('s01', 'c01', 100123, 'group_buy', '1003'),
+  ('s01', 'c01', 100124, 'group_buy', '2004');
 
 DROP TABLE IF EXISTS `team_order`;
 CREATE TABLE `team_order` (
@@ -86,7 +94,9 @@ CREATE TABLE `team_order` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='拼团团队订单';
 
 INSERT INTO `team_order` (`team_id`, `activity_id`, `source`, `channel`, `original_price`, `deduction_price`, `pay_price`, `target_count`, `complete_count`, `lock_count`, `status`, `valid_start_time`, `valid_end_time`)
-VALUES ('88888888', 100123, 's01', 'c01', 100.00, 20.00, 80.00, 3, 0, 1, 0, '2000-01-01 00:00:00', '2099-12-31 23:59:59');
+VALUES
+  ('88888888', 100123, 's01', 'c01', 100.00, 20.00, 80.00, 3, 1, 1, 0, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
+  ('77777777', 100124, 's01', 'c01', 69.00, 30.00, 39.00, 2, 2, 0, 1, '2000-01-01 00:00:00', '2099-12-31 23:59:59');
 
 DROP TABLE IF EXISTS `t_order`;
 CREATE TABLE `t_order` (
@@ -113,7 +123,11 @@ CREATE TABLE `t_order` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='拼团个人订单';
 
 INSERT INTO `t_order` (`order_id`, `user_id`, `team_id`, `activity_id`, `goods_id`, `out_trade_no`, `status`, `original_price`, `deduction_price`, `pay_price`, `start_time`, `end_time`)
-VALUES ('TESTGB000001', 'test-user', '88888888', 100123, '1001', 'TEST_OUT_000001', 0, 100.00, 20.00, 80.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59');
+VALUES
+  ('TESTGB000001', 'test-user', '88888888', 100123, '1001', 'TEST_OUT_000001', 1, 100.00, 20.00, 80.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
+  ('TESTGB000002', 'test-user-2', '88888888', 100123, '1003', 'TEST_OUT_000002', 0, 159.00, 20.00, 139.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
+  ('TESTGB000003', 'test-user-3', '77777777', 100124, '2004', 'TEST_OUT_000003', 1, 69.00, 30.00, 39.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
+  ('TESTGB000004', 'test-user-4', '77777777', 100124, '2004', 'TEST_OUT_000004', 1, 69.00, 30.00, 39.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59');
 
 DROP TABLE IF EXISTS `notify_task`;
 CREATE TABLE `notify_task` (
@@ -145,7 +159,9 @@ CREATE TABLE `category` (
   UNIQUE KEY `uq_code` (`code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商品类目';
 
-INSERT INTO `category` (`id`, `name`, `code`) VALUES (1, 'AI模型', 'ai_model');
+INSERT INTO `category` (`id`, `name`, `code`) VALUES
+  (1, 'AI模型', 'ai_model'),
+  (2, '存储资源', 'storage');
 
 DROP TABLE IF EXISTS `sku`;
 CREATE TABLE `sku` (
@@ -163,7 +179,10 @@ CREATE TABLE `sku` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商品SKU';
 
 INSERT INTO `sku` (`goods_id`, `goods_name`, `goods_image_url`, `goods_detail`, `category_id`, `original_price`)
-VALUES ('1001', '测试商品', 'https://example.com/test.png', 'test sku', 1, 100.00);
+VALUES
+  ('1001', '测试商品-AI模型', 'https://example.com/test-ai.png', '测试 AI 模型商品', 1, 100.00),
+  ('1003', '测试商品-Claude额度', 'https://example.com/test-claude.png', '测试 Claude 模型额度商品', 1, 159.00),
+  ('2004', '测试商品-云存储1GB', 'https://example.com/test-storage.png', '测试云存储商品', 2, 69.00);
 
 DROP TABLE IF EXISTS `sku_resource_detail`;
 CREATE TABLE `sku_resource_detail` (
@@ -178,4 +197,7 @@ CREATE TABLE `sku_resource_detail` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='SKU资源明细';
 
 INSERT INTO `sku_resource_detail` (`goods_id`, `res_key`, `res_value`)
-VALUES ('1001', 'resource_url', 'https://example.com/resource');
+VALUES
+  ('1001', 'model', 'gpt-4'),
+  ('1003', 'model', 'claude-3'),
+  ('2004', 'storage', '1024MB');

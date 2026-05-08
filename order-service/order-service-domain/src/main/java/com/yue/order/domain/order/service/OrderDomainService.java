@@ -3,12 +3,14 @@ package com.yue.order.domain.order.service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.yue.order.domain.order.adapter.port.IGroupBuyOrderPendingPublisher;
 import com.yue.order.domain.order.adapter.port.INormalOrderPendingPublisher;
 import com.yue.order.domain.order.adapter.port.IOrderClosePublisher;
 import com.yue.order.domain.order.adapter.port.IOrderPaidPublisher;
 import com.yue.order.domain.order.adapter.port.IOrderRefundPublisher;
 import com.yue.order.domain.order.adapter.port.IOrderShipTaskPublisher;
 import com.yue.order.domain.order.adapter.port.IPayPort;
+import com.yue.order.domain.order.adapter.repository.IOrderCacheRepository;
 import com.yue.order.domain.order.adapter.repository.IOrderRepository;
 import com.yue.order.domain.order.model.entity.CreateOrderCommand;
 import com.yue.order.domain.order.model.entity.NormalOrderEnqueueResult;
@@ -27,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -57,6 +60,12 @@ public class OrderDomainService implements IOrderDomainService {
     private INormalOrderPendingPublisher normalOrderPendingPublisher;
 
     @Resource
+    private IGroupBuyOrderPendingPublisher groupBuyOrderPendingPublisher;
+
+    @Resource
+    private IOrderCacheRepository orderCacheRepository;
+
+    @Resource
     private IOrderShipTaskPublisher orderShipTaskPublisher;
 
     @Value("${app.order.allow-direct-normal-create-order:true}")
@@ -67,6 +76,9 @@ public class OrderDomainService implements IOrderDomainService {
 
     @Value("${app.order.get-pay-url-pending-wait-ms:50}")
     private long getPayUrlPendingWaitMs;
+
+    @Value("${app.order.pending-marker-ttl-minutes:30}")
+    private long pendingMarkerTtlMinutes;
 
     @Override
     public String createOrder(CreateOrderCommand command) {
@@ -92,6 +104,13 @@ public class OrderDomainService implements IOrderDomainService {
             return existing.getOrderId();
         }
 
+        MarketTypeVO marketType = MarketTypeVO.fromCode(command.getMarketType());
+
+        // 拼团：异步落库（生成 ID → 写 Redis 标记 → 发 MQ → 立即返回），与普通单形态对齐
+        if (MarketTypeVO.GROUP_BUY == marketType) {
+            return submitGroupBuyOrderAsync(command, outTradeNo);
+        }
+
         // 构建订单实体
         OrderEntity order = OrderEntity.builder()
                 .userId(command.getUserId())
@@ -105,13 +124,44 @@ public class OrderDomainService implements IOrderDomainService {
                 .payPrice(command.getPayPrice())
                 .status(OrderStatusVO.LOCK)
                 .outTradeNo(outTradeNo)
-                .marketType(MarketTypeVO.fromCode(command.getMarketType()))
+                .marketType(marketType)
                 .notifyType("MQ")
                 .build();
 
         // 保存订单（对 normal 类型同时锁 SKU 库存）
         String orderId = orderRepository.saveOrder(order);
         log.info("createOrder 完成 userId:{} orderId:{} marketType:{}", command.getUserId(), orderId, command.getMarketType());
+        return orderId;
+    }
+
+    private String submitGroupBuyOrderAsync(CreateOrderCommand command, String outTradeNo) {
+        String orderId = RandomStringUtils.randomNumeric(12);
+
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("orderId", orderId);
+        msg.put("outTradeNo", outTradeNo);
+        msg.put("userId", command.getUserId());
+        msg.put("goodsId", command.getGoodsId());
+        msg.put("goodsName", command.getGoodsName());
+        msg.put("goodsImageUrl", command.getGoodsImageUrl());
+        msg.put("source", command.getSource());
+        msg.put("channel", command.getChannel());
+        msg.put("originalPrice", command.getOriginalPrice());
+        msg.put("deductionPrice", command.getDeductionPrice() != null ? command.getDeductionPrice() : BigDecimal.ZERO);
+        msg.put("payPrice", command.getPayPrice());
+        msg.put("marketType", MarketTypeVO.GROUP_BUY.getCode());
+        msg.put("notifyType", "MQ");
+
+        Duration ttl = Duration.ofMinutes(Math.max(1, pendingMarkerTtlMinutes));
+        orderCacheRepository.markPending(command.getUserId(), orderId, outTradeNo, ttl);
+        try {
+            groupBuyOrderPendingPublisher.publishInsertSync(JSON.toJSONString(msg));
+        } catch (RuntimeException e) {
+            orderCacheRepository.clearPending(command.getUserId(), orderId);
+            throw e;
+        }
+        log.info("createOrder 拼团已入队 userId:{} orderId:{} outTradeNo:{}",
+                command.getUserId(), orderId, outTradeNo);
         return orderId;
     }
 
@@ -155,25 +205,38 @@ public class OrderDomainService implements IOrderDomainService {
         msg.put("payPrice", command.getPayPrice());
         msg.put("marketType", "normal");
         msg.put("notifyType", "MQ");
-        normalOrderPendingPublisher.publishInsertSync(JSON.toJSONString(msg));
+
+        Duration ttl = Duration.ofMinutes(Math.max(1, pendingMarkerTtlMinutes));
+        orderCacheRepository.markPending(command.getUserId(), orderId, outTradeNo, ttl);
+        try {
+            normalOrderPendingPublisher.publishInsertSync(JSON.toJSONString(msg));
+        } catch (RuntimeException e) {
+            orderCacheRepository.clearPending(command.getUserId(), orderId);
+            throw e;
+        }
         log.info("submitNormalOrderFromMall 已入队 userId:{} orderId:{}", command.getUserId(), orderId);
         return NormalOrderEnqueueResult.builder().orderId(orderId).outTradeNo(outTradeNo).build();
     }
 
     @Override
     public String getPayUrl(String userId, String orderId) {
-        OrderEntity order = null;
-        int attempts = Math.max(1, getPayUrlPendingRetries);
-        for (int i = 0; i < attempts; i++) {
-            order = orderRepository.queryByUserIdAndOrderId(userId, orderId);
-            if (order != null) {
-                break;
+        OrderEntity order = orderRepository.queryByUserIdAndOrderId(userId, orderId);
+        if (order == null) {
+            // DB 未命中 → 用 Redis 存在标记区分「订单确实在飞」与「订单不存在」
+            // 标记存在 → 走重试循环兜底；标记不存在 → 直接报错，避免无谓阻塞
+            if (!orderCacheRepository.existsPending(userId, orderId)) {
+                throw new AppException(ResponseCode.ORDER_NOT_FOUND.getCode(), "订单不存在: " + orderId);
             }
-            if (i < attempts - 1) {
+            int attempts = Math.max(1, getPayUrlPendingRetries);
+            for (int i = 0; i < attempts; i++) {
                 try {
                     Thread.sleep(Math.max(1, getPayUrlPendingWaitMs));
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    break;
+                }
+                order = orderRepository.queryByUserIdAndOrderId(userId, orderId);
+                if (order != null) {
                     break;
                 }
             }

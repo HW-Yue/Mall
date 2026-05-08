@@ -49,6 +49,7 @@
   - `PayRefundSeckillListener.java`
 - 异步建单 / 履约：
   - `NormalOrderCreateListener.java`
+  - `GroupBuyOrderCreateListener.java`
   - `SeckillOrderCreateListener.java`
   - `OrderShipTaskListener.java`
   - `GroupBuySuccessNotifyListener.java`
@@ -63,8 +64,12 @@
   - `OrderRefundMqProducer.java`
 - 普通单异步落单：
   - `NormalOrderPendingPublisher.java`
+- 拼团单异步落单：
+  - `GroupBuyOrderPendingPublisher.java`
 - 履约任务：
   - `OrderShipTaskMqProducer.java`
+- 订单创建存在标记（Redis）：
+  - `OrderCacheRepository.java`（key `order:exists:{userId}:{orderId}`，发 MQ 前写入、消费落库后清理）
 
 ## 什么时候先看这里
 

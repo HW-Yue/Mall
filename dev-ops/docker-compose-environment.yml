@@ -29,6 +29,24 @@ services:
       retries: 10
       start_period: 15s
 
+  mysql-business-sync:
+    image: mysql:8.0.32
+    container_name: mysql-business-sync
+    restart: "no"
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+    volumes:
+      - ./mysql/sql:/work/sql:ro
+    command: [ "sh", "/work/sql/zzz-sync-business-sql-on-start.sh" ]
+    networks:
+      - my-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   canal-server:
     image: canal/canal-server:v1.1.6
     container_name: canal-server
