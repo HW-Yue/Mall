@@ -30,6 +30,11 @@ scrape_configs:
         regex: '127\.0\.0\.1:(.*)'
         replacement: 'host.docker.internal:${1}'
         target_label: __address__
+      # Drop Dubbo Triple 端口（20880-20889）：Nacos 实例级注册会把 Dubbo 端口也吐出来，
+      # 用 /actuator/prometheus 打过去会触发 Dubbo "Invoker not found" 异常刷屏
+      - source_labels: [__address__]
+        regex: '.*:2088[0-9]'
+        action: drop
 
   # ===== 中间件 Exporter =====
   # 三个 exporter 通过 docker-compose-exporters.yml 启动；统一打 application=shared，

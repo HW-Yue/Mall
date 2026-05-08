@@ -158,7 +158,8 @@ yue:
 # Dubbo RPC（Triple 协议，Nacos 注册）
 dubbo:
   application:
-    name: ${spring.application.name}
+    # Dubbo 用独立 service-name，避免与 Spring Cloud 同名导致 gateway 把 HTTP 请求路由到 Triple 端口
+    name: ${spring.application.name}-dubbo
   registry:
     address: nacos://100.86.250.112:8848
     register-mode: instance
