@@ -63,4 +63,37 @@ class SopDispatcherTest {
         assertThat(d.matchRule(ev)).isPresent();
         assertThat(d.matchRule(ev).get().getSopMarkdown()).contains("清理日志");
     }
+
+    @Test
+    void matchesByEnrichedServiceAndTopic() {
+        OpsAiProperties props = new OpsAiProperties();
+        OpsAiProperties.Sop.Rule r = new OpsAiProperties.Sop.Rule();
+        r.setMatchCategory("rocketmq");
+        r.setMatchService("order-service");
+        r.setMatchTopic("group-buy-order-create");
+        props.getSop().setRules(List.of(r));
+
+        SopDispatcher dispatcher = new SopDispatcher(props);
+        AlertEvent event = new AlertEvent(
+                "firing",
+                "RocketMqConsumerLagHigh",
+                "warning",
+                "shared",
+                Map.of("category", "rocketmq"),
+                Map.of());
+        EnrichedAlertContext enrichment = new EnrichedAlertContext(
+                "order-service",
+                List.of("order-service"),
+                "",
+                "group-buy-order-create",
+                "",
+                "",
+                "",
+                "",
+                "topic 命中",
+                Map.of("topic", "group-buy-order-create"),
+                Map.of());
+
+        assertThat(dispatcher.matchRule(event, enrichment)).isPresent();
+    }
 }

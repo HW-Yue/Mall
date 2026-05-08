@@ -2,6 +2,8 @@ package com.yue.opsagent.springai.service;
 
 import com.yue.opsagent.springai.agent.parent.OpsAgent;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
+import com.yue.opsagent.springai.domain.alert.AlertEnrichmentService;
+import com.yue.opsagent.springai.domain.alert.EnrichedAlertContext;
 import com.yue.opsagent.springai.domain.alert.SopDispatcher;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunContextHolder;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunSession;
@@ -29,6 +31,7 @@ public class OpsRouteService {
     private final SopStepRunner sopStepRunner;
     private final OpsAgent opsAgent;
     private final OpsAiProperties opsAiProperties;
+    private final AlertEnrichmentService alertEnrichmentService;
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "ops-route-worker");
         t.setDaemon(true);
@@ -41,13 +44,15 @@ public class OpsRouteService {
             SopAiMatcherService sopAiMatcherService,
             SopStepRunner sopStepRunner,
             OpsAgent opsAgent,
-            OpsAiProperties opsAiProperties) {
+            OpsAiProperties opsAiProperties,
+            AlertEnrichmentService alertEnrichmentService) {
         this.opsRunService = opsRunService;
         this.sopDispatcher = sopDispatcher;
         this.sopAiMatcherService = sopAiMatcherService;
         this.sopStepRunner = sopStepRunner;
         this.opsAgent = opsAgent;
         this.opsAiProperties = opsAiProperties;
+        this.alertEnrichmentService = alertEnrichmentService;
     }
 
     @PreDestroy
@@ -85,26 +90,41 @@ public class OpsRouteService {
             opsRunService.fail(runId, "告警事件为空");
             return;
         }
+        opsRunService.event(runId, "signal_extract", "SignalExtract", "提取告警信号",
+                Map.of("labels", event.labels() == null ? Map.of() : event.labels()));
+        EnrichedAlertContext enrichment = alertEnrichmentService.enrich(event);
+        opsRunService.event(runId, "alert_enrich", "AlertEnrich", "完成服务归因与上下文增强",
+                Map.of(
+                        "primaryService", enrichment.primaryService(),
+                        "candidateServices", enrichment.candidateServices(),
+                        "resolvedLabels", enrichment.resolvedLabels(),
+                        "evidence", enrichment.evidence()));
         opsRunService.node(runId, "HardSopMatch", "按 alertname/category/severity/application 匹配 SOP");
-        Optional<OpsAiProperties.Sop.Rule> hard = sopDispatcher.matchRule(event);
+        Optional<OpsAiProperties.Sop.Rule> hard = sopDispatcher.matchRule(event, enrichment);
         OpsAiProperties.Sop.Rule rule;
         Map<String, Object> matchData;
         if (hard.isPresent()) {
             rule = hard.get();
-            matchData = Map.of("source", "hard", "matchAlertname", nullToEmpty(rule.getMatchAlertname()));
+            matchData = Map.of(
+                    "source", "hard",
+                    "matchAlertname", nullToEmpty(rule.getMatchAlertname()),
+                    "primaryService", nullToEmpty(enrichment.primaryService()));
             opsRunService.node(runId, "HardSopMatch", "命中硬匹配 SOP");
         } else {
             opsRunService.node(runId, "AiSopMatch", "硬匹配未命中，使用 AI 在已有 SOP 中选择");
-            Optional<SopAiMatcherService.MatchResult> ai = sopAiMatcherService.matchEvent(event);
+            Optional<SopAiMatcherService.MatchResult> ai = sopAiMatcherService.matchEvent(event, enrichment);
             if (ai.isEmpty()) {
                 opsRunService.complete(runId, "End", "未找到匹配 SOP，运行结束",
-                        Map.of("matched", false, "alertname", nullToEmpty(event.alertname())));
+                        Map.of(
+                                "matched", false,
+                                "alertname", nullToEmpty(event.alertname()),
+                                "enrichment", enrichment));
                 return;
             }
             rule = ai.get().rule();
             matchData = ai.get().toMap();
         }
-        executeMatchedRule(runId, event, rule, matchData);
+        executeMatchedRule(runId, event, enrichment, rule, matchData);
     }
 
     private void routeText(String runId, String text) {
@@ -127,12 +147,20 @@ public class OpsRouteService {
                 firstNonBlank(rule.getMatchApplication(), ""),
                 Map.of("category", firstNonBlank(rule.getMatchCategory(), "text")),
                 Map.of("summary", text));
-        executeMatchedRule(runId, event, rule, ai.get().toMap());
+        EnrichedAlertContext enrichment = alertEnrichmentService.enrich(event);
+        opsRunService.event(runId, "alert_enrich", "AlertEnrich", "根据文本推断服务上下文",
+                Map.of(
+                        "primaryService", enrichment.primaryService(),
+                        "candidateServices", enrichment.candidateServices(),
+                        "resolvedLabels", enrichment.resolvedLabels(),
+                        "evidence", enrichment.evidence()));
+        executeMatchedRule(runId, event, enrichment, rule, ai.get().toMap());
     }
 
     private void executeMatchedRule(
             String runId,
             AlertEvent event,
+            EnrichedAlertContext enrichment,
             OpsAiProperties.Sop.Rule rule,
             Map<String, Object> matchData) {
         if (opsRunService.isCancelled(runId)) {
@@ -141,17 +169,17 @@ public class OpsRouteService {
         opsRunService.node(runId, "ReactExecute", "开始执行命中的 SOP");
         String mode = opsAiProperties.getAlert().getMode();
         if ("deterministic".equalsIgnoreCase(mode) && rule.getSteps() != null && !rule.getSteps().isEmpty()) {
-            var result = sopStepRunner.run(event, rule.getSteps());
+            var result = sopStepRunner.run(event, enrichment, rule.getSteps());
             if (!opsRunService.isCancelled(runId)) {
                 opsRunService.complete(runId, "End", "SOP 步骤执行完成",
-                        Map.of("match", matchData, "result", result));
+                        Map.of("match", matchData, "enrichment", enrichment, "result", result));
             }
             return;
         }
         String summary = opsAgent.runForAlert(event, rule);
         if (!opsRunService.isCancelled(runId)) {
             opsRunService.complete(runId, "End", "ReAct 编排完成",
-                    Map.of("match", matchData, "summary", summary == null ? "" : summary));
+                    Map.of("match", matchData, "enrichment", enrichment, "summary", summary == null ? "" : summary));
         }
     }
 

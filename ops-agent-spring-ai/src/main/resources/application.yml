@@ -42,7 +42,7 @@ ops-ai:
     service-name: ${OPS_AI_OTLP_SERVICE_NAME:yue-ops-agent}
     timeout-seconds: 10
   alert:
-    mode: react
+    mode: deterministic
   react:
     max-parent-iters: 6
     max-sub-iters: 4
@@ -81,6 +81,8 @@ ops-ai:
     database: ${OPS_AI_REDIS_DATABASE:0}
   sop:
     rules-dir: classpath:sop/rules/
+  catalog:
+    location: classpath:ops-catalog/catalog.json
 
 logstash:
   enabled: ${LOGSTASH_ENABLED:false}

@@ -7,7 +7,8 @@
 1. [项目架构](architecture.md)
 2. [API 与运行说明](api.md)
 3. [部署与配置](deployment.md)
-4. [返回 DevOps 总入口](../../README.md)
+4. [告警归因知识库](knowledge-catalog.md)
+5. [返回 DevOps 总入口](../../README.md)
 
 ## 文档内容
 

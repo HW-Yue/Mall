@@ -53,6 +53,12 @@ Java 端 `AlertmanagerPayload` 只强依赖两个字段：**顶层 `alerts` 数�
 
 POST `Content-Type: application/json` → `http://<host>:8096/api/v1/alert/receive`
 
+说明：
+
+- 这里的 `/api/v1/alert/receive` 是 Agent 接收 webhook 的入口
+- 告警体内如果带 `labels.resource`，应填写业务服务内部 URI，例如 `/api/v1/mall/index/query_goods_page`
+- 不要把网关对外入口 `/gw/api/v1/...` 写进 `labels.resource`
+
 ```json
 {
   "status": "firing",
@@ -98,12 +104,12 @@ POST `Content-Type: application/json` → `http://<host>:8096/api/v1/alert/recei
         "alertname": "Http5xxRateHigh",
         "severity": "critical",
         "category": "http",
-        "application": "mall",
+        "application": "mall-service",
         "instance": "192.168.1.20:8095",
         "job": "spring-boot"
       },
       "annotations": {
-        "summary": "mall 服务 5xx 比例过高",
+        "summary": "mall-service 服务 5xx 比例过高",
         "description": "5xx/总请求 > 0.5% 持续 5m"
       },
       "startsAt": "2026-04-25T10:05:00.000Z",
@@ -114,18 +120,18 @@ POST `Content-Type: application/json` → `http://<host>:8096/api/v1/alert/recei
   "groupLabels": {
     "alertname": "Http5xxRateHigh",
     "category": "http",
-    "application": "mall"
+    "application": "mall-service"
   },
   "commonLabels": {
     "alertname": "Http5xxRateHigh",
     "severity": "critical",
     "category": "http",
-    "application": "mall",
+    "application": "mall-service",
     "instance": "192.168.1.20:8095",
     "job": "spring-boot"
   },
   "commonAnnotations": {
-    "summary": "mall 服务 5xx 比例过高"
+    "summary": "mall-service 服务 5xx 比例过高"
   },
   "externalURL": "http://alertmanager:9093"
 }

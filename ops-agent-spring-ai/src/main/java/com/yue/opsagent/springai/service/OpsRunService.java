@@ -139,6 +139,10 @@ public class OpsRunService {
                 event == null ? Map.of() : event);
     }
 
+    public void event(String runId, String type, String node, String message, Map<String, Object> data) {
+        addEvent(runId, type, node, message, data == null ? Map.of() : data);
+    }
+
     public SseEmitter subscribe(String runId) {
         SseEmitter emitter = new SseEmitter(3_600_000L);
         subscribers.computeIfAbsent(runId, k -> new CopyOnWriteArrayList<>()).add(emitter);

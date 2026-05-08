@@ -15,7 +15,11 @@
 
 **标签**：`category: sentinel`；annotations 含 `{{ $labels.app }}`、`{{ $labels.resource }}`。
 
-**说明（来自规则注释）**：`resource` 为 URI 字符串；`*_qps` 为 Gauge，**不宜**对 `rate()` 再聚合。
+**说明（来自规则注释）**：
+
+- `resource` 为服务内 URI 字符串，如 `/api/v1/order/get_pay_url`、`/api/v1/mall/index/query_goods_page`
+- `resource` 不带 HTTP Method，也不带网关前缀 `/gw`
+- `*_qps` 为 Gauge，**不宜**对 `rate()` 再聚合
 
 ## order-service 专项
 
@@ -24,6 +28,8 @@
 | OrderServiceCreateOrderBlockHigh | 1m | critical | order-service | `sentinel_block_qps{app="order-service", resource="/api/v1/order/create_order"} > 20` |
 | OrderServiceCreateOrderRtHigh | 2m | warning | order-service | `sentinel_rt{...create_order} > 500` |
 | OrderServiceGetPayUrlRtHigh | 2m | warning | order-service | `sentinel_rt{...get_pay_url} > 300` |
+
+前端调试样例如果要模拟订单链路 RT 抖动，优先使用 `/api/v1/order/get_pay_url`，这样更贴近当前商城支付跳转路径。
 
 ## seckill-service 专项
 
@@ -38,6 +44,8 @@
 |-----------|-----|----------|------------------|--------------|
 | GroupBuyServiceCreatePayOrderBlockHigh | 1m | warning | group-buy-service | `sentinel_block_qps{app="group-buy-service", resource=~"/api/v1/group-buy/trade/.*"} > 30` |
 
+前端样例建议落到具体接口 `/api/v1/group-buy/trade/create_pay_order`，避免只写模糊通配范围。
+
 ## pay 服务专项（`app="pay-service"`）
 
 | alertname | for | severity | application 标签 | expr（摘要） |
@@ -50,6 +58,8 @@
 | alertname | for | severity | application 标签 | expr（摘要） |
 |-----------|-----|----------|------------------|--------------|
 | MallServiceQueryGoodsPageBlockHigh | 1m | warning | mall-service | `sentinel_block_qps{app="mall-service", resource="/api/v1/mall/index/query_goods_page"} > 50` |
+
+这类商城告警用于模拟商品列表链路，不要误写成旧的网关外层地址 `/gw/api/v1/...`。
 
 ## 网关专项
 

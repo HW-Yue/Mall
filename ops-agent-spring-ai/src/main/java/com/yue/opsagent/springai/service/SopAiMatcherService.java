@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.domain.alert.AlertPlaceholderResolver;
+import com.yue.opsagent.springai.domain.alert.EnrichedAlertContext;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,10 @@ public class SopAiMatcherService {
     }
 
     public Optional<MatchResult> matchEvent(AlertEvent event) {
+        return matchEvent(event, EnrichedAlertContext.empty());
+    }
+
+    public Optional<MatchResult> matchEvent(AlertEvent event, EnrichedAlertContext enrichment) {
         String text = """
                 status=%s
                 alertname=%s
@@ -46,13 +51,15 @@ public class SopAiMatcherService {
                 application=%s
                 labels=%s
                 annotations=%s
+                enrichment=%s
                 """.formatted(
                 AlertPlaceholderResolver.nullToEmpty(event.status()),
                 AlertPlaceholderResolver.nullToEmpty(event.alertname()),
                 AlertPlaceholderResolver.nullToEmpty(event.severity()),
                 AlertPlaceholderResolver.nullToEmpty(event.application()),
                 event.labels() == null ? Map.of() : event.labels(),
-                event.annotations() == null ? Map.of() : event.annotations());
+                event.annotations() == null ? Map.of() : event.annotations(),
+                enrichment == null ? Map.of() : enrichment.evidence());
         return matchText(text);
     }
 

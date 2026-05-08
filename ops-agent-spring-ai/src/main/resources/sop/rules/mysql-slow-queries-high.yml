@@ -22,6 +22,32 @@ sop-markdown: |
   Top 慢 SQL 模式、是否缺索引、是否需 DBA；避免单条样本下结论。
 
 steps:
-  - skill: mysql_inspect
-    tool: mysql_slow_query
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 MySqlSlowQueriesHigh。
+      如果 labels 或文本里有表名/库名，优先围绕 table=${table}、db=${database} 排查。
+      查询 slow query、processlist、global status、metadata locks，总结最可疑 SQL 模式。
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 MySqlSlowQueriesHigh。
+      查看 mysqld_exporter 指标与业务 RT 时间线，对齐是否伴随连接数、锁等待、CPU 或 IO 抖动。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 MySqlSlowQueriesHigh。
+      围绕主服务 ${primaryService} 检索 ORM SQL、连接池超时、SQL 慢日志样本。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 MySqlSlowQueriesHigh。
+      查询 ${primaryService} 数据源/JDBC 相关配置，只读确认池大小、超时、慢 SQL 调优项是否近期变更。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 MySqlSlowQueriesHigh。
+      查看 MySQL 容器或宿主日志，确认是否存在磁盘、内存、重启等基础设施异常。
+    on-error: continue

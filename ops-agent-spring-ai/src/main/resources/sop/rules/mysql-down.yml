@@ -23,7 +23,32 @@ sop-markdown: |
   主从切换、宕机、网络、误告警；RTO 与升级路径。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "up"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 MySqlDown。
+      先判断 mysqld_exporter、业务侧 up 和错误率，区分 DB 真挂、网络问题还是采集异常。
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 MySqlDown。
+      若仍可连通，查询 global status、processlist，判断只读、连接拒绝、长事务或锁表问题。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 MySqlDown。
+      查询 Communications link failure、连接超时、拒绝连接日志，归因影响最大的业务服务。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 MySqlDown。
+      查询 ${primaryService} 或候选服务 ${candidateServices} 的数据源配置，只读确认 host、端口、账号是否变更。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 MySqlDown。
+      查看 MySQL 容器/宿主机日志和资源使用，确认进程退出、磁盘满或节点异常。
+    on-error: continue

@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.service;
 
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.domain.alert.AlertPlaceholderResolver;
+import com.yue.opsagent.springai.domain.alert.EnrichedAlertContext;
 import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -40,6 +41,13 @@ public class SopStepRunner {
     }
 
     public List<Map<String, Object>> run(AlertEvent event, List<OpsAiProperties.Sop.Step> steps) {
+        return run(event, EnrichedAlertContext.empty(), steps);
+    }
+
+    public List<Map<String, Object>> run(
+            AlertEvent event,
+            EnrichedAlertContext enrichment,
+            List<OpsAiProperties.Sop.Step> steps) {
         log.info("[SopStepRunner] deterministic 开始 alertname={} application={} severity={} labels={} annotations={} steps={}",
                 event.alertname(),
                 event.application(),
@@ -48,10 +56,14 @@ public class SopStepRunner {
                 event.annotations(),
                 steps == null ? 0 : steps.size());
         List<Map<String, Object>> out = new ArrayList<>();
-        Map<String, String> flat = AlertPlaceholderResolver.flattenLabels(event);
+        Map<String, String> flat = AlertPlaceholderResolver.flatten(event, enrichment);
+        Map<String, Object> sharedContext = new HashMap<>();
+        sharedContext.put("enrichment", enrichment);
         for (OpsAiProperties.Sop.Step step : steps) {
             try {
-                out.add(executeStep(event, step, flat));
+                Map<String, Object> result = executeStep(event, enrichment, step, flat, sharedContext);
+                out.add(result);
+                sharedContext.put("lastStep", result);
             } catch (Exception ex) {
                 log.warn("[SopStepRunner] step failed: {}", ex.toString());
                 out.add(Map.of(
@@ -72,17 +84,24 @@ public class SopStepRunner {
         return out;
     }
 
-    private Map<String, Object> executeStep(AlertEvent event, OpsAiProperties.Sop.Step step, Map<String, String> flat) {
+    private Map<String, Object> executeStep(
+            AlertEvent event,
+            EnrichedAlertContext enrichment,
+            OpsAiProperties.Sop.Step step,
+            Map<String, String> flat,
+            Map<String, Object> sharedContext) {
         String type = step.getType() == null ? "direct_tool" : step.getType().trim();
         if ("delegate_subagent".equalsIgnoreCase(type)) {
             String task = AlertPlaceholderResolver.substituteTemplate(step.getTask(), flat);
             Map<String, Object> ctx = new HashMap<>(AlertPlaceholderResolver.resolveArgs(step.getContext(), flat));
+            ctx.putAll(sharedContext);
             ctx.put("alert", Map.of(
                     "alertname", AlertPlaceholderResolver.nullToEmpty(event.alertname()),
                     "severity", AlertPlaceholderResolver.nullToEmpty(event.severity()),
                     "application", AlertPlaceholderResolver.nullToEmpty(event.application()),
                     "labels", event.labels() == null ? Map.of() : event.labels(),
                     "annotations", event.annotations() == null ? Map.of() : event.annotations()));
+            ctx.put("enrichment", enrichment);
             String summary = agentToolRegistry.execute(step.getSubAgentId(), task, ctx);
             return Map.of(
                     "type", "delegate_subagent",

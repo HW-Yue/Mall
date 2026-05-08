@@ -1,0 +1,208 @@
+{
+  "serviceAliases": {
+    "mall": "mall-service",
+    "mall-service": "mall-service",
+    "order": "order-service",
+    "order-service": "order-service",
+    "group-buy": "group-buy-service",
+    "group_buy": "group-buy-service",
+    "group-buy-service": "group-buy-service",
+    "seckill": "seckill-service",
+    "seckill-service": "seckill-service",
+    "pay": "pay-service",
+    "pay-service": "pay-service",
+    "gateway": "gateway",
+    "springcloud-gateway": "gateway",
+    "ops-agent-spring-ai": "ops-agent-spring-ai",
+    "yue-ops-agent": "ops-agent-spring-ai",
+    "shared": "shared"
+  },
+  "resourceOwners": {
+    "/api/v1/mall/index/query_category_type_list": "mall-service",
+    "/api/v1/mall/index/query_activity_goods": "mall-service",
+    "/api/v1/mall/index/query_goods_page": "mall-service",
+    "/api/v1/mall/index/query_sku_detail": "mall-service",
+    "/api/v1/mall/trade/create_normal_order": "mall-service",
+    "/api/v1/order/create_order": "order-service",
+    "/api/v1/order/create_order_normal_from_mall": "order-service",
+    "/api/v1/order/get_pay_url": "order-service",
+    "/api/v1/order/refund": "order-service",
+    "/api/v1/order/refund_execute": "order-service",
+    "/api/v1/order/query_user_order_list": "order-service",
+    "/api/v1/order/query_seckill_order": "order-service",
+    "/api/v1/order/query_order_by_out_trade_no": "order-service",
+    "/api/v1/group-buy/market/query_goods_list": "group-buy-service",
+    "/api/v1/group-buy/market/query_group_buy_market_config": "group-buy-service",
+    "/api/v1/group-buy/trade/create_pay_order": "group-buy-service",
+    "/api/v1/group-buy/trade/refund": "group-buy-service",
+    "/api/v1/seckill/market/query_goods_list": "seckill-service",
+    "/api/v1/seckill/trade/create_pay_order": "seckill-service",
+    "/api/v1/seckill/trade/refund": "seckill-service",
+    "/api/v1/alipay/create_pay_order": "pay-service"
+  },
+  "topics": {
+    "pay-success-normal": {
+      "producers": ["pay-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_PAY_SUCCESS_NORMAL"]
+    },
+    "pay-success-group-buy": {
+      "producers": ["pay-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_PAY_SUCCESS_GROUP_BUY"]
+    },
+    "pay-success-seckill": {
+      "producers": ["pay-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_PAY_SUCCESS_SECKILL"]
+    },
+    "pay-refund-normal": {
+      "producers": ["order-service"],
+      "consumers": ["pay-service"],
+      "consumerGroups": ["CG_PAY_PAY_REFUND_NORMAL"]
+    },
+    "pay-refund-group-buy": {
+      "producers": ["order-service", "group-buy-service"],
+      "consumers": ["pay-service", "group-buy-service"],
+      "consumerGroups": ["CG_PAY_PAY_REFUND_GROUP_BUY", "CG_GROUP_BUY_PAY_REFUND"]
+    },
+    "pay-refund-seckill": {
+      "producers": ["order-service"],
+      "consumers": ["pay-service", "seckill-service"],
+      "consumerGroups": ["CG_PAY_PAY_REFUND_SECKILL", "CG_SECKILL_PAY_REFUND"]
+    },
+    "pay-refund-normal-result": {
+      "producers": ["pay-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_PAY_REFUND_NORMAL_RESULT"]
+    },
+    "pay-refund-group-buy-result": {
+      "producers": ["pay-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_PAY_REFUND_GROUP_BUY_RESULT"]
+    },
+    "pay-refund-seckill-result": {
+      "producers": ["pay-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_PAY_REFUND_SECKILL_RESULT"]
+    },
+    "normal-order-create": {
+      "producers": ["order-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_NORMAL_ORDER_CREATE"]
+    },
+    "group-buy-order-create": {
+      "producers": ["order-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_GROUP_BUY_ORDER_CREATE"]
+    },
+    "seckill-order-create": {
+      "producers": ["seckill-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_SECKILL_ORDER_CREATE_ORDER"]
+    },
+    "order-paid-group_buy": {
+      "producers": ["order-service"],
+      "consumers": ["group-buy-service"],
+      "consumerGroups": ["CG_GROUP_BUY_ORDER_PAID"]
+    },
+    "order-paid-seckill": {
+      "producers": ["order-service"],
+      "consumers": ["seckill-service"],
+      "consumerGroups": ["CG_ORDER_PAID_SECKILL"]
+    },
+    "group-buy-success-notify": {
+      "producers": ["group-buy-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_GROUP_BUY_SUCCESS_NOTIFY"]
+    },
+    "group-buy-timeout-refund": {
+      "producers": ["group-buy-service"],
+      "consumers": ["group-buy-service"],
+      "consumerGroups": ["CG_GROUP_BUY_TIMEOUT_REFUND"]
+    },
+    "order-close-normal": {
+      "producers": ["pay-service", "order-service"],
+      "consumers": ["pay-service", "order-service"],
+      "consumerGroups": ["CG_PAY_ORDER_CLOSE_NORMAL", "CG_ORDER_CLOSE_NORMAL"]
+    },
+    "order-close-group-buy": {
+      "producers": ["pay-service", "order-service", "group-buy-service"],
+      "consumers": ["pay-service", "order-service", "group-buy-service"],
+      "consumerGroups": ["CG_PAY_ORDER_CLOSE_GROUP_BUY", "CG_ORDER_CLOSE_GROUP_BUY", "CG_GROUP_BUY_ORDER_CLOSE"]
+    },
+    "order-close-seckill": {
+      "producers": ["pay-service", "order-service"],
+      "consumers": ["pay-service", "order-service", "seckill-service"],
+      "consumerGroups": ["CG_PAY_ORDER_CLOSE_SECKILL", "CG_ORDER_CLOSE_SECKILL", "CG_ORDER_CLOSE_SECKILL_MARKET"]
+    },
+    "order-ship-task": {
+      "producers": ["order-service"],
+      "consumers": ["order-service"],
+      "consumerGroups": ["CG_ORDER_SHIP_TASK"]
+    },
+    "seckill-stock-deduct": {
+      "producers": ["seckill-service"],
+      "consumers": ["seckill-service"],
+      "consumerGroups": ["CG_SECKILL_STOCK_DEDUCT"]
+    }
+  },
+  "consumerGroups": {
+    "CG_PAY_SUCCESS_NORMAL": ["order-service"],
+    "CG_PAY_SUCCESS_GROUP_BUY": ["order-service"],
+    "CG_PAY_SUCCESS_SECKILL": ["order-service"],
+    "CG_PAY_PAY_REFUND_NORMAL": ["pay-service"],
+    "CG_PAY_PAY_REFUND_GROUP_BUY": ["pay-service"],
+    "CG_PAY_PAY_REFUND_SECKILL": ["pay-service"],
+    "CG_GROUP_BUY_PAY_REFUND": ["group-buy-service"],
+    "CG_SECKILL_PAY_REFUND": ["seckill-service"],
+    "CG_PAY_REFUND_NORMAL_RESULT": ["order-service"],
+    "CG_PAY_REFUND_GROUP_BUY_RESULT": ["order-service"],
+    "CG_PAY_REFUND_SECKILL_RESULT": ["order-service"],
+    "CG_NORMAL_ORDER_CREATE": ["order-service"],
+    "CG_GROUP_BUY_ORDER_CREATE": ["order-service"],
+    "CG_SECKILL_ORDER_CREATE_ORDER": ["order-service"],
+    "CG_GROUP_BUY_ORDER_PAID": ["group-buy-service"],
+    "CG_ORDER_PAID_SECKILL": ["seckill-service"],
+    "CG_GROUP_BUY_SUCCESS_NOTIFY": ["order-service"],
+    "CG_GROUP_BUY_TIMEOUT_REFUND": ["group-buy-service"],
+    "CG_PAY_ORDER_CLOSE_NORMAL": ["pay-service"],
+    "CG_ORDER_CLOSE_NORMAL": ["order-service"],
+    "CG_PAY_ORDER_CLOSE_GROUP_BUY": ["pay-service"],
+    "CG_ORDER_CLOSE_GROUP_BUY": ["order-service"],
+    "CG_GROUP_BUY_ORDER_CLOSE": ["group-buy-service"],
+    "CG_PAY_ORDER_CLOSE_SECKILL": ["pay-service"],
+    "CG_ORDER_CLOSE_SECKILL": ["order-service"],
+    "CG_ORDER_CLOSE_SECKILL_MARKET": ["seckill-service"],
+    "CG_ORDER_SHIP_TASK": ["order-service"],
+    "CG_SECKILL_STOCK_DEDUCT": ["seckill-service"]
+  },
+  "tableOwners": {
+    "t_order": ["order-service", "group-buy-service"],
+    "pay_order": ["pay-service"],
+    "group_buy_discount": ["group-buy-service"],
+    "group_buy_activity": ["group-buy-service"],
+    "team_order": ["group-buy-service"],
+    "sc_sku_activity": ["group-buy-service", "seckill-service"],
+    "seckill_activity": ["seckill-service"],
+    "sms_seckill_sku": ["seckill-service"],
+    "sku": ["mall-service", "group-buy-service"],
+    "sku_resource_detail": ["mall-service", "group-buy-service"]
+  },
+  "databaseOwners": {
+    "mall_db": ["mall-service"],
+    "order_service": ["order-service"],
+    "group_buy_service": ["group-buy-service"],
+    "seckill_service": ["seckill-service"],
+    "pay": ["pay-service"],
+    "mysql": ["shared"],
+    "nacos": ["shared"]
+  },
+  "poolOwners": {
+    "Mall_HikariCP": "mall-service",
+    "Order_HikariCP": "order-service",
+    "Seckill_HikariCP": "seckill-service",
+    "GroupBuy_HikariCP": "group-buy-service",
+    "Pay_HikariCP": "pay-service"
+  }
+}

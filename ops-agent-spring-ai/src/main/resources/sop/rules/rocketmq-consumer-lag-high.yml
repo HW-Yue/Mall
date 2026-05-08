@@ -26,6 +26,43 @@ steps:
   - type: delegate_subagent
     sub-agent-id: rocketmq_inspect
     task: |
-      告警 RocketMqConsumerLagHigh，应用 ${application}。
-      用 labels 里 topic、consumerGroup（若有）依次 mq_topic_stats、mq_consumer_status，必要时 mq_dead_letter，给出堆积原因与建议。
+      告警 RocketMqConsumerLagHigh。
+      topic=${topic}，consumerGroup=${consumerGroup}，主服务优先看 ${primaryService}。
+      依次查询 mq_topic_stats、mq_consumer_status，必要时 mq_dead_letter，输出堆积位置、消费 TPS、重试与 DLQ 线索。
     context: {}
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 RocketMqConsumerLagHigh。
+      查看 ${primaryService} 的实例数、健康状态和注册情况，判断是否因缩容或实例异常导致消费掉队。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 RocketMqConsumerLagHigh。
+      检索服务 ${primaryService} 与 topic=${topic}、group=${consumerGroup} 相关的消费超时、重试、异常样本。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 RocketMqConsumerLagHigh。
+      查看 RocketMQ exporter 与服务 ${primaryService} 的业务指标，判断 lag 是否伴随 RT、线程池或错误率升高。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 RocketMqConsumerLagHigh。
+      若消费者 ${primaryService} 最终落库或查库，排查 MySQL 慢查询/锁等待是否拖慢消费。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 RocketMqConsumerLagHigh。
+      若消费者 ${primaryService} 依赖 Redis，排查 Redis 慢命令或阻塞是否导致消费耗时增加。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 RocketMqConsumerLagHigh。
+      查看 ${primaryService} 消费容器的资源、日志和重启情况。
+    on-error: continue

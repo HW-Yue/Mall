@@ -1,28 +1,69 @@
 window.RunWorkbench = (() => {
     const alertExamples = [
-        { key: 'ServiceDown', group: 'system', severity: 'critical' },
-        { key: 'JvmHeapUsageHigh', group: 'system', severity: 'warning' },
-        { key: 'JvmGcPauseHigh', group: 'system', severity: 'warning' },
-        { key: 'Http5xxErrorRateHigh', group: 'http', severity: 'critical' },
-        { key: 'SentinelRtHigh', group: 'sentinel', severity: 'warning', labels: { resource: '/api/v1/order/create_order' } },
-        { key: 'SentinelBlockRateHigh', group: 'sentinel', severity: 'critical', labels: { resource: '/api/v1/order/create_order' } },
-        { key: 'HikariConnectionsSaturated', group: 'hikari', severity: 'critical' },
-        { key: 'HikariConnectionsPending', group: 'hikari', severity: 'warning' },
-        { key: 'HikariConnectionAcquireSlow', group: 'hikari', severity: 'warning' },
-        { key: 'MySqlSlowQueriesHigh', group: 'mysql', severity: 'warning' },
-        { key: 'MySqlTooManyConnections', group: 'mysql', severity: 'critical' },
-        { key: 'MySqlDown', group: 'mysql', severity: 'critical' },
-        { key: 'MySqlInnodbRowLockWaitHigh', group: 'mysql', severity: 'warning' },
-        { key: 'RedisMemoryHigh', group: 'redis', severity: 'warning' },
-        { key: 'RedisDown', group: 'redis', severity: 'critical' },
-        { key: 'RedisBlockedClients', group: 'redis', severity: 'warning' },
-        { key: 'RedisKeyspaceHitRateLow', group: 'redis', severity: 'warning' },
-        { key: 'RedisConnectedClientsHigh', group: 'redis', severity: 'warning' },
-        { key: 'RocketMqConsumerLagHigh', group: 'rocketmq', severity: 'warning', labels: { topic: 'order-topic', consumerGroup: 'order-consumer-group' } },
-        { key: 'RocketMqDlqMessageAppeared', group: 'rocketmq', severity: 'critical', labels: { topic: 'order-topic', consumerGroup: 'order-consumer-group' } },
-        { key: 'RocketMqBrokerDown', group: 'rocketmq', severity: 'critical' },
-        { key: 'ThreadPoolQueueUsageHigh', group: 'dynamictp', severity: 'warning' },
-        { key: 'ThreadPoolRejectedTasks', group: 'dynamictp', severity: 'critical' },
+        { key: 'ServiceDown', group: 'system', severity: 'critical', application: 'mall-service' },
+        { key: 'JvmHeapUsageHigh', group: 'system', severity: 'warning', application: 'order-service' },
+        { key: 'JvmGcPauseHigh', group: 'system', severity: 'warning', application: 'order-service' },
+        {
+            key: 'Http5xxErrorRateHigh',
+            group: 'http',
+            severity: 'critical',
+            application: 'mall-service',
+            annotations: {
+                summary: 'mall-service 接口 5xx 比例过高',
+                description: '模拟商城对外入口异常率升高；application 以服务标签为准，网关前缀 /gw 不进入告警 labels.resource',
+            },
+        },
+        {
+            key: 'SentinelRtHigh',
+            group: 'sentinel',
+            severity: 'warning',
+            application: 'order-service',
+            labels: { resource: '/api/v1/order/get_pay_url' },
+            annotations: {
+                summary: 'order-service 获取支付 URL RT 过高',
+                description: '模拟支付跳转链路变慢；resource 使用服务内 URI /api/v1/order/get_pay_url，不带 /gw',
+            },
+        },
+        {
+            key: 'SentinelBlockRateHigh',
+            group: 'sentinel',
+            severity: 'critical',
+            application: 'mall-service',
+            labels: { resource: '/api/v1/mall/index/query_goods_page' },
+            annotations: {
+                summary: 'mall 商品查询限流频繁',
+                description: '模拟商城首页商品分页被 Sentinel 限流；resource 使用服务内 URI /api/v1/mall/index/query_goods_page',
+            },
+        },
+        { key: 'HikariConnectionsSaturated', group: 'hikari', severity: 'critical', application: 'order-service' },
+        { key: 'HikariConnectionsPending', group: 'hikari', severity: 'warning', application: 'order-service' },
+        { key: 'HikariConnectionAcquireSlow', group: 'hikari', severity: 'warning', application: 'order-service' },
+        { key: 'MySqlSlowQueriesHigh', group: 'mysql', severity: 'warning', application: 'order-service' },
+        { key: 'MySqlTooManyConnections', group: 'mysql', severity: 'critical', application: 'order-service' },
+        { key: 'MySqlDown', group: 'mysql', severity: 'critical', application: 'order-service' },
+        { key: 'MySqlInnodbRowLockWaitHigh', group: 'mysql', severity: 'warning', application: 'order-service' },
+        { key: 'RedisMemoryHigh', group: 'redis', severity: 'warning', application: 'group-buy-service' },
+        { key: 'RedisDown', group: 'redis', severity: 'critical', application: 'group-buy-service' },
+        { key: 'RedisBlockedClients', group: 'redis', severity: 'warning', application: 'group-buy-service' },
+        { key: 'RedisKeyspaceHitRateLow', group: 'redis', severity: 'warning', application: 'group-buy-service' },
+        { key: 'RedisConnectedClientsHigh', group: 'redis', severity: 'warning', application: 'group-buy-service' },
+        {
+            key: 'RocketMqConsumerLagHigh',
+            group: 'rocketmq',
+            severity: 'warning',
+            application: 'order-service',
+            labels: { topic: 'group-buy-order-create', consumerGroup: 'order-service-consumer' },
+        },
+        {
+            key: 'RocketMqDlqMessageAppeared',
+            group: 'rocketmq',
+            severity: 'critical',
+            application: 'order-service',
+            labels: { topic: 'group-buy-order-create', consumerGroup: 'order-service-consumer' },
+        },
+        { key: 'RocketMqBrokerDown', group: 'rocketmq', severity: 'critical', application: 'shared' },
+        { key: 'ThreadPoolQueueUsageHigh', group: 'dynamictp', severity: 'warning', application: 'order-service' },
+        { key: 'ThreadPoolRejectedTasks', group: 'dynamictp', severity: 'critical', application: 'order-service' },
         { key: 'NacosConfigDrill', group: 'drill', severity: 'warning' },
     ];
 
@@ -51,7 +92,7 @@ window.RunWorkbench = (() => {
         },
         plain: {
             mode: 'text',
-            value: '订单服务最近大量报错，用户反馈下单接口偶发 500，请选择已有 SOP 或给出排查草案。'
+            value: '商城服务最近大量报错，用户反馈商品列表和下单链路偶发 500，请结合现有 SOP 给出排查草案。'
         }
     });
 
@@ -126,7 +167,7 @@ window.RunWorkbench = (() => {
         const labels = {
             alertname: item.key,
             severity: item.severity,
-            application: item.application || 'order-service',
+            application: item.application || 'shared',
             instance: '192.168.1.10:18081',
             job: 'spring-boot',
             category: item.group,
@@ -139,7 +180,7 @@ window.RunWorkbench = (() => {
                 labels,
                 annotations: {
                     summary: `测试告警 ${item.key}`,
-                    description: `手动构造的 webhook 请求体，用于 /api/v1/alert/receive；alertname=${item.key}`,
+                    description: `手动构造的 Alertmanager webhook 请求体，用于 /api/v1/alert/receive；业务资源请查看 labels.resource（服务内 URI，不带 /gw）`,
                     ...(item.annotations || {}),
                 },
                 startsAt: '2026-04-25T10:00:00Z',

@@ -20,7 +20,25 @@ sop-markdown: |
   RTO、是否已切主、消息是否可追平；集群手册与值班升级由人工执行，Agent 只做信息收集。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "up"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 RocketMqBrokerDown。
+      先判断 Broker/NameServer 侧 up、延迟和资源指标，区分单节点异常还是全局不可用。
+  - type: delegate_subagent
+    sub-agent-id: rocketmq_inspect
+    task: |
+      告警 RocketMqBrokerDown。
+      查询 topic 路由与消费状态，判断是 NameServer 视图异常、Broker 下线还是部分 Topic 受影响。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 RocketMqBrokerDown。
+      检索 send failed、NOT_ONLINE、超时重试日志，给出受影响最大的业务服务。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 RocketMqBrokerDown。
+      查看 RocketMQ 容器日志、stats、重启与磁盘情况，确认基础设施故障证据。
+    on-error: continue

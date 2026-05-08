@@ -8,6 +8,10 @@ public final class AlertPlaceholderResolver {
     private AlertPlaceholderResolver() {}
 
     public static Map<String, String> flattenLabels(AlertEvent event) {
+        return flatten(event, EnrichedAlertContext.empty());
+    }
+
+    public static Map<String, String> flatten(AlertEvent event, EnrichedAlertContext enrichment) {
         Map<String, String> m = new HashMap<>();
         if (event.labels() != null) {
             m.putAll(event.labels());
@@ -15,6 +19,20 @@ public final class AlertPlaceholderResolver {
         m.put("alertname", nullToEmpty(event.alertname()));
         m.put("severity", nullToEmpty(event.severity()));
         m.put("application", nullToEmpty(event.application()));
+        if (enrichment != null) {
+            putIfNotBlank(m, "primaryService", enrichment.primaryService());
+            putIfNotBlank(m, "candidateServices", String.join(",", enrichment.candidateServices()));
+            putIfNotBlank(m, "resource", enrichment.resource());
+            putIfNotBlank(m, "topic", enrichment.topic());
+            putIfNotBlank(m, "consumerGroup", enrichment.consumerGroup());
+            putIfNotBlank(m, "table", enrichment.table());
+            putIfNotBlank(m, "database", enrichment.database());
+            putIfNotBlank(m, "pool", enrichment.pool());
+            putIfNotBlank(m, "serviceReason", enrichment.serviceReason());
+            if (enrichment.resolvedLabels() != null) {
+                enrichment.resolvedLabels().forEach((k, v) -> putIfNotBlank(m, k, v));
+            }
+        }
         return m;
     }
 
@@ -49,5 +67,11 @@ public final class AlertPlaceholderResolver {
             return substituteTemplate(str, labels);
         }
         return v;
+    }
+
+    private static void putIfNotBlank(Map<String, String> target, String key, String value) {
+        if (value != null && !value.isBlank()) {
+            target.put(key, value);
+        }
     }
 }

@@ -25,6 +25,38 @@ sop-markdown: |
   根因：池过小、SQL 慢、泄漏、DB 限连；调参或 SQL 优化需走变更流程。
 
 steps:
-  - skill: mysql_inspect
-    tool: mysql_processlist
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 HikariConnectionsSaturated。
+      主服务 ${primaryService}，pool=${pool}。
+      查看 active/pending/max/timeout、JVM 与线程池指标，区分池真打满还是阈值设置过紧。
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 HikariConnectionsSaturated。
+      围绕服务 ${primaryService} 查询 processlist、global status、metadata locks，判断慢 SQL、锁等待或 DB 限连。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 HikariConnectionsSaturated。
+      检索 ${primaryService} 的 Connection is not available、timeout、pool 相关异常。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 HikariConnectionsSaturated。
+      查看 ${primaryService} 数据源与连接池配置，只读确认 maximum-pool-size、connection-timeout 是否近期调整。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 HikariConnectionsSaturated。
+      若服务 ${primaryService} 存在缓存依赖，排查 Redis 慢命令是否放大请求占用时间。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: rocketmq_inspect
+    task: |
+      告警 HikariConnectionsSaturated。
+      若服务 ${primaryService} 存在消费/发布链路，判断 MQ 堆积是否导致业务线程被拖慢。
+    on-error: continue

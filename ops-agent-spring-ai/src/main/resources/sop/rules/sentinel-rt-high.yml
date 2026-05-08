@@ -29,6 +29,43 @@ sop-markdown: |
   区分容量、下游慢、代码回归、限流误伤；给出优先验证的一条证据链。
 
 steps:
-  - skill: metrics_ops
-    tool: sentinel_metrics
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 SentinelRtHigh。
+      目标服务优先看 ${primaryService}，resource=${resource}。
+      先查 Sentinel RT、block/pass、异常比例，再补业务下游 RT，判断是容量、下游慢还是回归。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 SentinelRtHigh。
+      围绕服务 ${primaryService}、resource=${resource} 检索慢调用、超时、连接池等待、traceId 线索，输出最相关异常样本。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 SentinelRtHigh。
+      查询 ${primaryService} 的实例数、健康状态，以及 Sentinel/运行时相关配置，确认是否有缩容或动态规则变更。
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 SentinelRtHigh。
+      若服务 ${primaryService} 依赖 MySQL，查 processlist、slow query、锁等待，判断 DB 是否拖慢接口 ${resource}。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 SentinelRtHigh。
+      若服务 ${primaryService} 依赖 Redis，查 slowlog、client list、memory，判断缓存或连接问题是否导致 RT 升高。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: rocketmq_inspect
+    task: |
+      告警 SentinelRtHigh。
+      若 labels 中存在 topic/group，结合 ${topic} / ${consumerGroup} 查 MQ 状态；否则仅在结论里说明未发现 MQ 直接线索。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 SentinelRtHigh。
+      针对服务 ${primaryService} 所在容器查看 stats、关键日志，确认 CPU throttle、内存压力或网络抖动。
+    on-error: continue

@@ -11,6 +11,21 @@ class OrderListManager {
 
         this.init();
     }
+
+    static get STATUS_CONFIGS() {
+        return {
+            'CREATE': { text: '新创建', class: 'bg-blue-50 text-blue-600', icon: 'plus-circle' },
+            'PAY_WAIT': { text: '等待支付', class: 'bg-orange-50 text-orange-600', icon: 'credit-card' },
+            'PAY_SUCCESS': { text: '支付成功', class: 'bg-green-50 text-green-600', icon: 'check-circle' },
+            'DEAL_DONE': { text: '交易完成', class: 'bg-indigo-50 text-indigo-600', icon: 'package' },
+            'CLOSE': { text: '已关闭', class: 'bg-slate-100 text-slate-400', icon: 'x-circle' },
+            'WAIT_REFUND': { text: '退款中', class: 'bg-red-50 text-red-600', icon: 'refresh-ccw' },
+            'REFUNDED': { text: '已退款', class: 'bg-rose-50 text-rose-600', icon: 'rotate-ccw' },
+            'WAIT_SHIP': { text: '待发货', class: 'bg-cyan-50 text-cyan-600', icon: 'package-check' },
+            'SHIPPED': { text: '已发货', class: 'bg-violet-50 text-violet-600', icon: 'truck' },
+            'DELIVERED': { text: '已签收', class: 'bg-emerald-50 text-emerald-600', icon: 'badge-check' }
+        };
+    }
     
     init() {
         this.bindEvents();
@@ -131,19 +146,35 @@ class OrderListManager {
     }
 
     getStatusConfig(status) {
-        const configs = {
-            'CREATE': { text: '新创建', class: 'bg-blue-50 text-blue-600', icon: 'plus-circle' },
-            'PAY_WAIT': { text: '等待支付', class: 'bg-orange-50 text-orange-600', icon: 'credit-card' },
-            'PAY_SUCCESS': { text: '支付成功', class: 'bg-green-50 text-green-600', icon: 'check-circle' },
-            'DEAL_DONE': { text: '交易完成', class: 'bg-indigo-50 text-indigo-600', icon: 'package' },
-            'CLOSE': { text: '已关闭', class: 'bg-slate-100 text-slate-400', icon: 'x-circle' },
-            'WAIT_REFUND': { text: '退款中', class: 'bg-red-50 text-red-600', icon: 'refresh-ccw' },
+        return OrderListManager.STATUS_CONFIGS[status] || {
+            text: status,
+            class: 'bg-slate-100 text-slate-500',
+            icon: 'help-circle'
         };
-        return configs[status] || { text: status, class: 'bg-slate-100 text-slate-500', icon: 'help-circle' };
+    }
+
+    getRefundAction(status) {
+        switch (status) {
+            case 'CLOSE':
+                return { disabled: true, text: '已关闭' };
+            case 'WAIT_REFUND':
+                return { disabled: true, text: '退款处理中' };
+            case 'REFUNDED':
+                return { disabled: true, text: '已退款' };
+            case 'WAIT_SHIP':
+                return { disabled: true, text: '待发货' };
+            case 'SHIPPED':
+                return { disabled: true, text: '已发货' };
+            case 'DELIVERED':
+                return { disabled: true, text: '已签收' };
+            default:
+                return { disabled: false, text: '退款/取消' };
+        }
     }
     
     createOrderElement(order) {
         const config = this.getStatusConfig(order.status);
+        const refundAction = this.getRefundAction(order.status);
         const orderDiv = document.createElement('div');
         orderDiv.className = 'order-card bg-white rounded-[32px] border border-slate-100 p-6 shadow-sm';
         
@@ -193,8 +224,8 @@ class OrderListManager {
                 ` : ''}
                 <button class="px-6 py-2.5 rounded-xl bg-slate-50 text-slate-600 text-sm font-bold hover:bg-slate-100 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                         onclick="orderManager.showRefundModal('${order.orderId}', '${order.marketType || 'normal'}')"
-                        ${order.status === 'CLOSE' ? 'disabled' : ''}>
-                    ${order.status === 'CLOSE' ? '已关闭' : '退款/取消'}
+                        ${refundAction.disabled ? 'disabled' : ''}>
+                    ${refundAction.text}
                 </button>
             </div>
         `;
@@ -212,15 +243,8 @@ class OrderListManager {
     }
     
     getStatusText(status) {
-        const statusMap = {
-            'CREATE': '新创建',
-            'PAY_WAIT': '等待支付',
-            'PAY_SUCCESS': '支付成功',
-            'DEAL_DONE': '交易完成',
-            'CLOSE': '已关闭',
-            'WAIT_REFUND': '退款中',
-        };
-        return statusMap[status] || status;
+        const config = this.getStatusConfig(status);
+        return config.text || status;
     }
     
     formatTime(timeStr) {

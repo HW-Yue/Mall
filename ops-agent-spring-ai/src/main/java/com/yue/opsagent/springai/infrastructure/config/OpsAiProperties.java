@@ -22,6 +22,7 @@ public class OpsAiProperties {
     private final Rocketmq rocketmq = new Rocketmq();
     private final Redis redis = new Redis();
     private final Otlp otlp = new Otlp();
+    private final Catalog catalog = new Catalog();
 
     public Elasticsearch getElasticsearch() {
         return elasticsearch;
@@ -71,6 +72,10 @@ public class OpsAiProperties {
         return otlp;
     }
 
+    public Catalog getCatalog() {
+        return catalog;
+    }
+
     /**
      * OpenTelemetry OTLP → SkyWalking OAP 10.4（Virtual GenAI：span 含 gen_ai.response.model）。
      */
@@ -116,7 +121,7 @@ public class OpsAiProperties {
 
     public static class Alert {
         /** react: SOP 注入 OpsAgent ReAct；deterministic: 逐步 SopStepRunner */
-        private String mode = "react";
+        private String mode = "deterministic";
 
         public String getMode() {
             return mode;
@@ -124,6 +129,21 @@ public class OpsAiProperties {
 
         public void setMode(String mode) {
             this.mode = mode;
+        }
+    }
+
+    public static class Catalog {
+        /**
+         * 运行时只读知识库快照，避免依赖 sibling module 路径。
+         */
+        private String location = "classpath:ops-catalog/catalog.json";
+
+        public String getLocation() {
+            return location;
+        }
+
+        public void setLocation(String location) {
+            this.location = location;
         }
     }
 
@@ -438,6 +458,12 @@ public class OpsAiProperties {
             private String matchCategory = "";
             private String matchSeverity = "";
             private String matchApplication = "";
+            private String matchService = "";
+            private String matchResourcePrefix = "";
+            private String matchTopic = "";
+            private String matchConsumerGroup = "";
+            private String matchTable = "";
+            private String matchDb = "";
             /** 标准作业程序正文（纯文本即可），供 OpsAgent 使用；配置键仍为 sop-markdown */
             private String sopMarkdown = "";
             private List<Step> steps = new ArrayList<>();
@@ -480,6 +506,54 @@ public class OpsAiProperties {
 
             public void setMatchApplication(String matchApplication) {
                 this.matchApplication = matchApplication;
+            }
+
+            public String getMatchService() {
+                return matchService;
+            }
+
+            public void setMatchService(String matchService) {
+                this.matchService = matchService;
+            }
+
+            public String getMatchResourcePrefix() {
+                return matchResourcePrefix;
+            }
+
+            public void setMatchResourcePrefix(String matchResourcePrefix) {
+                this.matchResourcePrefix = matchResourcePrefix;
+            }
+
+            public String getMatchTopic() {
+                return matchTopic;
+            }
+
+            public void setMatchTopic(String matchTopic) {
+                this.matchTopic = matchTopic;
+            }
+
+            public String getMatchConsumerGroup() {
+                return matchConsumerGroup;
+            }
+
+            public void setMatchConsumerGroup(String matchConsumerGroup) {
+                this.matchConsumerGroup = matchConsumerGroup;
+            }
+
+            public String getMatchTable() {
+                return matchTable;
+            }
+
+            public void setMatchTable(String matchTable) {
+                this.matchTable = matchTable;
+            }
+
+            public String getMatchDb() {
+                return matchDb;
+            }
+
+            public void setMatchDb(String matchDb) {
+                this.matchDb = matchDb;
             }
 
             public List<Step> getSteps() {

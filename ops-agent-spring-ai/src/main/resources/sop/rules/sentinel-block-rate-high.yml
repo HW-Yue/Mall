@@ -23,6 +23,37 @@ sop-markdown: |
   误杀还是保护生效；调阈值、扩容、修下游的优先级。
 
 steps:
-  - skill: metrics_ops
-    tool: sentinel_metrics
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 SentinelBlockRateHigh。
+      目标服务 ${primaryService}，resource=${resource}。
+      查询 block/pass/RT/异常比例，判断是预期限流、容量不足还是下游拖慢触发保护。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 SentinelBlockRateHigh。
+      检索服务 ${primaryService} 下与 ${resource} 相关的 BlockException、429、超时日志。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 SentinelBlockRateHigh。
+      查看 ${primaryService} 实例与 Sentinel 配置，确认是否近期改过阈值或缩容。
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 SentinelBlockRateHigh。
+      排查 MySQL 是否因慢查询或锁等待拖慢 ${primaryService}，导致线程耗尽后触发限流。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 SentinelBlockRateHigh。
+      排查 Redis 慢命令、阻塞客户端、内存压力，判断缓存依赖是否触发连带限流。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 SentinelBlockRateHigh。
+      查看 ${primaryService} 容器资源与关键错误日志，判断是否单机过载。
+    on-error: continue
