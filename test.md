@@ -40,12 +40,12 @@ MySQL compose 已挂载 `dev-ops/mysql/sql` 到容器 `/docker-entrypoint-initdb
 ./docker-apps/up-apps.sh
 ```
 
-当前 `docker-apps/docker-compose-apps.yml` 默认：
+当前 `dev-ops/stacks/apps/test.compose.yml` 默认：
 
 - `order-service`: `SPRING_PROFILES_ACTIVE=test`
 - `group-buy-service`: `SPRING_PROFILES_ACTIVE=test`
 - `pay`: `SPRING_PROFILES_ACTIVE=test`
-- `pay` 宿主机端口: `18080`
+- `pay` 宿主机端口: `8095`
 - 所有应用容器加入外部网络 `nexus-devops`
 
 如需临时覆盖：
@@ -70,7 +70,7 @@ make seckill-mock
 mock 支付宝支付成功后回调 pay 的宿主机映射端口：
 
 ```text
-http://127.0.0.1:18080/api/v1/alipay/alipay_notify_url
+http://127.0.0.1:8095/api/v1/alipay/alipay_notify_url
 ```
 
 ## 验证入口
@@ -87,7 +87,7 @@ http://127.0.0.1:18080/api/v1/alipay/alipay_notify_url
 ```bash
 curl http://127.0.0.1:8092/actuator/health
 curl http://127.0.0.1:8093/actuator/health
-curl http://127.0.0.1:18080/actuator/health
+curl http://127.0.0.1:8095/actuator/health
 ```
 
 跑全链路前确认测试库已有拼团、订单、支付所需初始化数据，并确认 RocketMQ topic 可自动创建或已创建。

@@ -115,7 +115,7 @@ NACOS_ADDR=100.86.250.112:8848 NACOS_USER=nacos NACOS_PASS=nacos ./init-nacos-ru
 ```bash
 hey -n 5000 -c 50 -m POST -H "Content-Type: application/json" \
   -d '{"goodsId":"P001"}' \
-  http://100.86.250.112:8077/api/v1/mall/index/query_sku_detail
+  http://100.86.250.112:8091/api/v1/mall/index/query_sku_detail
 ```
 
 在 Nacos 中把 `mall-service-flow-rules.json` 里 `query_sku_detail` 的 `count` 从 500 改成 10，保存后：

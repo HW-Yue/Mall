@@ -1,4 +1,4 @@
-# yue-ops-agent
+# ops-agent-spring-ai
 
 一个面向个人 GitHub 展示的 Spring AI 运维 Agent 项目。
 
@@ -10,7 +10,7 @@
 - SOP 驱动的告警处理链路，支持规则匹配和 AI 辅助匹配
 - 进程内工具体系，覆盖 Docker、MySQL、Redis、Nacos、RocketMQ、Prometheus、Elasticsearch
 - 审批流支持受控写操作，适合展示“安全可控的自动化”
-- 内置 Web 控制台，能直接演示对话、工具调用、审批队列和运行时间线
+- 独立 Web 控制台，能直接演示对话、工具调用、审批队列和运行时间线
 - 可观测性接入了日志、Prometheus、OpenTelemetry / SkyWalking 相关链路
 
 ## 总体架构
@@ -42,7 +42,7 @@ flowchart LR
     Exec --> Obs
 ```
 
-![总体架构图](docs/assets/architecture-overview.svg)
+![总体架构图](dev-ops/docs/diagrams/ops-agent/architecture-overview.svg)
 
 ## 核心流程
 
@@ -71,7 +71,7 @@ sequenceDiagram
     Route-->>API: run session / result
 ```
 
-![告警处理流程图](docs/assets/alert-flow.svg)
+![告警处理流程图](dev-ops/docs/diagrams/ops-agent/alert-flow.svg)
 
 ### 2. 工具执行流程
 
@@ -89,7 +89,7 @@ flowchart TD
     Run --> Done
 ```
 
-![工具执行模块图](docs/assets/tool-chain.svg)
+![工具执行模块图](dev-ops/docs/diagrams/ops-agent/tool-chain.svg)
 
 ## 模块说明
 
@@ -99,13 +99,17 @@ flowchart TD
 - `skill/`：具体工具域，实现每个技能域的 registry 与 toolkit
 - `domain/`：运行态、告警、审批等领域对象
 - `infrastructure/`：配置、日志、追踪、SOP 外部加载
-- `src/main/resources/static/`：Web 控制台
+- `dev-ops/frontend/`：独立 Web 控制台
 
-## 在线演示页面
+## 前端页面
 
-- 运行工作台：`/index.html`
-- 审批队列：`/approvals.html`
-- 工具调用：`/tools.html`
+- 前端目录：`dev-ops/frontend/`
+- Docker 默认访问：
+  - `http://127.0.0.1:8089/`
+  - `http://127.0.0.1:8089/runs.html`
+  - `http://127.0.0.1:8089/approvals.html`
+  - `http://127.0.0.1:8089/tools.html`
+- 前端默认通过 Gateway 访问 API：`http://127.0.0.1:8090/gw/api/v1/ops-ai`
 
 ## 运行方式
 
@@ -131,7 +135,15 @@ export DASHSCOPE_API_KEY=your-key
 mvn spring-boot:run
 ```
 
-默认端口：`2322`
+默认端口：`8096`
+
+### 4. 启动前端
+
+使用 Docker Compose：
+
+```bash
+docker compose -f ../dev-ops/docker-compose-apps-test.yml up -d ops-agent-frontend gateway ops-agent-spring-ai
+```
 
 ## API 概览
 
@@ -151,8 +163,8 @@ mvn spring-boot:run
 
 ## 文档入口
 
-- [项目架构](docs/architecture.md)
-- [API 与运行说明](docs/api.md)
-- [部署与配置](docs/deployment.md)
-- [文档索引](docs/README.md)
-
+- [DevOps 总入口](dev-ops/README.md)
+- [ops-agent 文档索引](dev-ops/docs/ops-agent/README.md)
+- [项目架构](dev-ops/docs/ops-agent/architecture.md)
+- [API 与运行说明](dev-ops/docs/ops-agent/api.md)
+- [部署与配置](dev-ops/docs/ops-agent/deployment.md)

@@ -20,9 +20,9 @@
 
 - **名称**：`ops-agent-spring-ai`
 - **类型**：`webhook_configs`
-- **URL**：`http://host.docker.internal:2322/api/v1/alert/receive`
+- **URL**：`http://host.docker.internal:8096/api/v1/alert/receive`
 - **send_resolved**：`true`（解决事件也会推送）
-- **说明**：`2322` 对应仓库内 **`ops-agent-spring-ai`** 模块（见 `ops-agent-spring-ai/src/main/resources/application.yml` 的 `server.port`）
+- **说明**：`8096` 对应仓库内 **`ops-agent-spring-ai`** 模块（见 `ops-agent-spring-ai/src/main/resources/application.yml` 的 `server.port`）
 
 ## 4. 抑制规则 `inhibit_rules`
 

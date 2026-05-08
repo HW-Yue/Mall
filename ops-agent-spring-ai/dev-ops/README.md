@@ -1,14 +1,15 @@
 # DevOps 资料（Nexus 仓库）
 
 本目录集中存放 **运维/告警/联调** 相关的前端控制台与 **开发文档**。  
-**Agent 开发与 SOP 编写**请优先阅读 [`docs/README.md`](docs/README.md)，并按其中的索引跳转到细则。
+**Agent 开发与 SOP 编写**请先看本页，再进入 [`docs/README.md`](docs/README.md) 与 [`docs/ops-agent/README.md`](docs/ops-agent/README.md)。
 
 ## 子目录
 
 | 路径 | 说明 |
 |------|------|
-| [`frontend/`](frontend/README.md) | 静态控制台：`index.html` 对话 + 审批收件箱（对接本模块 API） |
+| [`frontend/`](frontend/README.md) | 独立静态前端：运行工作台 / 审批 / 工具 / 运行历史（默认走 Gateway） |
 | [`docs/`](docs/README.md) | **开发文档主入口**：告警格式、来源、与 Agent/SOP 的对应关系 |
+| [`docs/ops-agent/`](docs/ops-agent/README.md) | `ops-agent-spring-ai` 专题文档：架构、API、部署与运行说明 |
 
 ## 与商城现网配置的对应关系（准确来源）
 
@@ -63,3 +64,4 @@ dev-ops/
 3. Webhook / Alertmanager → [`docs/alerts/alertmanager/webhook-and-routing.md`](docs/alerts/alertmanager/webhook-and-routing.md)  
 4. 按 category 逐条规则 → [`docs/alerts/by-category/README.md`](docs/alerts/by-category/README.md)  
 5. SOP ↔ 工具 → [`docs/alerts/sop-tool-mapping.md`](docs/alerts/sop-tool-mapping.md)
+6. ops-agent 架构 / API / 部署 → [`docs/ops-agent/README.md`](docs/ops-agent/README.md)

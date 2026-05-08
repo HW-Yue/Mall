@@ -18,16 +18,19 @@
 
 ## 控制台页面
 
-- `/index.html`：运行工作台
-- `/approvals.html`：审批队列
-- `/tools.html`：工具调用
+- 前端目录：`dev-ops/frontend/`
+- `index.html`：运行工作台
+- `runs.html`：运行历史
+- `approvals.html`：审批队列
+- `tools.html`：工具调用
+- 默认 API 基址：`http://127.0.0.1:8090/gw/api/v1/ops-ai`
 
 ## 常见调用
 
 ### 触发对话
 
 ```bash
-curl -X POST http://127.0.0.1:2322/api/v1/chat/react \
+curl -X POST http://127.0.0.1:8096/api/v1/chat/react \
   -H 'Content-Type: application/json' \
   -d '{"message":"帮我排查 Redis 延迟升高"}'
 ```
@@ -35,7 +38,7 @@ curl -X POST http://127.0.0.1:2322/api/v1/chat/react \
 ### 执行工具
 
 ```bash
-curl -X POST http://127.0.0.1:2322/api/v1/tools/execute \
+curl -X POST http://127.0.0.1:8096/api/v1/tools/execute \
   -H 'Content-Type: application/json' \
   -d '{"skill":"redis_inspect","tool":"redis_info","args":{}}'
 ```
@@ -43,8 +46,7 @@ curl -X POST http://127.0.0.1:2322/api/v1/tools/execute \
 ### 接收告警
 
 ```bash
-curl -X POST http://127.0.0.1:2322/api/v1/alert/receive \
+curl -X POST http://127.0.0.1:8096/api/v1/alert/receive \
   -H 'Content-Type: application/json' \
   -d @alertmanager-payload.json
 ```
-

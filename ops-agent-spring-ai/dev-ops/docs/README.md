@@ -7,6 +7,7 @@
 | 文档 | 内容 |
 |------|------|
 | [`skills/skills-and-tools.md`](skills/skills-and-tools.md) | **Skill & Function Tool 总览**：7 域 Skill、两层调用、工具参数与审批说明 |
+| [`ops-agent/README.md`](ops-agent/README.md) | `ops-agent-spring-ai` 专题入口：架构、API、部署与运行说明 |
 | [`alerts/README.md`](alerts/README.md) | 告警体系总览：谁评估、谁发送、标签约定 |
 | [`alerts/overview-alert-pipeline.md`](alerts/overview-alert-pipeline.md) | 从指标 → 规则 → Alertmanager → Webhook 的完整链路 |
 | [`alerts/prometheus/scrape-and-labels.md`](alerts/prometheus/scrape-and-labels.md) | 抓取任务、Nacos SD、`application`/`category` 标签来源 |

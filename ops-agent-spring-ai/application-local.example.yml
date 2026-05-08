@@ -1,6 +1,6 @@
 spring:
   application:
-    name: yue-ops-agent
+    name: ops-agent-spring-ai
   cloud:
     nacos:
       discovery:
@@ -13,7 +13,7 @@ ops-ai:
   otlp:
     enabled: false
     endpoint: http://127.0.0.1:11800
-    service-name: yue-ops-agent
+    service-name: ops-agent-spring-ai
   elasticsearch:
     base-url: http://127.0.0.1:9200
   prometheus:

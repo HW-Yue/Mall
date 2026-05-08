@@ -24,7 +24,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 - `group-buy-service` — 拼团服务
 - `seckill-service` — 秒杀服务
 - `pay` — 支付服务（Spring Boot 2.7.12, Java 8），对接支付宝
-- `ops-agent-spring-ai` — 运维 Agent（Spring AI Alibaba，:2322），SOP 驱动 ReAct + 7 域 skill 工具（Docker / MySQL / RocketMQ / Prometheus / Elasticsearch / Redis / Nacos）；详见 `ops-agent-spring-ai/README.md`
+- `ops-agent-spring-ai` — 运维 Agent（Spring AI Alibaba，:8096），SOP 驱动 ReAct + 7 域 skill 工具（Docker / MySQL / RocketMQ / Prometheus / Elasticsearch / Redis / Nacos）；详见 `ops-agent-spring-ai/README.md`
 
 ## DDD Module Layout
 
@@ -218,15 +218,15 @@ mvn clean package -pl <module-name> -am
 ```
 
 ```bash
-docker-compose -f dev-ops/docker-compose-environment.yml up -d
-docker compose -f docker-apps/docker-compose-apps.yml up -d
+docker compose -f dev-ops/docker-compose-environment.yml up -d
+docker compose -f dev-ops/docker-compose-apps-test.yml up -d
 ```
 
 **Docker 环境约定：**
 - 所有基础环境都通过根目录 `dev-ops/` 下的 Docker Compose 文件构建和启动，不再从子模块目录找环境配置。
 - MySQL、Redis、Nacos、RocketMQ、Sentinel、ELK、Prometheus/Grafana 等端口、容器名、网络名、挂载目录均以 `dev-ops/` 内的 compose 与配置文件为准。
 - MySQL 初始化 SQL 统一放在 `dev-ops/mysql/sql/`；只有 `dev-ops/mysql/data/` 为空时官方镜像才会执行 `/docker-entrypoint-initdb.d`，测试库 SQL 由 `zz-init-test-sql.sh` 递归加载 `test/*.sql`。
-- 业务应用镜像和容器入口在 `docker-apps/`；需要确认应用依赖的环境地址时，先查 `dev-ops/`，再查各服务 `application-{profile}.yml` 和 `docker-apps/docker-compose-apps.yml`。
+- 业务应用镜像和容器入口统一以 `dev-ops/docker-compose-apps-test.yml` 与 `dev-ops/docker-compose-apps-dev.yml` 为准，`docker-apps/` 仅保留脚本入口；需要确认应用依赖的环境地址时，先查 `dev-ops/`，再查各服务 `application-{profile}.yml`。
 - 涉及订单、拼团、支付、网关、Nacos、MySQL 初始化或 Docker 启停的重大变更，提交前必须先完成一次完整全链路测试，流程见 `dev-ops/full-flow-test/README.md`，脚本入口为 `bash dev-ops/app/group-buy-full-flow-test.sh`。
 
 ## 监控文档

@@ -1,0 +1,14 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: ${NACOS_SERVER_ADDR:nacos:8848}
+        ip: ${NACOS_DISCOVERY_IP:}
+      config:
+        server-addr: ${NACOS_SERVER_ADDR:nacos:8848}
+
+ops-ai:
+  nacos:
+    server-addr: ${OPS_AI_NACOS_SERVER_ADDR:nacos:8848}
+  otlp:
+    service-name: ${OPS_AI_OTLP_SERVICE_NAME:ops-agent-spring-ai}

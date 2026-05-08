@@ -134,7 +134,7 @@ wait_group_buy_route
 wait_http "http://127.0.0.1:8090/actuator/health" "gateway"
 wait_http "http://127.0.0.1:8093/actuator/health" "group-buy-service"
 wait_http "http://127.0.0.1:8092/actuator/health" "order-service"
-wait_http "http://127.0.0.1:18080/actuator/health" "pay"
+wait_http "http://127.0.0.1:8095/actuator/health" "pay"
 
 echo "[2/5] create first group-buy order..."
 REQ1="$(cat <<JSON

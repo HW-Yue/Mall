@@ -1,9 +1,9 @@
 server:
-  port: 2322
+  port: 8096
 
 spring:
   application:
-    name: yue-ops-agent
+    name: ops-agent-spring-ai
   web:
     resources:
       cache:

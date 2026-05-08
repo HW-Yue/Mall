@@ -13,6 +13,18 @@ services:
     networks:
       - nexus-devops
 
+  ops-agent-frontend:
+    image: nexus/ops-agent-frontend:${IMAGE_TAG:-local}
+    build:
+      context: ../ops-agent-spring-ai/dev-ops/frontend
+      dockerfile: Dockerfile
+    container_name: nexus-ops-agent-frontend
+    ports:
+      - "${OPS_AGENT_FRONTEND_PORT:-8089}:80"
+    restart: unless-stopped
+    networks:
+      - nexus-devops
+
   mall:
     image: nexus/mall-app:${IMAGE_TAG:-local}
     build:
@@ -24,7 +36,7 @@ services:
       JAVA_OPTS: "${MALL_JAVA_OPTS:--Xms256m -Xmx512m -server -XX:+HeapDumpOnOutOfMemoryError -javaagent:/opt/skywalking/skywalking-agent/skywalking-agent.jar -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800} -Dskywalking.agent.service_name=mall-service}"
       PARAMS: "--spring.profiles.active=${MALL_SPRING_PROFILES_ACTIVE:-test} --rocketmq.name-server=${MALL_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}"
     ports:
-      - "${MALL_PORT:-8077}:8077"
+      - "${MALL_PORT:-8091}:8091"
     volumes:
       - "${SKYWALKING_AGENT_CONTEXT:-/home/yue/tools/apache-skywalking-java-agent-9.6.0/skywalking-agent}:/opt/skywalking/skywalking-agent:ro"
     restart: unless-stopped
@@ -104,7 +116,7 @@ services:
       JAVA_OPTS: "${PAY_JAVA_OPTS:--Xms256m -Xmx512m -server -XX:+HeapDumpOnOutOfMemoryError -javaagent:/opt/skywalking/skywalking-agent/skywalking-agent.jar -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800} -Dskywalking.agent.service_name=pay-service}"
       PARAMS: "--spring.profiles.active=${PAY_SPRING_PROFILES_ACTIVE:-test} --rocketmq.name-server=${PAY_ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876}"
     ports:
-      - "${PAY_PORT:-18080}:${PAY_INTERNAL_PORT:-18080}"
+      - "${PAY_PORT:-8095}:${PAY_INTERNAL_PORT:-8095}"
     volumes:
       - "${SKYWALKING_AGENT_CONTEXT:-/home/yue/tools/apache-skywalking-java-agent-9.6.0/skywalking-agent}:/opt/skywalking/skywalking-agent:ro"
     restart: unless-stopped
@@ -144,9 +156,11 @@ services:
     environment:
       TZ: Asia/Shanghai
       JAVA_OPTS: "${OPS_AGENT_JAVA_OPTS:--Xms256m -Xmx512m -server -XX:+HeapDumpOnOutOfMemoryError -javaagent:/opt/skywalking/skywalking-agent/skywalking-agent.jar -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800} -Dskywalking.agent.service_name=ops-agent-spring-ai -Dskywalking.trace.ignore_path=/actuator/**,*:/actuator/**,SpringScheduled/**,HikariCP/**,SpringCloudGateway/GatewayFilter,Mysql/JDBC/PreparedStatement/execute}"
-      PARAMS: "--server.port=2322 --spring.profiles.active=${SPRING_PROFILES_ACTIVE:-dev} --rocketmq.name-server=${ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876} --ops-ai.otlp.enabled=${OPS_AI_OTLP_ENABLED:-true} --ops-ai.otlp.endpoint=${OPS_AI_OTLP_ENDPOINT:-http://100.86.250.112:11800} --ops-ai.otlp.service-name=${OPS_AI_OTLP_SERVICE_NAME:-ops-agent-spring-ai}"
+      NACOS_SERVER_ADDR: "${NACOS_SERVER_ADDR:-nacos:8848}"
+      OPS_AI_NACOS_SERVER_ADDR: "${OPS_AI_NACOS_SERVER_ADDR:-nacos:8848}"
+      PARAMS: "--server.port=8096 --spring.profiles.active=${SPRING_PROFILES_ACTIVE:-test} --rocketmq.name-server=${ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876} --ops-ai.otlp.enabled=${OPS_AI_OTLP_ENABLED:-true} --ops-ai.otlp.endpoint=${OPS_AI_OTLP_ENDPOINT:-http://100.86.250.112:11800} --ops-ai.otlp.service-name=${OPS_AI_OTLP_SERVICE_NAME:-ops-agent-spring-ai}"
     ports:
-      - "${OPS_AGENT_PORT:-2322}:2322"
+      - "${OPS_AGENT_PORT:-8096}:8096"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped

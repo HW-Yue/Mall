@@ -7,7 +7,7 @@ app:
     cross-origin: '*'
     # SC 渠道配置 - 拼团对接渠道值、回调通知
     ali-pay:
-      api-url: http://100.86.250.112:8080
+      api-url: http://100.86.250.112:8095
       notify-url: http://100.86.250.112:8091/api/v1/
       source: s01
       chanel: c01
@@ -23,7 +23,7 @@ app:
 
 
 server:
-  port: 8077
+  port: 8091
   # Tomcat 工作线程由 DynamicTp spring.dynamic.tp.tomcat-tp 管理；此处保留连接层参数
   tomcat:
     mbeanregistry:

@@ -1,5 +1,5 @@
 server:
-  port: 8077
+  port: 8091
   tomcat:
     mbeanregistry:
       enabled: true
@@ -20,13 +20,13 @@ app:
     api-version: v1
     cross-origin: '*'
     ali-pay:
-      api-url: http://pay:18080
-      notify-url: http://mall:8077/api/v1/
+      api-url: http://pay:8095
+      notify-url: http://mall:8091/api/v1/
       source: s01
       chanel: c01
     no-market:
-      api-url: http://mall:8077
-      notify-url: http://mall:8077/
+      api-url: http://mall:8091
+      notify-url: http://mall:8091/
       source: s01
       chanel: c01
   order:

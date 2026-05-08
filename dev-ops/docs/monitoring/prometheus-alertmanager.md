@@ -16,7 +16,7 @@
 
 - 配置：`dev-ops/prometheus/alertmanager.yml`
 - 默认接收器：`ops-agent-spring-ai`
-- Webhook URL：`http://host.docker.internal:2322/api/v1/alert/receive`
+- Webhook URL：`http://host.docker.internal:8096/api/v1/alert/receive`
 - 分组键：`alertname`、`category`、`application`
 - 抑制规则：同服务下 `critical` 抑制同名 `warning`
 

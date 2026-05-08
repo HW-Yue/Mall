@@ -13,7 +13,7 @@ pay-service 的 alipay.gateway-url 改为本服务地址即可接管所有支付
 
 启动：
   python locust/seckill/mock_alipay.py
-  PORT=7000 NOTIFY_URL=http://127.0.0.1:18080/api/v1/alipay/alipay_notify_url \
+  PORT=7000 NOTIFY_URL=http://127.0.0.1:8095/api/v1/alipay/alipay_notify_url \
       python locust/seckill/mock_alipay.py
 """
 import os

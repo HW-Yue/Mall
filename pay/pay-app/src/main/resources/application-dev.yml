@@ -1,5 +1,5 @@
 server:
-  port: 8079
+  port: 8095
 
 # Actuator：供 Prometheus 抓取 /actuator/prometheus（与 Docker 内 Prometheus + Nacos SD 对接）
 management:

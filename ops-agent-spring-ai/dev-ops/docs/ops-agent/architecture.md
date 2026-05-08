@@ -1,6 +1,6 @@
 # 项目架构
 
-`yue-ops-agent` 是一个面向运维场景的 Spring AI Agent 应用，核心目标不是“聊天演示”，而是把真实运维动作串成可解释、可审批、可追踪的自动化链路。
+`ops-agent-spring-ai` 是一个面向运维场景的 Spring AI Agent 应用，核心目标不是“聊天演示”，而是把真实运维动作串成可解释、可审批、可追踪的自动化链路。
 
 ## 架构总览
 
@@ -29,7 +29,7 @@ flowchart LR
     Route --> Obs
 ```
 
-![总体架构图](assets/architecture-overview.svg)
+![总体架构图](../diagrams/ops-agent/architecture-overview.svg)
 
 ## 组件职责
 
@@ -39,7 +39,7 @@ flowchart LR
 - `skill`：工具域实现层，按技能域组织 registry / toolkit
 - `domain`：告警、审批、路由、运行态等领域对象
 - `infrastructure`：配置、日志、追踪、SOP 外部加载
-- `static`：可直接在浏览器演示的 Web 控制台
+- `dev-ops/frontend`：独立部署的 Web 控制台
 
 ## 核心流转
 
@@ -68,7 +68,7 @@ sequenceDiagram
     Route-->>API: run session / result
 ```
 
-![告警处理流程图](assets/alert-flow.svg)
+![告警处理流程图](../diagrams/ops-agent/alert-flow.svg)
 
 ### 工具流
 
@@ -86,7 +86,7 @@ flowchart TD
     Run --> Done
 ```
 
-![工具执行模块图](assets/tool-chain.svg)
+![工具执行模块图](../diagrams/ops-agent/tool-chain.svg)
 
 ## 设计原则
 
@@ -95,4 +95,3 @@ flowchart TD
 - SOP 优先，AI 兜底
 - 每次执行都带运行轨迹，方便回放和排障
 - 公开仓库默认值全部可本地启动，不包含内网地址或密钥
-

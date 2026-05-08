@@ -51,7 +51,7 @@ Java 端 `AlertmanagerPayload` 只强依赖两个字段：**顶层 `alerts` 数�
 
 ### 5.1 仅含本项目解析字段的「最小可运行」体
 
-POST `Content-Type: application/json` → `http://<host>:2322/api/v1/alert/receive`
+POST `Content-Type: application/json` → `http://<host>:8096/api/v1/alert/receive`
 
 ```json
 {
@@ -99,7 +99,7 @@ POST `Content-Type: application/json` → `http://<host>:2322/api/v1/alert/recei
         "severity": "critical",
         "category": "http",
         "application": "mall",
-        "instance": "192.168.1.20:18080",
+        "instance": "192.168.1.20:8095",
         "job": "spring-boot"
       },
       "annotations": {
@@ -121,7 +121,7 @@ POST `Content-Type: application/json` → `http://<host>:2322/api/v1/alert/recei
     "severity": "critical",
     "category": "http",
     "application": "mall",
-    "instance": "192.168.1.20:18080",
+    "instance": "192.168.1.20:8095",
     "job": "spring-boot"
   },
   "commonAnnotations": {

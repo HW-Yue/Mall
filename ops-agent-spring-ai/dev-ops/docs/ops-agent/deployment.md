@@ -21,6 +21,12 @@ export DASHSCOPE_API_KEY=your-key
 mvn spring-boot:run
 ```
 
+5. 单独启动前端时，使用静态服务器或 Docker Compose 暴露 `dev-ops/frontend/`。
+
+```bash
+docker compose -f ../dev-ops/docker-compose-apps-test.yml up -d ops-agent-frontend gateway ops-agent-spring-ai
+```
+
 ## 配置来源
 
 - `src/main/resources/application.yml`：公开默认值
@@ -45,4 +51,4 @@ mvn spring-boot:run
 - OTLP 默认关闭
 - DashScope Key 默认留空
 - 不包含任何内网 IP、网关地址或真实口令
-
+- 独立前端默认通过 `http://localhost:8090/gw/api/v1/ops-ai` 访问后端 API

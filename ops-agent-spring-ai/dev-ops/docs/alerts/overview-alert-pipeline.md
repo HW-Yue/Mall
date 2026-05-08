@@ -25,10 +25,10 @@ Exporters ────────┘              │
                         firing alerts ──► Alertmanager
                                  │
                                  ▼
-                        webhook POST ──► Agent（ops-agent-spring-ai 默认 :2322，见 `ops-agent-spring-ai/src/main/resources/application.yml`）
+                        webhook POST ──► Agent（ops-agent-spring-ai 默认 :8096，见 `ops-agent-spring-ai/src/main/resources/application.yml`）
 ```
 
-> **注意**：Alertmanager webhook 默认指向 **`http://host.docker.internal:2322/api/v1/alert/receive`**（与 `dev-ops/prometheus/alertmanager.yml` 一致）。
+> **注意**：Alertmanager webhook 默认指向 **`http://host.docker.internal:8096/api/v1/alert/receive`**（与 `dev-ops/prometheus/alertmanager.yml` 一致）。
 
 ## 3. 与「预警」相关的代码路径（商城）
 

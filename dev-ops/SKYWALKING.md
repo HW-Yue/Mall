@@ -4,9 +4,9 @@
 
 ## 1. 起基础设施
 
-1. `docker compose -f docker-compose-environment.yml up -d`（`nexus-devops` 网络）
-2. `docker compose -f docker-compose-elk.yml up -d`（Elasticsearch + Logstash + Kibana）
-3. `docker compose -f docker-compose-skywalking.yml up -d`（OAP + UI，存储指向同一套 ES）
+1. `docker compose -f dev-ops/docker-compose-environment.yml up -d`（`nexus-devops` 网络）
+2. `docker compose -f dev-ops/docker-compose-elk.yml up -d`（Elasticsearch + Logstash + Kibana）
+3. `docker compose -f dev-ops/docker-compose-skywalking.yml up -d`（OAP + UI，存储指向同一套 ES）
 4. UI：`http://100.86.250.112:9988`；Agent 上报 OAP 地址：`100.86.250.112:11800`（已映射到宿主机）
 
 ## 2. 应用侧配置

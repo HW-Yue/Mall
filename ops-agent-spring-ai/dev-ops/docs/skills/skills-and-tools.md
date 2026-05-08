@@ -157,5 +157,5 @@
 |------|------|
 | [`alerts/sop-tool-mapping.md`](../alerts/sop-tool-mapping.md) | 告警 category → Skill 工具建议排查路径 |
 | [`alerts/by-category/README.md`](../alerts/by-category/README.md) | 按 Prometheus category 的告警条目 |
-| [`../../docs/architecture.md`](../../docs/architecture.md) | 项目架构与流程图 |
-| [`../../docs/api.md`](../../docs/api.md) | HTTP API 概览 |
+| [`../ops-agent/architecture.md`](../ops-agent/architecture.md) | 项目架构与流程图 |
+| [`../ops-agent/api.md`](../ops-agent/api.md) | HTTP API 概览 |
