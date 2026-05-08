@@ -60,13 +60,13 @@ docker compose -f dev-ops/docker-compose-elk.yml up -d
 ### IDEA 一键执行版
 
 ```bash
-cd "$(git rev-parse --show-toplevel)" && ./docker-apps/build-app-images-test.sh
+cd "$(git rev-parse --show-toplevel)" && ./docker-apps/build-app-images.sh
 ```
 
 ### 项目根目录命令行版
 
 ```bash
-./docker-apps/build-app-images-test.sh
+./docker-apps/build-app-images.sh
 ```
 
 如果 Maven 包已经手动构建过，只重建 Docker 镜像：
@@ -74,13 +74,13 @@ cd "$(git rev-parse --show-toplevel)" && ./docker-apps/build-app-images-test.sh
 ### IDEA 一键执行版
 
 ```bash
-cd "$(git rev-parse --show-toplevel)" && SKIP_MAVEN=true ./docker-apps/build-app-images-test.sh
+cd "$(git rev-parse --show-toplevel)" && SKIP_MAVEN=true ./docker-apps/build-app-images.sh
 ```
 
 ### 项目根目录命令行版
 
 ```bash
-SKIP_MAVEN=true ./docker-apps/build-app-images-test.sh
+SKIP_MAVEN=true ./docker-apps/build-app-images.sh
 ```
 
 ## 3. 只重建单个服务或单个前端

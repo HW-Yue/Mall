@@ -1,0 +1,124 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: springcloud-gateway
+  cloud:
+    nacos:
+      discovery:
+        enabled: false
+      config:
+        enabled: false
+    sentinel:
+      enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: false
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: false
+            maxAge: 3600
+      routes:
+        - id: mall
+          uri: http://mall:8091
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/mall/**
+          filters:
+            - StripPrefix=1
+        - id: pay
+          uri: http://pay:8095
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/pay/**
+          filters:
+            - StripPrefix=1
+        - id: pay-alipay
+          uri: http://pay:8095
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/alipay/**
+          filters:
+            - StripPrefix=1
+        - id: order-service
+          uri: http://order-service:8092
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/order/**
+          filters:
+            - StripPrefix=1
+        - id: group-buy-service
+          uri: http://group-buy-service:8093
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/group-buy/**
+          filters:
+            - StripPrefix=1
+        - id: seckill-service
+          uri: http://seckill-service:8094
+          order: 1
+          predicates:
+            - Path=/gw/api/v1/seckill/**
+          filters:
+            - StripPrefix=1
+        - id: ops-agent-spring-ai
+          uri: http://ops-agent-spring-ai:8096
+          order: 1
+          metadata:
+            response-timeout: -1
+          predicates:
+            - Path=/gw/api/v1/ops-ai/**
+          filters:
+            - StripPrefix=1
+            - name: RewritePath
+              args:
+                regexp: /api/v1/ops-ai/(.*)
+                replacement: /api/v1/$1
+            - name: DedupeResponseHeader
+              args:
+                name: Access-Control-Allow-Origin Access-Control-Allow-Credentials
+                strategy: RETAIN_FIRST
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 60s
+        pool:
+          type: elastic
+          max-connections: 10000
+          max-life-time: 60s
+          eviction-interval: 30s
+
+logging:
+  level:
+    root: info
+  config: classpath:logback-spring.xml
+
+logstash:
+  enabled: true
+  host: logstash
+  port: 4560
+
+yue:
+  log:
+    trace:
+      provider: skywalking
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}

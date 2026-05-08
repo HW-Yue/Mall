@@ -32,6 +32,7 @@ from seckill.config import MOCK_ALIPAY_PORT, NOTIFY_URL
 
 PORT = int(os.getenv("PORT", MOCK_ALIPAY_PORT))
 _NOTIFY_URL = os.getenv("NOTIFY_URL", NOTIFY_URL)
+_PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", f"http://100.86.250.112:{PORT}").rstrip("/")
 
 _orders: dict = {}
 _lock = threading.Lock()
@@ -40,7 +41,7 @@ _lock = threading.Lock()
 @app.post("/gateway.do")
 @app.post("/alipay.trade.page.pay")
 def alipay_trade_page_pay():
-    """pay-service 通过 alipay SDK 调此接口创建支付。"""
+    """浏览器提交 pay-service 返回的 HTML form 后，进入 mock 收银台。"""
     params = request.form.to_dict() or request.get_json(force=True, silent=True) or {}
     biz_str = params.get("biz_content", "{}")
     import json
@@ -53,9 +54,10 @@ def alipay_trade_page_pay():
     out_trade_no = biz.get("out_trade_no") or params.get("out_trade_no") or str(uuid.uuid4())
     total_amount = biz.get("total_amount") or params.get("total_amount", "0.00")
     subject = biz.get("subject") or params.get("subject", "Mock商品")
+    return_url = params.get("return_url", "")
     trade_no = f"MOCK_{int(time.time() * 1000)}_{out_trade_no[-8:]}"
     pay_url = (
-        f"http://100.86.250.112:{PORT}/mock/pay_page"
+        f"{_PUBLIC_BASE_URL}/mock/pay_page"
         f"?outTradeNo={out_trade_no}&tradeNo={trade_no}&amount={total_amount}"
     )
 
@@ -68,21 +70,11 @@ def alipay_trade_page_pay():
             "status": "WAIT_BUYER_PAY",
             "createTime": time.time(),
             "payUrl": pay_url,
+            "returnUrl": return_url,
         }
 
     app.logger.info("[Mock] 创建支付 outTradeNo=%s", out_trade_no)
-    return jsonify(
-        {
-            "alipay_trade_page_pay_response": {
-                "code": "10000",
-                "msg": "Success",
-                "out_trade_no": out_trade_no,
-                "trade_no": trade_no,
-            },
-            "payUrl": pay_url,
-            "sign": "mock_sign",
-        }
-    )
+    return _render_pay_page(out_trade_no, trade_no, total_amount, return_url)
 
 
 @app.get("/mock/pay_page")
@@ -90,6 +82,11 @@ def pay_page():
     out_trade_no = request.args.get("outTradeNo", "")
     trade_no = request.args.get("tradeNo", "")
     amount = request.args.get("amount", "0.00")
+    return_url = request.args.get("returnUrl", "")
+    return _render_pay_page(out_trade_no, trade_no, amount, return_url)
+
+
+def _render_pay_page(out_trade_no: str, trade_no: str, amount: str, return_url: str) -> str:
     return f"""<!DOCTYPE html>
 <html>
 <body style="font-family:sans-serif;text-align:center;padding:60px">
@@ -99,6 +96,7 @@ def pay_page():
   <form method="post" action="/mock/confirm_pay">
     <input type="hidden" name="outTradeNo" value="{out_trade_no}">
     <input type="hidden" name="tradeNo"    value="{trade_no}">
+    <input type="hidden" name="returnUrl"  value="{return_url}">
     <button type="submit"
       style="padding:12px 36px;font-size:16px;background:#1677ff;
              color:#fff;border:none;border-radius:8px;cursor:pointer">
@@ -113,10 +111,20 @@ def pay_page():
 def confirm_pay():
     out_trade_no = request.form.get("outTradeNo", "")
     trade_no = request.form.get("tradeNo", "")
+    return_url = request.form.get("returnUrl", "")
+    if not return_url:
+        with _lock:
+            return_url = (_orders.get(out_trade_no) or {}).get("returnUrl", "")
     _async_notify(out_trade_no, trade_no)
-    return """<html><body style="text-align:center;padding:60px;font-family:sans-serif">
+    redirect_block = (
+        f'<p><a href="{return_url}">返回商城</a></p>'
+        f'<script>setTimeout(function(){{window.location.href="{return_url}";}}, 1500);</script>'
+        if return_url else ""
+    )
+    return f"""<html><body style="text-align:center;padding:60px;font-family:sans-serif">
       <h2 style="color:green">支付成功（Mock）</h2>
       <p>已向 pay-service 发送回调</p>
+      {redirect_block}
     </body></html>"""
 
 
@@ -177,9 +185,9 @@ if __name__ == "__main__":
     print(f"[Mock Alipay] 监听 http://0.0.0.0:{PORT}")
     print(f"[Mock Alipay] 支付成功回调目标: {_NOTIFY_URL}")
     print(
-        f"[Mock Alipay] 收银台页面: http://100.86.250.112:{PORT}/mock/pay_page"
+        f"[Mock Alipay] 收银台页面: {_PUBLIC_BASE_URL}/mock/pay_page"
         "?outTradeNo=xxx&tradeNo=xxx&amount=1.00"
     )
-    print(f"[Mock Alipay] 查看订单:   GET  http://100.86.250.112:{PORT}/mock/orders")
-    print(f"[Mock Alipay] 手动触发:   POST http://100.86.250.112:{PORT}/mock/trigger_callback")
+    print(f"[Mock Alipay] 查看订单:   GET  {_PUBLIC_BASE_URL}/mock/orders")
+    print(f"[Mock Alipay] 手动触发:   POST {_PUBLIC_BASE_URL}/mock/trigger_callback")
     app.run(host="0.0.0.0", port=PORT, debug=False)

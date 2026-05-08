@@ -39,11 +39,11 @@ app:
     api-version: v1
     cross-origin: '*'
     group-buy-market:
-      api-url: http://127.0.0.1:8093
+      api-url: http://group-buy-service:8093
       source: s01
       chanel: c01
     no-market:
-      api-url: http://127.0.0.1:8093
+      api-url: http://group-buy-service:8093
       source: s01
       chanel: c01
 
@@ -60,9 +60,9 @@ alipay:
   app_id: test-app
   merchant_private_key: test-private
   alipay_public_key: test-public
-  notify_url: http://127.0.0.1/mock-notify
-  return_url: http://127.0.0.1/mock-return
-  gatewayUrl: http://127.0.0.1/mock-gateway
+  notify_url: ${PAY_MOCK_NOTIFY_URL:http://pay:8095/api/v1/alipay/alipay_notify_url}
+  return_url: ${PAY_MOCK_RETURN_URL:http://100.86.250.112:8088/index.html}
+  gatewayUrl: ${PAY_MOCK_GATEWAY_URL:http://mock-alipay:7000/gateway.do}
   mock-refund: true
 
 logging:

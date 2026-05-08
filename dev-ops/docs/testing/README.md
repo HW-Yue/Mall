@@ -7,6 +7,7 @@
 - [单测隔离与测试基座](./test-isolation-and-fixtures.md)
 - [单测执行方式](./test-execution.md)
 - [提交前最低测试要求](./minimum-test-requirements.md)
+- [Docker Mock 联调](./docker-test-mock-compose.md)
 - [服务单测计划](./service-unit-test-plan/README.md)
 - [集成 / 全链路测试](../../full-flow-test/README.md)
 
