@@ -12,12 +12,9 @@ public class Unpaid2RefundStrategy extends AbstractRefundOrderStrategy {
 
     @Override
     public void refundOrder(TradeRefundOrderEntity tradeRefundOrderEntity) throws Exception {
-        log.info("退单；未支付，未成团，发 order-close-group-buy MQ userId:{} teamId:{} orderId:{} outTradeNo:{}",
+        log.info("退单；未支付，未成团，等待 order-service 关闭订单后回推 market 事件 userId:{} teamId:{} orderId:{}",
                 tradeRefundOrderEntity.getUserId(), tradeRefundOrderEntity.getTeamId(),
-                tradeRefundOrderEntity.getOrderId(), tradeRefundOrderEntity.getOutTradeNo());
-        // 发 MQ：由 OrderCloseGroupBuyListener 统一原子执行 t_order 关单 + team_order.lock_count -1
-        groupBuyRefundMqProducer.sendOrderCloseMessage(
-                tradeRefundOrderEntity.getOutTradeNo(), tradeRefundOrderEntity.getUserId());
+                tradeRefundOrderEntity.getOrderId());
     }
 
     @Override

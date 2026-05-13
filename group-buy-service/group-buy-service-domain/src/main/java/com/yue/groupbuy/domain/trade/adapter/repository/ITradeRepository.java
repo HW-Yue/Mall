@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface ITradeRepository {
 
-    MarketPayOrderEntity queryMarketPayOrderEntityByOutTradeNo(String userId, String outTradeNo);
+    MarketPayOrderEntity queryMarketPayOrderEntityByOrderId(String userId, String orderId);
 
     MarketPayOrderEntity lockMarketPayOrder(GroupBuyOrderAggregate groupBuyOrderAggregate);
 
@@ -48,8 +48,6 @@ public interface ITradeRepository {
 
     void refund2AddRecovery(String recoveryTeamStockKey, String orderId);
 
-    String queryOutTradeNoByOrderId(String userId, String orderId);
-
     /**
      * 乐观锁更新团队状态为失败（status = 2），仅当当前状态为拼单中（0）时生效
      * @return 影响行数，1 表示更新成功，0 表示已被其他流程修改
@@ -82,13 +80,13 @@ public interface ITradeRepository {
      * 将个人订单更新为已退款（status = 4）
      * @return 影响行数
      */
-    int updateOrder2Refunded(String outTradeNo);
+    int updateOrder2Refunded(String orderId);
 
     /**
      * 关闭单笔未支付订单并回退团占用库存（CAS：t_order.status 0→3，命中后再 lock_count-1）。
      * @return true 本次确实把订单从未支付翻到了已关团并扣减了 lock_count；
      *         false 订单已被处理过（非 status=0），无副作用。
      */
-    boolean closeUnpaidOrderAndReleaseStock(String outTradeNo);
+    boolean closeUnpaidOrderAndReleaseStock(String orderId);
 
 }

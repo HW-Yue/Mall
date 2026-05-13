@@ -38,7 +38,7 @@
             <div class="panel-head compact">
                 <div>
                     <h2>运行历史 <span class="approval-count" id="runs-count">0</span></h2>
-                    <p>来自 Elasticsearch（logstash 索引），按 runId 聚合最近的运行。</p>
+                    <p>优先显示当前进程内最近运行，再补充数据库里的 run 摘要；详情时间线继续按 runId 查询归档事件。</p>
                 </div>
                 <div class="runs-toolbar">
                     <input type="text" id="run-id-input" class="runs-input" placeholder="按 runId 直接查询" />
@@ -52,7 +52,7 @@
             <div class="panel-head compact">
                 <div>
                     <h2>Timeline <span class="run-id-chip" id="active-run-id">未选中</span></h2>
-                    <p>事件按 @timestamp 升序，data 字段渲染为可折叠 JSON。</p>
+                    <p id="timeline-desc">事件按时间升序展示；当前运行优先读实时内存事件，历史运行按 runId 查询 ES timeline。</p>
                 </div>
                 <div id="timeline-meta" class="timeline-meta"></div>
             </div>
@@ -62,8 +62,8 @@
 
     <div id="toast" class="toast" role="status"></div>
 
-    <script src="config.js?v=20260507-1700"></script>
-    <script src="js/runs.js?v=20260507-1700"></script>
+    <script src="config.js?v=20260509-0035"></script>
+    <script src="js/runs.js?v=20260509-0900"></script>
     <script src="js/app.js?v=20260507-1700"></script>
 </body>
 </html>

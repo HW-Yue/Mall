@@ -19,9 +19,9 @@ public class TradeSettlementRuleCommandEntity {
     private String channel;
     /** 用户ID */
     private String userId;
-    /** 外部交易单号 */
-    private String outTradeNo;
-    /** 外部交易时间 */
+    /** 订单ID */
+    private String orderId;
+    /** 支付时间 */
     private Date outTradeTime;
 
 }

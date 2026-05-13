@@ -22,7 +22,7 @@ public class RefundOrderNodeFilter implements ILogicHandler<TradeRefundCommandEn
 
     @Override
     public TradeRefundBehaviorEntity apply(TradeRefundCommandEntity tradeRefundCommandEntity, TradeRefundRuleFilterFactory.RefundLinkContext dynamicContext) throws Exception {
-        log.info("逆向流程-退单操作，退单策略处理 userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
+        log.info("逆向流程-退单操作，退单策略处理 userId:{} orderId:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOrderId());
 
         MarketPayOrderEntity marketPayOrderEntity = dynamicContext.getMarketPayOrderEntity();
         TradeOrderStatusEnumVO tradeOrderStatusEnumVO = marketPayOrderEntity.getTradeOrderStatusEnumVO();
@@ -38,7 +38,6 @@ public class RefundOrderNodeFilter implements ILogicHandler<TradeRefundCommandEn
                 .orderId(marketPayOrderEntity.getOrderId())
                 .teamId(marketPayOrderEntity.getTeamId())
                 .activityId(groupBuyTeamEntity.getActivityId())
-                .outTradeNo(tradeRefundCommandEntity.getOutTradeNo())
                 .build());
 
         return stop(

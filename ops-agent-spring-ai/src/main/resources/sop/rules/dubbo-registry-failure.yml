@@ -20,11 +20,31 @@ sop-markdown: |
   区分 Nacos 故障、网络隔离、服务配置错误、版本/分组不一致。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "{__name__=~\"dubbo_registry_.*_failed_total\"}"
-  - skill: nacos_config
-    tool: nacos_list_instances
-    args:
-      serviceName: "${application}"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboRegistryFailure。
+      查询 dubbo registry failed 指标、up 和影响范围，判断单服务 ${primaryService} 异常还是全局注册中心异常。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 DubboRegistryFailure。
+      查询 ${primaryService} 实例、Nacos 服务列表和注册中心配置，确认注册失败、健康实例异常或 namespace/group 配置错误。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboRegistryFailure。
+      检索 ${primaryService} 的 Nacos、registry、subscribe、register、timeout、connection refused 日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 DubboRegistryFailure。
+      如果多服务同时失败，优先查看 Nacos 容器；如果单服务失败，查看 ${primaryService} 容器日志、网络和资源异常。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 DubboRegistryFailure。
+      只读核对 Dubbo registry 地址、服务分组、namespace 和应用启动配置是否近期变化。
+    on-error: continue

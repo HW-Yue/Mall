@@ -16,7 +16,6 @@ public class TeamOrderEntity {
 
     private String orderId;
     private String userId;
-    private String outTradeNo;
     private Integer status;
 
 }

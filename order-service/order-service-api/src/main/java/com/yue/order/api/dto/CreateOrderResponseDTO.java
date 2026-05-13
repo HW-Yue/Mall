@@ -20,6 +20,4 @@ public class CreateOrderResponseDTO implements Serializable {
 
     /** 订单ID（返回给前端，用于后续支付/查询） */
     private String orderId;
-    /** 外部交易单号 */
-    private String outTradeNo;
 }

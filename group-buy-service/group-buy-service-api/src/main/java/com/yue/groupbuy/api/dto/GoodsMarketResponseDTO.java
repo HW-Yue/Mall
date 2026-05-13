@@ -76,8 +76,6 @@ public class GoodsMarketResponseDTO {
         private Date validEndTime;
         // 倒计时(字符串) validEndTime - validStartTime
         private String validTimeCountdown;
-        /** 外部交易单号-确保外部调用唯一幂等 */
-        private String outTradeNo;
 
         public static String differenceDateTime2Str(Date validStartTime, Date validEndTime) {
             if (validStartTime == null || validEndTime == null) {

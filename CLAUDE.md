@@ -1,5 +1,13 @@
 > 注意：如果修改本文件内容，必须同步更新 `CLAUDE.md`；如果修改 `CLAUDE.md`，也必须同步更新本文件。
 
+## 当前交易链路硬约束
+
+- `orderId` 与 `outTradeNo` 统一由 `order-service` 生成，格式分别为 `OD{snowflake}` / `OT{snowflake}`。
+- `outTradeNo` 只允许存在于 `order-service`、`pay-service` 的内部表、内部 DTO、内部 MQ 和两者之间的调用中。
+- `mall`、`group-buy-service`、`seckill-service`、前端、网关出入参、营销服务本地表、营销服务 MQ 都不能新增或继续保留 `outTradeNo` 语义。
+- 营销服务之间以及 `order-service -> 营销服务` 的业务事件，只能用 `orderId` 作为订单关联键。
+- 如果后续修改订单、支付、拼团、秒杀链路，必须先检查并保持这个边界，不能把 `outTradeNo` 重新泄漏回营销服务或前端。
+
 ## Repository Overview
 
 Multi-module Java enterprise microservices mono-repo，DDD 架构。
@@ -106,29 +114,32 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 > - `order-service` 不是所有 MQ 都走事务消息。当前 `pay-refund-*`、`order-ship-task` 走事务消息；`order-paid-*`、`normal-order-create`、`group-buy-order-create` 走普通消息。
 > - 普通单与拼团单都通过 MQ 异步落库（`normal-order-create` / `group-buy-order-create`），发 MQ 前在 Redis 写存在标记 `order:exists:{userId}:{orderId}`，`get_pay_url` 命中标记后才走 6×50ms DB 重试兜底，未命中标记直接 `ORDER_NOT_FOUND` 快速失败。
 > - 秒杀下单先返回 `seckillToken`，前端轮询拿到 `orderId` 后再走支付流程。
+> - 当前真实实现中：营销服务和前端只感知 `orderId`；`outTradeNo` 已收口到 `order-service` / `pay-service`。
 
 ### 普通下单
-前端 → mall `create_normal_order`（防刷→锁可售库存） → Dubbo order-service `create_order_normal_from_mall` → order-service 发布 `normal-order-create` → order-service 消费后异步落库 `t_order` → 前端拿 `orderId` / `outTradeNo` → order-service `get_pay_url`（必要时短暂重试等待订单落库）→ Dubbo pay `create_pay_order` → 支付宝
+前端 → mall `create_normal_order`（防刷→锁可售库存） → order-service `create_order_normal_from_mall` → order-service 生成 `orderId/outTradeNo` 并返回 `orderId` → order-service 发布 `normal-order-create` → order-service 消费后异步落库 `t_order` → 前端拿 `orderId` → order-service `get_pay_url`（必要时短暂重试等待订单落库）→ order-service 内部用 `outTradeNo` 调 pay `create_pay_order` → 支付宝
 
 支付后：支付宝回调 pay → pay 更新支付单状态 → `pay-success-normal` → order-service 更新订单状态 → 发布 `order-paid-normal` 与事务消息 `order-ship-task`
 
 ### 拼团下单
-前端 → group-buy-service `create_pay_order`（校验活动、占 `lock_count`、必要时创建 team）→ Dubbo order-service `create_order` → order-service 写 Redis 存在标记并发布 `group-buy-order-create` → 立即返回 `orderId` / `teamId` / `outTradeNo` → order-service 消费后异步落库 `t_order` → order-service `get_pay_url`（命中存在标记后做 DB 重试兜底）→ Dubbo pay → 支付宝
+前端 → group-buy-service `create_pay_order`（校验活动、占 `lock_count`、必要时创建 team）→ order-service `create_order` → order-service 生成 `orderId/outTradeNo`，写 Redis 存在标记并发布 `group-buy-order-create` → 立即返回 `orderId` / `teamId` → order-service 消费后异步落库 `t_order` → order-service `get_pay_url`（命中存在标记后做 DB 重试兜底）→ order-service 内部用 `outTradeNo` 调 pay → 支付宝
 
 新开团时：group-buy-service 还会发送 `group-buy-timeout-refund` 定时消息，用于队伍超时后的关单 / 退款补偿。
 
 支付后：pay → `pay-success-group-buy` → order-service 更新订单状态 → 发布 `order-paid-group_buy` → group-buy-service 结算拼团订单并更新组队状态 → 成团后由 group-buy-service 再发 `group-buy-success-notify` 给 order-service 推进后续处理
 
 ### 秒杀下单
-前端 → seckill-service `create_pay_order`（校验活动、Lua 扣 Redis 可售库存、生成 `seckillToken` / `outTradeNo`）→ seckill-service 发布 `seckill-order-create` → order-service 异步建单 → 前端轮询 order-service `query_seckill_order` 拿到 `orderId` → order-service `get_pay_url` → Dubbo pay → 支付宝
+前端 → seckill-service `create_pay_order`（校验活动、Lua 扣 Redis 可售库存、生成 `seckillToken`）→ seckill-service 发布 `seckill-order-create` → order-service 异步建单并生成 `orderId/outTradeNo` → 前端轮询 order-service `query_seckill_order` 拿到 `orderId` → order-service `get_pay_url` → order-service 内部用 `outTradeNo` 调 pay → 支付宝
 
 支付后：pay → `pay-success-seckill` → order-service 更新订单状态 → 发布 `order-paid-seckill` 与事务消息 `order-ship-task` → seckill-service 扣 Redis 真实库存并发布 `seckill-stock-deduct` 异步回写 MySQL 库存
 
 退款：
 
 - 普通单：前端 → order-service `refund` → order-service 发布事务消息 `pay-refund-normal`
-- 拼团 / 秒杀：前端 → 各营销服务 `refund` → HTTP 调 order-service `refund_execute` → order-service 发布事务消息 `pay-refund-group-buy` / `pay-refund-seckill`
-- pay 完成退款后，再回写 `pay-refund-*-result` 给 order-service；营销服务侧分别消费 `pay-refund-group-buy` / `pay-refund-seckill` 做本地状态与库存补偿
+- 拼团 / 秒杀：前端 → 各营销服务 `refund` → HTTP 调 order-service `refund_execute`
+- `order-service -> pay-service`：仍然用 `pay-refund-group-buy` / `pay-refund-seckill` 和 `outTradeNo`
+- pay 完成退款后，先回写 `pay-refund-*-result` 给 order-service；再由 `order-service` 发布只带 `orderId` 的 `order-refund-group-buy` / `order-refund-seckill` 给营销服务做本地状态与库存补偿
+- 关单链路同理：`order-close-group-buy` / `order-close-seckill` 只给 `pay-service` 与 `order-service`；营销服务消费 `order-close-group-buy-market` / `order-close-seckill-market`
 
 ## MQ 文档
 

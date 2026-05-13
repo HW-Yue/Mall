@@ -193,8 +193,8 @@ public class GroupBuyRepository implements IGroupBuyRepository {
     }
 
     @Override
-    public Map<String, Object> queryTeamInfoByOutTradeNo(String outTradeNo) {
-        return tOrderGroupDao.queryTeamInfoByOutTradeNo(outTradeNo);
+    public Map<String, Object> queryTeamInfoByOrderId(String orderId) {
+        return tOrderGroupDao.queryTeamInfoByOrderId(orderId);
     }
 
     @Override

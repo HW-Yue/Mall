@@ -20,6 +20,31 @@ sop-markdown: |
   根因树：DB 慢、网络、池配置、泄漏；下一步归属应用、DBA 或网络。
 
 steps:
-  - skill: metrics_ops
-    tool: jvm_metrics
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 HikariConnectionAcquireSlow。
+      主服务 ${primaryService}，pool=${pool}。查看 acquire、active、pending、max、timeout 与 QPS/RT 时间线，判断获取连接慢是否伴随池压力。
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 HikariConnectionAcquireSlow。
+      查询 processlist、slow query、locks 和 status，判断 DB 慢、锁等待或连接建立慢是否导致 getConnection 变慢。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 HikariConnectionAcquireSlow。
+      检索 ${primaryService} 的 connection acquire、Hikari timeout、Communications link failure、validation 相关日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 HikariConnectionAcquireSlow。
+      只读查看 ${primaryService} 数据源配置，确认 connection-timeout、validationTimeout、maximum-pool-size 是否近期变更。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 HikariConnectionAcquireSlow。
+      查看 ${primaryService} 容器资源与网络相关日志，若证据不足，在结论中提示人工核对跨 AZ、DNS、防火墙。
+    on-error: continue

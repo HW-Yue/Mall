@@ -71,6 +71,24 @@ class OpsRunServiceLoggingTest {
         assertThat(dataMap).containsEntry("tool", "metrics_query");
     }
 
+    @Test
+    void recentRunsReturnsNewestSummaryFirst() {
+        var first = service.create(RouteRequest.text("first"));
+        service.node(first.runId(), "AiSopMatch", "命中第一条");
+        var second = service.create(RouteRequest.text("second"));
+        service.complete(second.runId(), "End", "第二条结束", Map.of("ok", true));
+
+        var runs = service.recentRuns(10);
+
+        assertThat(runs).hasSize(2);
+        assertThat(runs.getFirst().runId()).isEqualTo(second.runId());
+        assertThat(runs.getFirst().source()).isEqualTo("memory");
+        assertThat(runs.getFirst().eventCount()).isEqualTo(2);
+        assertThat(runs.getFirst().firstEventType()).isEqualTo("start");
+        assertThat(runs.getFirst().lastEventType()).isEqualTo("end");
+        assertThat(runs.get(1).runId()).isEqualTo(first.runId());
+    }
+
     private static ILoggingEvent findEvent(List<ILoggingEvent> events, String marker) {
         return events.stream()
                 .filter(e -> e.getFormattedMessage().startsWith(marker))

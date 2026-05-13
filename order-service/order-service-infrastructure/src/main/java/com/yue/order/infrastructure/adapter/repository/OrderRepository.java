@@ -11,7 +11,6 @@ import com.yue.api.dto.SkuStockRequestDTO;
 import com.yue.order.types.enums.ResponseCode;
 import com.yue.order.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Repository;
@@ -51,8 +50,10 @@ public class OrderRepository implements IOrderRepository {
             }
         }
 
-        // 生成内部订单号
-        String orderId = RandomStringUtils.randomNumeric(12);
+        String orderId = order.getOrderId();
+        if (StringUtils.isBlank(orderId) || StringUtils.isBlank(order.getOutTradeNo())) {
+            throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "orderId / outTradeNo 不能为空");
+        }
 
         OrderPO po = OrderPO.builder()
                 .orderId(orderId)

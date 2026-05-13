@@ -42,11 +42,46 @@
 - `mall -> order-service`
   - 普通商品锁库后调用 `create_order_normal_from_mall`
 - `order-service -> pay`
-  - 创建支付单
+  - 创建支付单、发起退款、发起关单
 - `group-buy-service -> order-service`
-  - 创建拼团订单、查询订单、执行退款
+  - 创建拼团订单、执行退款
 - `seckill-service -> order-service`
-  - 创建秒杀订单、按外部单号查询、执行退款
+  - 创建秒杀订单、执行退款
+
+## 统一 ID 规则
+
+- `orderId` 由 `order-service` 统一生成，格式为 `OD{snowflake}`
+- `outTradeNo` 由 `order-service` 统一生成，格式为 `OT{snowflake}`
+- `outTradeNo` 只允许存在于 `order-service` 与 `pay-service` 的内部调用、内部表和两者之间的 MQ
+- `mall`、`group-buy-service`、`seckill-service`、前端都只感知 `orderId`
+
+## 当前业务数据流转
+
+### 普通单
+
+- 前端调用 `mall create_normal_order`
+- `mall` 锁普通库存后调用 `order-service create_order_normal_from_mall`
+- `order-service` 生成 `orderId/outTradeNo`，立即返回 `orderId`，同时写 Redis pending 标记并发 `normal-order-create`
+- 前端用 `orderId` 调 `order-service get_pay_url`
+- `order-service` 通过内部 `outTradeNo` 调 `pay-service`
+
+### 拼团单
+
+- 前端调用 `group-buy-service create_pay_order`
+- `group-buy-service` 只负责活动校验、占团锁单、建队/参团，随后调用 `order-service create_order`
+- `order-service` 生成 `orderId/outTradeNo`，立即返回 `orderId` 给拼团服务；拼团服务本地只保存 `orderId`
+- 前端拿 `orderId` 调 `order-service get_pay_url`
+- 支付成功后链路为：`pay-success-group-buy -> order-service -> order-paid-group_buy -> group-buy-service`
+- 退款/关单链路为：营销服务只调用 `order-service refund_execute(orderId)`；`order-service` 用内部 `outTradeNo` 驱动 `pay-service`，再向拼团发布仅含 `orderId` 的 `order-refund-group-buy` / `order-close-group-buy-market`
+
+### 秒杀单
+
+- 前端调用 `seckill-service create_pay_order`
+- `seckill-service` 只生成 `seckillToken`，扣 Redis 可售库存后发 `seckill-order-create`
+- `order-service` 异步建单时生成 `orderId/outTradeNo`，并把 `orderId` 回写到 `seckillToken`
+- 前端轮询 `query_seckill_order` 拿到 `orderId`，再调 `get_pay_url`
+- 支付成功后链路为：`pay-success-seckill -> order-service -> order-paid-seckill -> seckill-service`
+- 退款/关单链路为：`order-service` 内部对 `pay-service` 仍用 `outTradeNo`，对秒杀服务只发 `order-refund-seckill` / `order-close-seckill-market`
 
 ## 服务文档
 

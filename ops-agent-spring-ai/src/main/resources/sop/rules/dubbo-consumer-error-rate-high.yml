@@ -20,12 +20,37 @@ sop-markdown: |
   区分无 provider、网络/注册、provider 慢、业务异常；给出证据和责任服务。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "dubbo_consumer_requests_failed_total"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboConsumerErrorRateHigh。
+      围绕主服务 ${primaryService} 查询 consumer 侧失败率、QPS、interface、method，判断错误是否集中在单一下游接口。
   - type: delegate_subagent
     sub-agent-id: nacos_config
     task: |
-      查询 ${application} 及相关 Dubbo provider 的 Nacos 实例状态。若无法从标签推断 provider 服务名，只说明无法确认。
-    context: {}
+      告警 DubboConsumerErrorRateHigh。
+      查询 ${primaryService} 及相关 Dubbo provider 的 Nacos 实例状态，确认无 provider、实例数下降、注册 IP/端口异常。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboConsumerErrorRateHigh。
+      检索 ${primaryService} 的 No provider、timeout、network、codec、serialization、RpcException 日志，输出最相关异常样本。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 DubboConsumerErrorRateHigh。
+      查看 ${primaryService} 容器是否存在、资源是否异常、是否有重启或关键错误日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 DubboConsumerErrorRateHigh。
+      仅当前面日志或指标指向 DB 依赖时，排查慢查询、锁等待、连接占用是否导致 consumer 调用失败。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 DubboConsumerErrorRateHigh。
+      仅当前面日志或指标指向 Redis 依赖时，排查慢命令、阻塞客户端和连接问题。
+    on-error: continue

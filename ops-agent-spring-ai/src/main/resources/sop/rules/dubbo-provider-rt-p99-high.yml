@@ -20,7 +20,37 @@ sop-markdown: |
   写清慢在 provider 内部还是下游，是否集中单接口/单实例，给出扩容、限流或优化建议。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "dubbo_provider_rt_milliseconds_p99"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboProviderRtP99High。
+      查询 ${primaryService} 的 provider P99 RT、QPS、失败率、interface、method，判断慢调用是否集中且是否伴随流量突增。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboProviderRtP99High。
+      按 interface/method 检索 ${primaryService} 的慢调用、timeout、SQL/Redis/MQ 慢点和 trace 线索。
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboProviderRtP99High。
+      联查 Dubbo 线程池、DynamicTP、JVM GC、CPU 和容器资源指标，判断是否线程池排队或 GC 放大 RT。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 DubboProviderRtP99High。
+      仅当日志或指标指向 DB 慢点时，查询 slow query、processlist、locks。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 DubboProviderRtP99High。
+      仅当日志或指标指向 Redis 慢点时，查询 slowlog、blocked clients、memory。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 DubboProviderRtP99High。
+      查看 ${primaryService} 容器 stats、日志和重启情况，确认单实例 CPU throttle、内存压力或网络抖动。
+    on-error: continue

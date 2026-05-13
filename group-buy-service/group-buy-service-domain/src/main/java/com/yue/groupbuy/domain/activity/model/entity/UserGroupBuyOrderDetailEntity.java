@@ -29,7 +29,4 @@ public class UserGroupBuyOrderDetailEntity {
     private Date validStartTime;
     /** 结束时间 */
     private Date validEndTime;
-    /** 外部交易单号 */
-    private String outTradeNo;
-
 }

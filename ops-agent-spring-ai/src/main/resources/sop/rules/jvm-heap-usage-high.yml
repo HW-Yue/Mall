@@ -25,6 +25,37 @@ sop-markdown: |
   结论偏向泄漏还是容量不足；是否建议 dump（说明风险）。
 
 steps:
-  - skill: metrics_ops
-    tool: jvm_metrics
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 JvmHeapUsageHigh。
+      围绕 ${primaryService} 查询 heap used/max、old gen、GC、QPS、线程指标，区分长期贴近上限、突发尖峰、流量型还是泄漏型。
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 JvmHeapUsageHigh。
+      确认 ${primaryService} 或 ${application} 容器存在，查看 docker_stats、inspect、logs，判断 cgroup memory limit、RSS、OOMKilled 或重启迹象。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 JvmHeapUsageHigh。
+      检索 ${primaryService} 的 OutOfMemoryError、GC overhead、allocation、large object、ERROR 日志，对齐告警时间窗。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 JvmHeapUsageHigh。
+      只读查看 ${primaryService} JVM、线程池、连接池配置，确认 Xmx、G1、Metaspace、池大小是否近期变更。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 JvmHeapUsageHigh。
+      若日志或指标指向缓存堆积，排查 Redis 慢命令、阻塞客户端、内存压力是否导致请求对象驻留。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 JvmHeapUsageHigh。
+      若日志或指标指向 DB 堆积，排查 MySQL 慢查询、锁等待、连接占用是否导致会话对象驻留。
+    on-error: continue

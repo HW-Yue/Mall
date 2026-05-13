@@ -17,6 +17,4 @@ public class CreateGroupBuyOrderRequestDTO {
     private String source;
     /** 渠道 */
     private String channel;
-    /** 外部单号（可选，为空时系统自动生成） */
-    private String outTradeNo;
 }

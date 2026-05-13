@@ -24,8 +24,6 @@ public class CreateOrderCommand {
     private BigDecimal payPrice;
     private String source;
     private String channel;
-    /** 外部交易单号（可选，不传则自动生成） */
-    private String outTradeNo;
     /** 商品名称（冗余写入 t_order，查询订单直接返回） */
     private String goodsName;
     /** 商品图片URL（冗余写入 t_order） */

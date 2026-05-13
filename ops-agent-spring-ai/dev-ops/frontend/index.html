@@ -51,6 +51,7 @@
                     <select id="alert-example-select"></select>
                 </label>
                 <button type="button" data-run-example="http5xx">标准 5xx 告警</button>
+                <button type="button" data-run-example="dubbo">Dubbo Provider 告警</button>
                 <button type="button" data-run-example="nacos">Nacos 发布演练</button>
                 <button type="button" data-run-example="plain">纯文本报错</button>
             </div>
@@ -60,6 +61,7 @@
                 <div class="route-actions">
                     <div class="run-id" id="run-id">未运行</div>
                     <div class="run-buttons">
+                        <button type="button" class="btn secondary" id="run-open-history" disabled>查看历史</button>
                         <button type="button" class="btn secondary danger" id="run-cancel" disabled title="有进行中的 run 且未结束时可暂停">暂停执行</button>
                         <button type="submit" class="btn primary" id="run-submit">发起运行</button>
                     </div>
@@ -101,8 +103,8 @@
     </main>
     <div id="toast" class="toast" role="status"></div>
 
-    <script src="config.js?v=20260426-1600"></script>
-    <script src="js/run-workbench.js?v=20260426-1600"></script>
+    <script src="config.js?v=20260509-0035"></script>
+    <script src="js/run-workbench.js?v=20260509-0900"></script>
     <script src="js/tools.js?v=20260426-1600"></script>
     <script src="js/inbox.js?v=20260426-1600"></script>
     <script src="js/app.js?v=20260426-1600"></script>

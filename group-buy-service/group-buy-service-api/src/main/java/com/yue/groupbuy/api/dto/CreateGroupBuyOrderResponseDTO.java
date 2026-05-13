@@ -17,8 +17,6 @@ public class CreateGroupBuyOrderResponseDTO {
     private String orderId;
     /** 队伍ID */
     private String teamId;
-    /** 外部单号 */
-    private String outTradeNo;
     /** 原始价格 */
     private BigDecimal originalPrice;
     /** 折扣金额 */

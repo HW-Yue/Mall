@@ -34,7 +34,7 @@ public class TradeSettlementOrderService implements ITradeSettlementOrderService
 
     @Override
     public TradePaySettlementEntity settlementMarketPayOrder(TradePaySuccessEntity tradePaySuccessEntity) throws Exception {
-        log.info("拼团交易-支付订单结算 userId:{} outTradeNo:{}", tradePaySuccessEntity.getUserId(), tradePaySuccessEntity.getOutTradeNo());
+        log.info("拼团交易-支付订单结算 userId:{} orderId:{}", tradePaySuccessEntity.getUserId(), tradePaySuccessEntity.getOrderId());
 
         // 1. 结算规则过滤
         TradeSettlementRuleFilterBackEntity back = tradeSettlementRuleFilter.apply(
@@ -42,7 +42,7 @@ public class TradeSettlementOrderService implements ITradeSettlementOrderService
                         .source(tradePaySuccessEntity.getSource())
                         .channel(tradePaySuccessEntity.getChannel())
                         .userId(tradePaySuccessEntity.getUserId())
-                        .outTradeNo(tradePaySuccessEntity.getOutTradeNo())
+                        .orderId(tradePaySuccessEntity.getOrderId())
                         .outTradeTime(tradePaySuccessEntity.getOutTradeTime())
                         .build(),
                 new TradeSettlementRuleFilterFactory.SettlementLinkContext());
@@ -93,7 +93,7 @@ public class TradeSettlementOrderService implements ITradeSettlementOrderService
                 .userId(tradePaySuccessEntity.getUserId())
                 .teamId(teamId)
                 .activityId(groupBuyTeamEntity.getActivityId())
-                .outTradeNo(tradePaySuccessEntity.getOutTradeNo())
+                .orderId(tradePaySuccessEntity.getOrderId())
                 .build();
     }
 

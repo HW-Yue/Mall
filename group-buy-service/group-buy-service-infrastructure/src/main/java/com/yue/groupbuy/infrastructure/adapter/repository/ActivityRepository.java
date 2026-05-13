@@ -183,7 +183,6 @@ public class ActivityRepository implements IActivityRepository {
                     .lockCount(team.getLockCount())
                     .validStartTime(team.getValidStartTime())
                     .validEndTime(team.getValidEndTime())
-                    .outTradeNo((String) row.get("outTradeNo"))
                     .build());
         }
         return result;

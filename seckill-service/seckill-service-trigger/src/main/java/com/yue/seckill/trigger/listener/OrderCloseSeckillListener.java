@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 @Component
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
 @RocketMQMessageListener(
-        topic = "${app.rocketmq.topic.orderCloseSeckill:order-close-seckill}",
+        topic = "${app.rocketmq.topic.orderCloseSeckillMarket:order-close-seckill-market}",
         consumerGroup = "${app.rocketmq.consumerGroup.orderCloseSeckill:CG_ORDER_CLOSE_SECKILL_MARKET}"
 )
 public class OrderCloseSeckillListener implements RocketMQListener<String> {

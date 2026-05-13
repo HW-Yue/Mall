@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunEvent;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunSession;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunStatus;
+import com.yue.opsagent.springai.domain.opsroute.OpsRunSummary;
 import com.yue.opsagent.springai.domain.opsroute.RouteInputType;
 import com.yue.opsagent.springai.domain.opsroute.RouteRequest;
 import jakarta.annotation.PostConstruct;
@@ -12,12 +13,15 @@ import jakarta.annotation.PreDestroy;
 import net.logstash.logback.argument.StructuredArguments;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +38,7 @@ public class OpsRunService {
     private static final Logger log = LoggerFactory.getLogger(OpsRunService.class);
 
     private final ObjectMapper objectMapper;
+    private final OpsRunSummaryRepository summaryRepository;
     private final Map<String, MutableRun> runs = new ConcurrentHashMap<>();
     private final Map<String, CopyOnWriteArrayList<SseEmitter>> subscribers = new ConcurrentHashMap<>();
     private final ScheduledExecutorService heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(r -> {
@@ -42,8 +47,14 @@ public class OpsRunService {
         return t;
     });
 
-    public OpsRunService(ObjectMapper objectMapper) {
+    @Autowired
+    public OpsRunService(ObjectMapper objectMapper, OpsRunSummaryRepository summaryRepository) {
         this.objectMapper = objectMapper;
+        this.summaryRepository = summaryRepository;
+    }
+
+    public OpsRunService(ObjectMapper objectMapper) {
+        this(objectMapper, OpsRunSummaryRepository.noop());
     }
 
     @PostConstruct
@@ -67,6 +78,16 @@ public class OpsRunService {
     public Optional<OpsRunSession> snapshot(String runId) {
         MutableRun run = runs.get(runId);
         return run == null ? Optional.empty() : Optional.of(run.snapshot());
+    }
+
+    public List<OpsRunSummary> recentRuns(int size) {
+        int limit = Math.max(1, Math.min(size, 200));
+        return runs.values().stream()
+                .map(MutableRun::snapshot)
+                .sorted(Comparator.comparing(OpsRunSession::updatedAt).reversed())
+                .limit(limit)
+                .map(session -> JdbcOpsRunSummaryRepository.toSummary(session, "memory"))
+                .toList();
     }
 
     public void node(String runId, String node, String message) {
@@ -171,6 +192,7 @@ public class OpsRunService {
         }
         OpsRunEvent event = OpsRunEvent.of(type, node, message, data);
         run.add(event);
+        persistSummary(run.snapshot());
         for (SseEmitter emitter : subscribers.getOrDefault(runId, new CopyOnWriteArrayList<>())) {
             send(emitter, event);
         }
@@ -195,6 +217,14 @@ public class OpsRunService {
 
     private String toJson(Object payload) throws JsonProcessingException {
         return objectMapper.writeValueAsString(payload);
+    }
+
+    private void persistSummary(OpsRunSession session) {
+        try {
+            summaryRepository.upsert(session);
+        } catch (Exception e) {
+            log.warn("[OpsRunSummary] persist failed runId={} err={}", session.runId(), e.toString());
+        }
     }
 
     private void broadcastHeartbeats() {

@@ -42,10 +42,10 @@ public class OrderPaidGroupBuyListener implements RocketMQListener<String> {
         }
 
         String userId = json.getString("userId");
-        String outTradeNo = json.getString("outTradeNo");
+        String orderId = json.getString("orderId");
         Long outTradeTimeMs = json.getLong("outTradeTime");
 
-        if (StringUtils.isAnyBlank(userId, outTradeNo)) {
+        if (StringUtils.isAnyBlank(userId, orderId)) {
             log.error("消息缺少必填字段: {}", message);
             return;
         }
@@ -55,11 +55,11 @@ public class OrderPaidGroupBuyListener implements RocketMQListener<String> {
         try {
             groupBuyDomainService.settlementGroupBuyOrder(SettlementCommand.builder()
                     .userId(userId)
-                    .outTradeNo(outTradeNo)
+                    .orderId(orderId)
                     .outTradeTime(outTradeTime)
                     .build());
         } catch (Exception e) {
-            log.error("拼团结算失败 userId:{} outTradeNo:{}", userId, outTradeNo, e);
+            log.error("拼团结算失败 userId:{} orderId:{}", userId, orderId, e);
             throw new RuntimeException(e);
         }
     }

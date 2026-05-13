@@ -70,6 +70,12 @@ ops-ai:
     jdbc-url: ${OPS_AI_MYSQL_JDBC_URL:jdbc:mysql://127.0.0.1:3306/mysql?useSSL=false&allowPublicKeyRetrieval=true}
     username: ${OPS_AI_MYSQL_USERNAME:root}
     password: ${OPS_AI_MYSQL_PASSWORD:}
+  history:
+    enabled: ${OPS_AI_HISTORY_ENABLED:true}
+    jdbc-url: ${OPS_AI_HISTORY_JDBC_URL:jdbc:mysql://127.0.0.1:3306/ops_agent?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${OPS_AI_HISTORY_USERNAME:root}
+    password: ${OPS_AI_HISTORY_PASSWORD:}
+    table-name: ${OPS_AI_HISTORY_TABLE_NAME:ops_run_summary}
   rocketmq:
     name-server: ${OPS_AI_ROCKETMQ_NAME_SERVER:127.0.0.1:9876}
     enabled: ${OPS_AI_ROCKETMQ_ENABLED:false}

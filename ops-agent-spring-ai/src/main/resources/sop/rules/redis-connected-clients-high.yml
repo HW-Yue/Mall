@@ -18,6 +18,25 @@ sop-markdown: |
   缩池、连接复用、调 maxclients（运维）；修泄漏（开发）。
 
 steps:
-  - skill: redis_inspect
-    tool: redis_client_list
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 RedisConnectedClientsHigh。
+      查询 client list 和 info，按 addr、name、cmd 聚合连接来源，确认 connected_clients 与 maxclients。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 RedisConnectedClientsHigh。
+      查询 ${primaryService} 实例数和 Redis 连接池配置，估算实例数乘连接池上限是否超过 Redis maxclients。
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 RedisConnectedClientsHigh。
+      对齐连接数曲线、发布、扩容、QPS 和错误率，判断是否连接泄漏或规模变化导致。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 RedisConnectedClientsHigh。
+      检索 ${primaryService} 的 Redis 连接泄漏、连接池耗尽、timeout、reconnect 相关日志。
+    on-error: continue

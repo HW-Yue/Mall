@@ -69,11 +69,17 @@
   "info": "成功",
   "data": {
     "seckillToken": "token-1",
-    "orderId": "OID-1",
-    "outTradeNo": "SK123456"
+    "orderId": null
   }
 }
 ```
+
+当前真实链路：
+
+- `seckill-service` 只生成 `seckillToken`
+- 不生成、不返回 `outTradeNo`
+- `orderId` 通常在异步建单完成前为空，前端需要轮询 `order-service query_seckill_order`
+- `order-service` 异步建单时统一生成 `orderId/outTradeNo`
 
 ## `POST /api/v1/seckill/trade/refund`
 
@@ -91,9 +97,16 @@
 ```json
 {
   "userId": "u1",
-  "orderId": "OID-1"
+  "orderId": "OD191234567890123456"
 }
 ```
+
+退款与库存回滚：
+
+- 秒杀服务不直接和 `pay-service` 交互
+- 退款统一调用 `order-service refund_execute(orderId)`
+- 秒杀服务只消费 `order-refund-seckill` 和 `order-close-seckill-market`
+- Redis 可售库存 / 真实库存的恢复都按 `orderId` 找回上下文
 
 ## `GET /api/v1/seckill/admin/query_activities`
 

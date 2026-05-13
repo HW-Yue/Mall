@@ -18,10 +18,15 @@
 - `channel`
 - `goodsName`
 - `goodsImageUrl`
-- `outTradeNo`
 - `originalPrice`
 - `deductionPrice`
 - `payPrice`
+
+## 备注
+
+- `seckill-service` 不生成也不透传 `outTradeNo`
+- `order-service` 消费这条消息时，才在内部生成 `orderId/outTradeNo`
+- 对秒杀前端与秒杀服务回写的结果只有 `orderId`
 
 ## 事实来源
 

@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.skill.redis;
 
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
+import com.yue.opsagent.springai.skill.support.SkillToolHelp;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -11,6 +12,9 @@ import java.util.Set;
 public class RedisSkillRegistry implements OpsSkillRegistry {
 
     public static final String SKILL_NAME = "redis_inspect";
+
+    private static final Set<String> DATA_TOOLS =
+            Set.of("redis_info", "redis_slowlog", "redis_client_list", "redis_memory", "redis_get");
 
     private final RedisToolkit toolkit;
 
@@ -30,13 +34,7 @@ public class RedisSkillRegistry implements OpsSkillRegistry {
 
     @Override
     public String promptFragment() {
-        return """
-                - redis_info: section(string 可选)
-                - redis_slowlog: count(number 可选)
-                - redis_client_list: 无参
-                - redis_memory: INFO memory
-                - redis_get: key(string 可选)；或 scanPattern + scanCount 做受控 SCAN 采样
-                """;
+        return RedisToolDocumentation.aggregatePromptFragment();
     }
 
     @Override
@@ -51,24 +49,21 @@ public class RedisSkillRegistry implements OpsSkillRegistry {
     }
 
     @Override
-    public String toolSpecification(String toolName) {
-        return switch (toolName) {
-            case "redis_info" -> "redis_info: section 可选";
-            case "redis_slowlog" -> "redis_slowlog: count 可选";
-            case "redis_client_list" -> "redis_client_list: {}";
-            case "redis_memory" -> "redis_memory: {}";
-            case "redis_get" -> "redis_get: key 或 scanPattern/scanCount";
-            default -> OpsSkillRegistry.super.toolSpecification(toolName);
-        };
+    public Set<String> toolNames() {
+        return SkillToolHelp.toolNamesWithHelp(DATA_TOOLS, this);
     }
 
     @Override
-    public Set<String> toolNames() {
-        return Set.of("redis_info", "redis_slowlog", "redis_client_list", "redis_memory", "redis_get");
+    public String documentationForDataTool(String dataToolName) {
+        return RedisToolDocumentation.docFor(dataToolName);
     }
 
     @Override
     public ToolResult execute(String toolName, Map<String, Object> args) {
+        ToolResult help = SkillToolHelp.tryExecute(this, toolName, args);
+        if (help != null) {
+            return help;
+        }
         Map<String, Object> a = args == null ? Map.of() : args;
         return switch (toolName) {
             case "redis_info" -> toolkit.info(str(a, "section"));

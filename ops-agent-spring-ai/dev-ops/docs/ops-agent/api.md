@@ -12,18 +12,29 @@
 | POST | `/api/v1/approvals/{id}/approve` | 审批通过 |
 | POST | `/api/v1/approvals/{id}/reject` | 拒绝审批 |
 | POST | `/api/v1/ops/route-text` | 纯文本路由 |
+| GET | `/api/v1/ops/runs/recent` | 查看当前进程内最近运行摘要 |
 | GET | `/api/v1/ops/runs/{runId}` | 查看运行状态 |
 | GET | `/api/v1/ops/runs/{runId}/events` | 运行事件流 |
+| GET | `/api/v1/ops/runs/{runId}/timeline` | 查看 ES 中归档的运行时间线 |
 | POST | `/api/v1/ops/runs/{runId}/cancel` | 取消运行 |
 
 ## 控制台页面
 
 - 前端目录：`dev-ops/frontend/`
 - `index.html`：运行工作台
-- `runs.html`：运行历史
+- `runs.html`：运行历史，优先展示 `recent`，再补充 DB `history`
 - `approvals.html`：审批队列
 - `tools.html`：工具调用
 - 默认 API 基址：`http://127.0.0.1:8090/gw/api/v1/ops-ai`
+
+## 运行历史接口说明
+
+- `GET /api/v1/ops/runs/recent?size=50`
+  返回当前服务进程内可见的最近运行摘要，适合前端直接列出“刚刚跑过的 run”。服务重启后这部分会丢失。
+- `GET /api/v1/ops/runs/history?size=50`
+  返回来自 MySQL `ops_run_summary` 的历史摘要，适合跨重启的长期回溯与 `runId` 可发现性。
+- `GET /api/v1/ops/runs/{runId}/timeline`
+  返回 ES 中单个 run 的归档事件明细；如果 ES 中尚无该 run，前端应回退到 `GET /api/v1/ops/runs/{runId}` 的实时事件或展示“仅有摘要”。
 
 ## 常见调用
 

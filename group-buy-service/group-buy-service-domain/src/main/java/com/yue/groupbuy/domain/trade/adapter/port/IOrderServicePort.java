@@ -10,7 +10,7 @@ public interface IOrderServicePort {
      */
     String createOrder(String userId, String productId, String goodsName, String goodsImageUrl,
                        BigDecimal originalPrice, BigDecimal deductionPrice, BigDecimal payPrice,
-                       String source, String channel, String outTradeNo,
+                       String source, String channel,
                        String teamId, Long activityId, Date startTime, Date endTime);
 
     /**

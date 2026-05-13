@@ -28,4 +28,21 @@ steps:
     task: |
       演练 NacosConfigDrill，应用 ${application}。
       依次 nacos_list_instances；再合理推断并 nacos_get_config 常见 dataId；缺 dataId 或 group 时在 FINAL 写明。
-    context: {}
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      演练 NacosConfigDrill。
+      查看 ${primaryService} 或 ${application} 的 up、错误率、RT、线程池或连接池指标，判断配置变更是否与指标变化对齐。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      演练 NacosConfigDrill。
+      检索 ${primaryService} 的配置刷新失败、Nacos 连接异常、规则加载失败日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      演练 NacosConfigDrill。
+      查看 ${primaryService} 与 Nacos 容器是否存在、是否重启、资源是否异常。
+    on-error: continue

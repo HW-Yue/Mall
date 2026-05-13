@@ -105,7 +105,6 @@ CREATE TABLE `t_order` (
   `team_id` varchar(8) NOT NULL,
   `activity_id` bigint NOT NULL,
   `goods_id` varchar(16) NOT NULL,
-  `out_trade_no` varchar(32) NOT NULL,
   `status` tinyint(1) NOT NULL DEFAULT 0,
   `original_price` decimal(8,2) NOT NULL,
   `deduction_price` decimal(8,2) NOT NULL,
@@ -118,16 +117,15 @@ CREATE TABLE `t_order` (
   PRIMARY KEY (`order_id`),
   KEY `idx_team_id` (`team_id`),
   KEY `idx_activity_id` (`activity_id`),
-  KEY `idx_user_activity` (`user_id`, `activity_id`),
-  KEY `idx_out_trade_no` (`out_trade_no`)
+  KEY `idx_user_activity` (`user_id`, `activity_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='拼团个人订单';
 
-INSERT INTO `t_order` (`order_id`, `user_id`, `team_id`, `activity_id`, `goods_id`, `out_trade_no`, `status`, `original_price`, `deduction_price`, `pay_price`, `start_time`, `end_time`)
+INSERT INTO `t_order` (`order_id`, `user_id`, `team_id`, `activity_id`, `goods_id`, `status`, `original_price`, `deduction_price`, `pay_price`, `start_time`, `end_time`)
 VALUES
-  ('TESTGB000001', 'test-user', '88888888', 100123, '1001', 'TEST_OUT_000001', 1, 100.00, 20.00, 80.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
-  ('TESTGB000002', 'test-user-2', '88888888', 100123, '1003', 'TEST_OUT_000002', 0, 159.00, 20.00, 139.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
-  ('TESTGB000003', 'test-user-3', '77777777', 100124, '2004', 'TEST_OUT_000003', 1, 69.00, 30.00, 39.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
-  ('TESTGB000004', 'test-user-4', '77777777', 100124, '2004', 'TEST_OUT_000004', 1, 69.00, 30.00, 39.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59');
+  ('TESTGB000001', 'test-user', '88888888', 100123, '1001', 1, 100.00, 20.00, 80.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
+  ('TESTGB000002', 'test-user-2', '88888888', 100123, '1003', 0, 159.00, 20.00, 139.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
+  ('TESTGB000003', 'test-user-3', '77777777', 100124, '2004', 1, 69.00, 30.00, 39.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59'),
+  ('TESTGB000004', 'test-user-4', '77777777', 100124, '2004', 1, 69.00, 30.00, 39.00, '2000-01-01 00:00:00', '2099-12-31 23:59:59');
 
 DROP TABLE IF EXISTS `notify_task`;
 CREATE TABLE `notify_task` (

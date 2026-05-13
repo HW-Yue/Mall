@@ -21,7 +21,7 @@ public class SCRuleFilter implements ILogicHandler<TradeSettlementRuleCommandEnt
 
     @Override
     public TradeSettlementRuleFilterBackEntity apply(TradeSettlementRuleCommandEntity requestParameter, TradeSettlementRuleFilterFactory.SettlementLinkContext dynamicContext) throws Exception {
-        log.info("结算规则过滤-渠道黑名单校验 userId:{} outTradeNo:{}", requestParameter.getUserId(), requestParameter.getOutTradeNo());
+        log.info("结算规则过滤-渠道黑名单校验 userId:{} orderId:{}", requestParameter.getUserId(), requestParameter.getOrderId());
 
         boolean intercept = repository.isSCBlackIntercept(requestParameter.getSource(), requestParameter.getChannel());
         if (intercept) {

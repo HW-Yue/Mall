@@ -112,9 +112,7 @@ class SeckillTradeServiceImplTest {
         String token = tokenCaptor.getValue();
         SeckillOrderTaskMessage message = messageCaptor.getValue();
         assertThat(result.getSeckillToken()).isEqualTo(token);
-        assertThat(result.getOutTradeNo()).startsWith("SK");
         assertThat(message.getSeckillToken()).isEqualTo(token);
-        assertThat(message.getOutTradeNo()).isEqualTo(result.getOutTradeNo());
         assertThat(message.getGoodsName()).isEqualTo("秒杀商品");
         assertThat(message.getGoodsImageUrl()).isEmpty();
         assertThat(message.getOriginalPrice()).isEqualByComparingTo("100");

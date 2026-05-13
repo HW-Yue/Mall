@@ -19,6 +19,32 @@ sop-markdown: |
   大 key、热 key、无过期哪类为主；扩容、清理、改策略；大 key 处理选低峰。
 
 steps:
-  - skill: redis_inspect
-    tool: redis_memory
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 RedisMemoryHigh。
+      查询 redis_memory、info memory/stats/persistence，判断 used_memory、maxmemory、淘汰策略和大 key 采样线索。
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 RedisMemoryHigh。
+      对齐 redis_exporter 内存曲线、写入 QPS、淘汰、业务错误率和告警时间。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 RedisMemoryHigh。
+      检索 ${primaryService} 的缓存滥用、序列化过大、未设 TTL、写入暴涨相关日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 RedisMemoryHigh。
+      查看 Redis 容器 stats、logs、重启和 cgroup memory limit，确认是否接近 OOM。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 RedisMemoryHigh。
+      只读查看 ${primaryService} 缓存 TTL、key 前缀、序列化和 Redis 连接配置是否近期变更。
+    on-error: continue

@@ -6,6 +6,14 @@
 
 **七域 skill id**：`docker_ops`、`mysql_inspect`、`rocketmq_inspect`、`metrics_ops`、`elasticsearch_ops`、`redis_inspect`、`nacos_config`（与 `SubAgent.domainId()` 一致）。
 
+## 0. deterministic `steps` 编写约束
+
+- 标准 SOP 的 `steps` 必须是多步证据链，不能只放一条 `metrics` 或单工具占位。
+- 常规顺序：主证据源（指标或领域 inspect）→ 实例/注册/配置 → 日志/容器现场 → 证据指向的下游依赖。
+- 优先使用 `type: delegate_subagent`，让领域子 Agent 在本域内选择具体工具；固定门禁查询才使用 direct tool。
+- 可选依赖分支必须加 `on-error: continue`，避免一个旁路证据源失败中断主 SOP。
+- `sop-markdown` 与 `steps` 要同步表达同一套排查逻辑；不能正文写完整流程但 `steps` 只执行第一步。
+
 ## 1. 按 `category`（Prometheus `labels.category`）
 
 | category | 典型现象 | 建议排查顺序（工具思路） |

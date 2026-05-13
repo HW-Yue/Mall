@@ -1,5 +1,6 @@
 package com.yue.order.infrastructure.adapter.repository;
 
+import com.alibaba.fastjson.JSON;
 import com.yue.order.domain.order.adapter.repository.IOrderCacheRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -8,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.annotation.Resource;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 
 @Slf4j
 @Repository
@@ -26,7 +29,11 @@ public class OrderCacheRepository implements IOrderCacheRepository {
         String key = buildKey(userId, orderId);
         Duration effective = ttl != null && !ttl.isZero() && !ttl.isNegative() ? ttl : Duration.ofMinutes(30);
         try {
-            stringRedisTemplate.opsForValue().set(key, StringUtils.defaultString(outTradeNo), effective);
+            Map<String, String> payload = new HashMap<>();
+            payload.put("userId", userId);
+            payload.put("orderId", orderId);
+            payload.put("outTradeNo", StringUtils.defaultString(outTradeNo));
+            stringRedisTemplate.opsForValue().set(key, JSON.toJSONString(payload), effective);
         } catch (Exception e) {
             log.error("order:exists 写入失败 userId:{} orderId:{}", userId, orderId, e);
         }

@@ -7,7 +7,6 @@ import com.yue.groupbuy.types.enums.ResponseCode;
 import com.yue.groupbuy.types.exception.AppException;
 import com.yue.order.api.IOrderDubboService;
 import com.yue.order.api.dto.CreateOrderRequestDTO;
-import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
 import com.yue.order.api.dto.RefundRequestDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.annotation.DubboReference;
@@ -30,7 +29,7 @@ public class OrderServicePort implements IOrderServicePort {
     @Override
     public String createOrder(String userId, String productId, String goodsName, String goodsImageUrl,
                               BigDecimal originalPrice, BigDecimal deductionPrice, BigDecimal payPrice,
-                              String source, String channel, String outTradeNo,
+                              String source, String channel,
                               String teamId, Long activityId, Date startTime, Date endTime) {
         CreateOrderRequestDTO request = CreateOrderRequestDTO.builder()
                 .userId(userId)
@@ -43,30 +42,23 @@ public class OrderServicePort implements IOrderServicePort {
                 .payPrice(payPrice)
                 .source(source)
                 .channel(channel)
-                .outTradeNo(outTradeNo)
                 .build();
 
         String orderId;
         try {
             var response = orderDubboService.createOrder(request);
             if (response == null || response.getOrderId() == null) {
-                log.error("order-service createOrder 返回空 userId:{} outTradeNo:{}", userId, outTradeNo);
-                orderId = queryOrderIdByOutTradeNo(userId, outTradeNo);
-                if (orderId == null) {
-                    throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
-                }
+                log.error("order-service createOrder 返回空 userId:{} productId:{}", userId, productId);
+                throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
             } else {
                 orderId = response.getOrderId();
             }
         } catch (AppException e) {
             throw e;
         } catch (Exception e) {
-            log.warn("order-service createOrder 调用异常，开始按 outTradeNo 确认 userId:{} outTradeNo:{}",
-                    userId, outTradeNo, e);
-            orderId = queryOrderIdByOutTradeNo(userId, outTradeNo);
-            if (orderId == null) {
-                throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
-            }
+            log.warn("order-service createOrder 调用异常 userId:{} productId:{}",
+                    userId, productId, e);
+            throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
         }
 
         saveOrderGroupIdempotent(TOrderGroup.builder()
@@ -75,7 +67,6 @@ public class OrderServicePort implements IOrderServicePort {
                 .teamId(teamId)
                 .activityId(activityId)
                 .goodsId(productId)
-                .outTradeNo(outTradeNo)
                 .originalPrice(originalPrice)
                 .deductionPrice(deductionPrice)
                 .payPrice(payPrice)
@@ -85,35 +76,18 @@ public class OrderServicePort implements IOrderServicePort {
         return orderId;
     }
 
-    private String queryOrderIdByOutTradeNo(String userId, String outTradeNo) {
-        QueryOrderByOutTradeNoRequestDTO request = new QueryOrderByOutTradeNoRequestDTO();
-        request.setUserId(userId);
-        request.setOutTradeNo(outTradeNo);
-        try {
-            var response = orderDubboService.queryOrderByOutTradeNo(request);
-            if (response == null) {
-                log.warn("order-service queryOrderByOutTradeNo 未查到订单 userId:{} outTradeNo:{}", userId, outTradeNo);
-                return null;
-            }
-            return response.getOrderId();
-        } catch (Exception e) {
-            log.warn("order-service queryOrderByOutTradeNo 调用异常 userId:{} outTradeNo:{}", userId, outTradeNo, e);
-            return null;
-        }
-    }
-
     private void saveOrderGroupIdempotent(TOrderGroup orderGroup) {
-        TOrderGroup existing = tOrderGroupDao.queryByUserIdAndOutTradeNo(orderGroup.getUserId(), orderGroup.getOutTradeNo());
+        TOrderGroup existing = tOrderGroupDao.queryByUserIdAndOrderId(orderGroup.getUserId(), orderGroup.getOrderId());
         if (existing != null) {
-            log.info("t_order_group 幂等跳过 userId:{} orderId:{} outTradeNo:{}",
-                    orderGroup.getUserId(), existing.getOrderId(), orderGroup.getOutTradeNo());
+            log.info("t_order_group 幂等跳过 userId:{} orderId:{}",
+                    orderGroup.getUserId(), existing.getOrderId());
             return;
         }
         try {
             tOrderGroupDao.insert(orderGroup);
         } catch (DuplicateKeyException e) {
-            log.info("t_order_group 重复插入，幂等跳过 userId:{} orderId:{} outTradeNo:{}",
-                    orderGroup.getUserId(), orderGroup.getOrderId(), orderGroup.getOutTradeNo());
+            log.info("t_order_group 重复插入，幂等跳过 userId:{} orderId:{}",
+                    orderGroup.getUserId(), orderGroup.getOrderId());
         }
     }
 

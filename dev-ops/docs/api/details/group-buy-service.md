@@ -33,6 +33,11 @@
 
 说明：聚合接口，返回拼团试算结果、进行中的团和团队统计。
 
+注意：
+
+- 返回进行中团列表时，不再暴露 `outTradeNo`
+- 拼团前端支付只依赖 `orderId`
+
 请求体参数：
 
 | 字段 | 类型 | 必填 | 说明 |
@@ -76,8 +81,7 @@
         "targetCount": 3,
         "completeCount": 1,
         "lockCount": 1,
-        "validTimeCountdown": "00:29:10",
-        "outTradeNo": "OUT-1"
+        "validTimeCountdown": "00:29:10"
       }
     ],
     "teamStatistic": {
@@ -103,8 +107,6 @@
 | `activityId` | long | 是 | 活动 ID |
 | `source` | string | 否 | 来源 |
 | `channel` | string | 否 | 渠道 |
-| `outTradeNo` | string | 否 | 外部交易单号 |
-
 请求样例：
 
 ```json
@@ -124,15 +126,21 @@
   "code": "0000",
   "info": "成功",
   "data": {
-    "orderId": "OID-1",
+    "orderId": "OD191234567890123456",
     "teamId": "T1",
-    "outTradeNo": "OUT-1",
     "originalPrice": 199.00,
     "deductionPrice": 20.00,
     "payPrice": 179.00
   }
 }
 ```
+
+当前真实链路：
+
+- `group-buy-service` 不生成 `outTradeNo`
+- 调 `order-service create_order` 后只接收 `orderId`
+- 本地 `t_order_group` 只保存 `orderId/userId/teamId/activityId/...`
+- 结算消息 `order-paid-group_buy`、退款完成消息 `order-refund-group-buy`、关单消息 `order-close-group-buy-market` 都只按 `orderId` 处理
 
 ## `POST /api/v1/group-buy/trade/refund`
 
@@ -150,6 +158,13 @@
 ```json
 {
   "userId": "u1",
-  "orderId": "OID-1"
+  "orderId": "OD191234567890123456"
 }
 ```
+
+退款数据流：
+
+- controller -> `GroupBuyDomainService.refundGroupBuyOrder`
+- 先做本地退款规则判定与状态推进
+- 再调用 `order-service refund_execute(orderId)`
+- 后续等待 `order-refund-group-buy` 或 `order-close-group-buy-market` 回推本地最终状态

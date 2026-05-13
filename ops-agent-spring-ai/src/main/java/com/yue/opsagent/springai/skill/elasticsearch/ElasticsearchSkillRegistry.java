@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.skill.elasticsearch;
 
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
+import com.yue.opsagent.springai.skill.support.SkillToolHelp;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -11,6 +12,8 @@ import java.util.Set;
 public class ElasticsearchSkillRegistry implements OpsSkillRegistry {
 
     public static final String SKILL_NAME = "elasticsearch_ops";
+
+    private static final Set<String> DATA_TOOLS = Set.of("es_indices", "es_search", "es_count", "es_aggregation");
 
     private final ElasticsearchToolkit toolkit;
 
@@ -30,13 +33,7 @@ public class ElasticsearchSkillRegistry implements OpsSkillRegistry {
 
     @Override
     public String promptFragment() {
-        return """
-                工具（参数均为 JSON / Map）。可选 cluster：logs（默认，应用日志 ELK）或 skywalking / sw（SkyWalking 存储，索引如 sw_segment-*、sw_metrics-*）。
-                - es_indices: cluster(string 可选)
-                - es_search: index(string 必填), query(string 可选), cluster(string 可选)
-                - es_count: index(string 必填), query(string 可选), cluster(string 可选)
-                - es_aggregation: index(string 必填), body(string 必填), cluster(string 可选)
-                """;
+        return ElasticsearchToolDocumentation.aggregatePromptFragment();
     }
 
     @Override
@@ -50,50 +47,27 @@ public class ElasticsearchSkillRegistry implements OpsSkillRegistry {
     }
 
     @Override
-    public String toolSpecification(String toolName) {
-        return switch (toolName) {
-            case "es_indices" -> """
-                    es_indices
-                    args: cluster (string 可选，logs | skywalking | sw，默认 logs)
-                    """;
-            case "es_search" -> """
-                    es_search
-                    args: index (string 必填), query (string 可选), cluster (string 可选)
-                    """;
-            case "es_count" -> """
-                    es_count
-                    args: index (string 必填), query (string 可选), cluster (string 可选)
-                    """;
-            case "es_aggregation" -> """
-                    es_aggregation
-                    args: index (string 必填), body (string 必填), cluster (string 可选)
-                    """;
-            default -> OpsSkillRegistry.super.toolSpecification(toolName);
-        };
+    public Set<String> toolNames() {
+        return SkillToolHelp.toolNamesWithHelp(DATA_TOOLS, this);
     }
 
     @Override
-    public Set<String> toolNames() {
-        return Set.of("es_indices", "es_search", "es_count", "es_aggregation");
+    public String documentationForDataTool(String dataToolName) {
+        return ElasticsearchToolDocumentation.docFor(dataToolName);
     }
 
     @Override
     public ToolResult execute(String toolName, Map<String, Object> args) {
+        ToolResult help = SkillToolHelp.tryExecute(this, toolName, args);
+        if (help != null) {
+            return help;
+        }
         String cluster = clusterArg(args);
         return switch (toolName) {
             case "es_indices" -> toolkit.listIndices(cluster);
-            case "es_search" -> toolkit.search(
-                    cluster,
-                    stringArg(args, "index"),
-                    stringArg(args, "query"));
-            case "es_count" -> toolkit.count(
-                    cluster,
-                    stringArg(args, "index"),
-                    stringArg(args, "query"));
-            case "es_aggregation" -> toolkit.aggregate(
-                    cluster,
-                    stringArg(args, "index"),
-                    stringArg(args, "body"));
+            case "es_search" -> toolkit.search(cluster, stringArg(args, "index"), stringArg(args, "query"));
+            case "es_count" -> toolkit.count(cluster, stringArg(args, "index"), stringArg(args, "query"));
+            case "es_aggregation" -> toolkit.aggregate(cluster, stringArg(args, "index"), stringArg(args, "body"));
             default -> ToolResult.error("unknown tool: " + toolName);
         };
     }

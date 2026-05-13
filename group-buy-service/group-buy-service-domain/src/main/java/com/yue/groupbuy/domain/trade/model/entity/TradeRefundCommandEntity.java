@@ -13,8 +13,8 @@ public class TradeRefundCommandEntity {
 
     /** 用户ID */
     private String userId;
-    /** 外部交易单号 */
-    private String outTradeNo;
+    /** 订单ID */
+    private String orderId;
     /** 来源 */
     private String source;
     /** 渠道 */

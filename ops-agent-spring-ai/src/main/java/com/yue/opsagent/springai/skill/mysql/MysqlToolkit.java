@@ -20,6 +20,8 @@ import java.util.Map;
 @Component
 public class MysqlToolkit {
 
+    static final int MAX_EXPLAIN_SQL_LENGTH = 20_000;
+
     private final OpsAiProperties props;
 
     public MysqlToolkit(OpsAiProperties props) {
@@ -78,5 +80,63 @@ public class MysqlToolkit {
         return query("slow_log",
                 "SELECT * FROM mysql.slow_log ORDER BY start_time DESC LIMIT 20",
                 20);
+    }
+
+    public ToolResult explainSql(String sql) {
+        String normalized = normalizeExplainSql(sql);
+        if (normalized == null) {
+            return ToolResult.error("explain_sql 失败: 仅允许单条 SELECT 或 WITH ... SELECT 语句");
+        }
+        return query("explain_json", "EXPLAIN FORMAT=JSON " + normalized, 1);
+    }
+
+    static String normalizeExplainSql(String sql) {
+        if (sql == null) {
+            return null;
+        }
+        String normalized = sql.trim();
+        if (normalized.isBlank() || normalized.length() > MAX_EXPLAIN_SQL_LENGTH) {
+            return null;
+        }
+        normalized = stripTrailingSemicolon(normalized);
+        if (normalized.isBlank() || hasExtraStatements(normalized)) {
+            return null;
+        }
+        String upper = normalized.toUpperCase(java.util.Locale.ROOT);
+        if (upper.startsWith("SELECT ")) {
+            return normalized;
+        }
+        if (upper.startsWith("WITH ") && upper.contains(" SELECT ")) {
+            return normalized;
+        }
+        return null;
+    }
+
+    private static String stripTrailingSemicolon(String sql) {
+        String normalized = sql;
+        while (normalized.endsWith(";")) {
+            normalized = normalized.substring(0, normalized.length() - 1).trim();
+        }
+        return normalized;
+    }
+
+    private static boolean hasExtraStatements(String sql) {
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        for (int i = 0; i < sql.length(); i++) {
+            char ch = sql.charAt(i);
+            if (ch == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+            if (ch == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+            if (ch == ';' && !inSingleQuote && !inDoubleQuote) {
+                return true;
+            }
+        }
+        return false;
     }
 }

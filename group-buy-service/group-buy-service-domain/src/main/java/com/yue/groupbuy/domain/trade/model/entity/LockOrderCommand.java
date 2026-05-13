@@ -18,7 +18,6 @@ public class LockOrderCommand {
     private Long activityId;
     private String source;
     private String channel;
-    private String outTradeNo;
 
     // 试算结果（由 domain service 填充）
     private String activityName;

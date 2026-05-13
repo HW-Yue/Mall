@@ -139,7 +139,6 @@
 | `deductionPrice` | number | 否 | 折扣金额 |
 | `source` | string | 否 | 来源 |
 | `channel` | string | 否 | 渠道 |
-| `outTradeNo` | string | 否 | 外部单号 |
 | `goodsName` | string | 否 | 商品名称 |
 | `goodsImageUrl` | string | 否 | 商品图片 |
 
@@ -166,11 +165,16 @@
   "code": "0000",
   "info": "成功",
   "data": {
-    "orderId": "OID-1",
-    "outTradeNo": "OUT-1"
+    "orderId": "OD123456789012345678"
   }
 }
 ```
+
+说明：
+
+- `mall` 不生成也不接收 `outTradeNo`
+- `order-service` 在内部生成 `orderId/outTradeNo`
+- `mall` 对前端只返回 `orderId`，后续支付页也只用 `orderId`
 
 失败响应样例：
 

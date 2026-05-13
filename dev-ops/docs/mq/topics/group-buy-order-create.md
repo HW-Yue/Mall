@@ -12,7 +12,6 @@
 
 - `orderId`
 - `userId`
-- `outTradeNo`
 - `payPrice`
 - `goodsId`
 - `goodsName`
@@ -26,6 +25,7 @@
 
 ## 备注
 
+- `outTradeNo` 由 `order-service` 在消费侧继续用于内部订单实体与支付链路，但不对 `group-buy-service` 暴露，也不是这条业务消息的跨服务契约
 - 拼团服务自管 `lock_count`，落库时不调用 `mallDubboService.lockStock`，与 `normal-order-create` 区分开。
 - 发送前在 Redis 写入存在标记 `order:exists:{userId}:{orderId}`（默认 30 min TTL），消费成功后由 listener `DEL`，TTL 兜底。
 - 发送失败时 publisher 抛 `AppException`，上层 `OrderDomainService.createOrder` 会清理 Redis 标记并把异常抛回 group-buy-service。

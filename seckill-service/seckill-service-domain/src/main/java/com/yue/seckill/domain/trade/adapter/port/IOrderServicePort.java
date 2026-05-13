@@ -5,8 +5,6 @@ package com.yue.seckill.domain.trade.adapter.port;
  */
 public interface IOrderServicePort {
 
-    String queryOrderIdByOutTradeNo(String userId, String outTradeNo);
-
     /**
      * 执行退款
      */

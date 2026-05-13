@@ -22,6 +22,31 @@ sop-markdown: |
   缩池、限实例、修泄漏、临时调高 max_connections（需 DBA 审批）及风险说明。
 
 steps:
-  - skill: mysql_inspect
-    tool: mysql_processlist
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 MySqlTooManyConnections。
+      查询 processlist 和 status，按 user、host、db、command 聚合连接来源，确认 Threads_connected、Max_used_connections、max_connections。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 MySqlTooManyConnections。
+      查询 ${primaryService} 实例数和数据源连接池配置，估算实例数乘 pool max 是否超过 DB max_connections。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 MySqlTooManyConnections。
+      检索连接泄漏、重试风暴、短时大量建连、Communications link failure 相关日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 MySqlTooManyConnections。
+      对齐扩缩容、发布、QPS、JVM 线程和连接数曲线，判断突增来源。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 MySqlTooManyConnections。
+      查看 MySQL 容器和 ${primaryService} 容器资源/重启情况，辅助判断是否基础设施异常导致连接堆积。
+    on-error: continue

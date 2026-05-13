@@ -23,12 +23,12 @@ public class OutTradeNoRuleFilter implements ILogicHandler<TradeSettlementRuleCo
 
     @Override
     public TradeSettlementRuleFilterBackEntity apply(TradeSettlementRuleCommandEntity requestParameter, TradeSettlementRuleFilterFactory.SettlementLinkContext dynamicContext) throws Exception {
-        log.info("结算规则过滤-外部单号校验 userId:{} outTradeNo:{}", requestParameter.getUserId(), requestParameter.getOutTradeNo());
+        log.info("结算规则过滤-订单校验 userId:{} orderId:{}", requestParameter.getUserId(), requestParameter.getOrderId());
 
-        MarketPayOrderEntity marketPayOrderEntity = repository.queryMarketPayOrderEntityByOutTradeNo(requestParameter.getUserId(), requestParameter.getOutTradeNo());
+        MarketPayOrderEntity marketPayOrderEntity = repository.queryMarketPayOrderEntityByOrderId(requestParameter.getUserId(), requestParameter.getOrderId());
 
         if (null == marketPayOrderEntity || TradeOrderStatusEnumVO.CLOSED.equals(marketPayOrderEntity.getTradeOrderStatusEnumVO())) {
-            log.error("不存在的外部交易单号或用户已退单 userId:{} outTradeNo:{}", requestParameter.getUserId(), requestParameter.getOutTradeNo());
+            log.error("不存在的订单或用户已退单 userId:{} orderId:{}", requestParameter.getUserId(), requestParameter.getOrderId());
             throw new AppException(ResponseCode.E0104);
         }
 

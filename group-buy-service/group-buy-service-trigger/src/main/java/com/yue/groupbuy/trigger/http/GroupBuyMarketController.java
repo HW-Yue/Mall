@@ -137,7 +137,6 @@ public class GroupBuyMarketController implements IGroupBuyMarketController {
                             .validEndTime(entity.getValidEndTime())
                             .validTimeCountdown(GoodsMarketResponseDTO.Team.differenceDateTime2Str(
                                     new Date(), entity.getValidEndTime()))
-                            .outTradeNo(entity.getOutTradeNo())
                             .build());
                 }
             }

@@ -42,9 +42,9 @@ public interface IGroupBuyRepository {
     void compensateLockCount(String teamId, boolean newTeam);
 
     /**
-     * 通过 outTradeNo 查询 teamId + activityId（join t_order + t_order_group）
+     * 通过 orderId 查询 teamId + activityId（join t_order + t_order_group）
      */
-    Map<String, Object> queryTeamInfoByOutTradeNo(String outTradeNo);
+    Map<String, Object> queryTeamInfoByOrderId(String orderId);
 
     /**
      * 结算：completeCount + 1，返回是否已达成团目标

@@ -8,6 +8,7 @@ import com.yue.opsagent.springai.service.ApprovalService;
 import com.yue.opsagent.springai.service.OpsRunService;
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
+import com.yue.opsagent.springai.skill.support.SkillToolHelp;
 import com.yue.opsagent.springai.skill.registry.rule.RunCancelRuleFilter;
 import com.yue.opsagent.springai.skill.registry.rule.SkillResolveRuleFilter;
 import com.yue.opsagent.springai.skill.registry.rule.ToolApprovalRuleFilter;
@@ -177,18 +178,30 @@ class MasterRegistryRuleChainTest {
 
         @Override
         public Set<String> toolNames() {
-            return Set.of("test_tool");
+            return SkillToolHelp.toolNamesWithHelp(Set.of("test_tool"), this);
+        }
+
+        @Override
+        public String documentationForDataTool(String dataToolName) {
+            if ("test_tool".equals(dataToolName)) {
+                return "test_tool IT 文档";
+            }
+            return "";
         }
 
         @Override
         public ToolResult execute(String toolName, Map<String, Object> args) {
+            ToolResult help = SkillToolHelp.tryExecute(this, toolName, args);
+            if (help != null) {
+                return help;
+            }
             executions.incrementAndGet();
             return ToolResult.ok("executed", args);
         }
 
         @Override
         public boolean requiresApproval(String toolName) {
-            return approvalRequired;
+            return approvalRequired && "test_tool".equals(toolName);
         }
 
         int executions() {

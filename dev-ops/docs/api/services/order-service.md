@@ -28,7 +28,6 @@
 | `/api/v1/order/create_order_normal_from_mall` | POST | 普通商品锁库后落单 | `mall` | 可带 `X-Internal-Token` |
 | `/api/v1/order/create_order` | POST | 营销订单创建 | `group-buy-service`、`seckill-service` | 与前端入口共用 |
 | `/api/v1/order/refund_execute` | POST | 营销订单退款执行 | `group-buy-service`、`seckill-service` | 跳过前端业务校验 |
-| `/api/v1/order/query_order_by_out_trade_no` | POST | 按外部单号查询订单 | `group-buy-service`、`seckill-service` | 幂等补偿、超时确认 |
 
 ## 关键同步文件
 
@@ -36,3 +35,9 @@
 - Controller：`order-service/order-service-trigger/src/main/java/com/yue/order/trigger/http/OrderController.java`
 - 前端路径：`dev-ops/nginx/html/js/api-config.js`
 - 网关路由：`springcloud-gateway/app/src/main/resources/application-*.yml`
+
+## 当前边界
+
+- `orderId` 与 `outTradeNo` 都由 `order-service` 服务端生成
+- `outTradeNo` 只允许保留在 `order-service` 和 `pay-service` 的内部链路中
+- `mall`、`group-buy-service`、`seckill-service` 对 `order-service` 的调用只传业务参数，返回后只消费 `orderId`

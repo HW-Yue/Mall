@@ -36,8 +36,6 @@ public class CreateOrderRequestDTO implements Serializable {
     private String source;
     /** 渠道 */
     private String channel;
-    /** 外部交易单号（可选，不传则自动生成） */
-    private String outTradeNo;
     /** 商品名称（由调用方传入，下单时冗余写入，查询订单直接返回，无需跨服务查询） */
     private String goodsName;
     /** 商品图片URL（由调用方传入，冗余存储） */

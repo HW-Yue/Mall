@@ -8,7 +8,31 @@ spring:
         server-addr: ${NACOS_SERVER_ADDR:nacos:8848}
 
 ops-ai:
+  otlp:
+    endpoint: ${OPS_AI_OTLP_ENDPOINT:http://skywalking-oap:11800}
+    service-name: ${OPS_AI_OTLP_SERVICE_NAME:ops-agent-spring-ai}
+  elasticsearch:
+    base-url: ${OPS_AI_ELASTICSEARCH_BASE_URL:http://elasticsearch:9200}
+  prometheus:
+    base-url: ${OPS_AI_PROMETHEUS_BASE_URL:http://prometheus:9090}
+  history:
+    jdbc-url: ${OPS_AI_HISTORY_JDBC_URL:jdbc:mysql://mysql:3306/ops_agent?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${OPS_AI_HISTORY_USERNAME:root}
+    password: ${OPS_AI_HISTORY_PASSWORD:123456}
+  mysql:
+    jdbc-url: ${OPS_AI_MYSQL_JDBC_URL:jdbc:mysql://mysql:3306/mysql?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${OPS_AI_MYSQL_USERNAME:root}
+    password: ${OPS_AI_MYSQL_PASSWORD:123456}
   nacos:
     server-addr: ${OPS_AI_NACOS_SERVER_ADDR:nacos:8848}
-  otlp:
-    service-name: ${OPS_AI_OTLP_SERVICE_NAME:ops-agent-spring-ai}
+  rocketmq:
+    name-server: ${OPS_AI_ROCKETMQ_NAME_SERVER:rmq-namesrv:9876}
+    enabled: ${OPS_AI_ROCKETMQ_ENABLED:true}
+  redis:
+    host: ${OPS_AI_REDIS_HOST:redis}
+    port: ${OPS_AI_REDIS_PORT:6379}
+    password: ${OPS_AI_REDIS_PASSWORD:}
+    database: ${OPS_AI_REDIS_DATABASE:0}
+
+logstash:
+  host: ${LOGSTASH_HOST:logstash}

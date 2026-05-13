@@ -2,7 +2,6 @@ package com.yue.seckill.test.infrastructure;
 
 import com.yue.order.api.IOrderDubboService;
 import com.yue.order.api.dto.CreateOrderResponseDTO;
-import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
 import com.yue.order.api.dto.RefundRequestDTO;
 import com.yue.seckill.infrastructure.adapter.port.OrderServicePort;
 import com.yue.seckill.infrastructure.adapter.port.SeckillOrderTaskPort;
@@ -99,29 +98,17 @@ class SeckillPortsTest {
     }
 
     @Test
-    void orderServicePortMapsQueryAndRefundResponses() {
-        CreateOrderResponseDTO queryDto = CreateOrderResponseDTO.builder().orderId("OID-1").build();
-        when(orderDubboService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenReturn(queryDto);
-
-        String orderId = orderServicePort.queryOrderIdByOutTradeNo("u1", "OTN-1");
-
-        assertThat(orderId).isEqualTo("OID-1");
-
+    void orderServicePortRefundExecuteDelegatesToDubbo() {
         when(orderDubboService.refundExecute(any(RefundRequestDTO.class))).thenReturn(true);
         orderServicePort.refundExecute("u1", "OID-1");
-
-        ArgumentCaptor<QueryOrderByOutTradeNoRequestDTO> queryCaptor = ArgumentCaptor.forClass(QueryOrderByOutTradeNoRequestDTO.class);
-        verify(orderDubboService).queryOrderByOutTradeNo(queryCaptor.capture());
-        assertThat(queryCaptor.getValue().getUserId()).isEqualTo("u1");
-        assertThat(queryCaptor.getValue().getOutTradeNo()).isEqualTo("OTN-1");
+        ArgumentCaptor<RefundRequestDTO> refundCaptor = ArgumentCaptor.forClass(RefundRequestDTO.class);
+        verify(orderDubboService).refundExecute(refundCaptor.capture());
+        assertThat(refundCaptor.getValue().getUserId()).isEqualTo("u1");
+        assertThat(refundCaptor.getValue().getOrderId()).isEqualTo("OID-1");
     }
 
     @Test
-    void orderServicePortReturnsNullOrThrowsOnBadResponses() {
-        when(orderDubboService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenThrow(new IllegalStateException("downstream"));
-
-        assertThat(orderServicePort.queryOrderIdByOutTradeNo("u1", "OTN-2")).isNull();
-
+    void orderServicePortThrowsOnRefundFailure() {
         when(orderDubboService.refundExecute(any(RefundRequestDTO.class))).thenThrow(new RuntimeException("refund rpc error"));
 
         assertThatThrownBy(() -> orderServicePort.refundExecute("u1", "OID-2"))

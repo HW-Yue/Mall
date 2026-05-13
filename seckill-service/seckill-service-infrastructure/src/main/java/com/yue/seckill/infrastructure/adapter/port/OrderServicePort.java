@@ -1,7 +1,6 @@
 package com.yue.seckill.infrastructure.adapter.port;
 
 import com.yue.order.api.IOrderDubboService;
-import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
 import com.yue.order.api.dto.RefundRequestDTO;
 import com.yue.seckill.domain.trade.adapter.port.IOrderServicePort;
 import com.yue.seckill.types.enums.ResponseCode;
@@ -19,24 +18,6 @@ public class OrderServicePort implements IOrderServicePort {
 
     @DubboReference
     private IOrderDubboService orderDubboService;
-
-    @Override
-    public String queryOrderIdByOutTradeNo(String userId, String outTradeNo) {
-        QueryOrderByOutTradeNoRequestDTO request = new QueryOrderByOutTradeNoRequestDTO();
-        request.setUserId(userId);
-        request.setOutTradeNo(outTradeNo);
-        try {
-            var response = orderDubboService.queryOrderByOutTradeNo(request);
-            if (response == null) {
-                log.warn("order-service queryOrderByOutTradeNo 未查到订单 userId:{} outTradeNo:{}", userId, outTradeNo);
-                return null;
-            }
-            return response.getOrderId();
-        } catch (Exception e) {
-            log.warn("order-service queryOrderByOutTradeNo 调用异常 userId:{} outTradeNo:{}", userId, outTradeNo, e);
-            return null;
-        }
-    }
 
     @Override
     public void refundExecute(String userId, String orderId) {

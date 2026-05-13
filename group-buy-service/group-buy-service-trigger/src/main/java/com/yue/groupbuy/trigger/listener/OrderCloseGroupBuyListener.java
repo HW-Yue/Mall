@@ -19,7 +19,7 @@ import jakarta.annotation.Resource;
 @Component
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
 @RocketMQMessageListener(
-        topic = "${app.rocketmq.topic.orderCloseGroupBuy:order-close-group-buy}",
+        topic = "${app.rocketmq.topic.orderCloseGroupBuyMarket:order-close-group-buy-market}",
         consumerGroup = "${app.rocketmq.consumerGroup.orderCloseGroupBuy:CG_GROUP_BUY_ORDER_CLOSE}"
 )
 public class OrderCloseGroupBuyListener implements RocketMQListener<String> {
@@ -39,12 +39,12 @@ public class OrderCloseGroupBuyListener implements RocketMQListener<String> {
                 log.warn("order-close-group-buy 消息 marketType 不匹配，跳过 marketType:{} message:{}", marketType, message);
                 return;
             }
-            String outTradeNo = dto.getString("outTradeNo");
-            if (StringUtils.isBlank(outTradeNo)) {
-                log.error("消息缺少 outTradeNo: {}", message);
+            String orderId = dto.getString("orderId");
+            if (StringUtils.isBlank(orderId)) {
+                log.error("消息缺少 orderId: {}", message);
                 return;
             }
-            groupBuyDomainService.handleOrderClose(outTradeNo);
+            groupBuyDomainService.handleOrderClose(orderId);
         } catch (Exception e) {
             log.error("order-close-group-buy 处理失败: {}", message, e);
             throw new RuntimeException(e);

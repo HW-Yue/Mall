@@ -28,8 +28,6 @@ public class PayDiscountEntity {
     private BigDecimal deductionPrice;
     /** 支付金额 */
     private BigDecimal payPrice;
-    /** 外部交易单号 */
-    private String outTradeNo;
     /** 回调配置 */
     private NotifyConfigVO notifyConfigVO;
 

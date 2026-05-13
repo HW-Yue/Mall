@@ -4,6 +4,12 @@
 
 说明：通用订单创建接口，供拼团、秒杀等营销服务调用。
 
+约束：
+
+- `orderId` 与 `outTradeNo` 都由 `order-service` 服务端生成
+- 外部调用方不允许传 `outTradeNo`
+- 对外响应只承诺 `orderId`
+
 请求体参数：
 
 | 字段 | 类型 | 必填 | 说明 |
@@ -16,7 +22,6 @@
 | `payPrice` | number | 是 | 支付金额 |
 | `source` | string | 否 | 来源 |
 | `channel` | string | 否 | 渠道 |
-| `outTradeNo` | string | 否 | 外部单号，不传自动生成 |
 | `goodsName` | string | 否 | 商品名称 |
 | `goodsImageUrl` | string | 否 | 商品图片 URL |
 
@@ -44,8 +49,7 @@
   "code": "0000",
   "info": "成功",
   "data": {
-    "orderId": "OID-1",
-    "outTradeNo": "OUT-1"
+    "orderId": "OD191234567890123456"
   }
 }
 ```
@@ -61,6 +65,11 @@ Header：
 | `X-Internal-Token` | 否 | 服务间内部校验 token |
 
 请求体：与 `create_order` 基本一致，`marketType` 固定会被视为 `normal`
+
+响应体：
+
+- 只返回 `orderId`
+- `outTradeNo` 不对 `mall` 暴露
 
 ## `POST /api/v1/order/get_pay_url`
 
@@ -91,6 +100,12 @@ Header：
   "data": "https://pay.example.com/qrcode/abc"
 }
 ```
+
+内部数据流：
+
+- `order-service` 查询本地订单时使用 `orderId`
+- 命中 Redis `order:exists:{userId}:{orderId}` 时，会做短暂 DB 重试兜底异步落单
+- 真正调用 `pay-service` 时，使用的是订单服务内部生成并持久化的 `outTradeNo`
 
 ## `POST /api/v1/order/refund`
 
@@ -147,8 +162,7 @@ Header：
   "data": {
     "orderList": [
       {
-        "orderId": "OID-1",
-        "outTradeNo": "OUT-1",
+        "orderId": "OD191234567890123456",
         "productId": "g1",
         "productName": "goods",
         "payPrice": 99.00,
@@ -184,22 +198,8 @@ Header：
 }
 ```
 
-## `POST /api/v1/order/query_order_by_out_trade_no`
+## 说明补充
 
-说明：按外部交易单号查询订单，供服务间幂等确认和补偿使用。
-
-请求体参数：
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| `userId` | string | 是 | 用户 ID |
-| `outTradeNo` | string | 是 | 外部交易单号 |
-
-请求样例：
-
-```json
-{
-  "userId": "u1",
-  "outTradeNo": "OUT-1"
-}
-```
+- `outTradeNo` 只在 `order-service` 与 `pay-service` 之间流转
+- 营销服务退款统一走 `refund_execute(userId, orderId)`
+- 拼团/秒杀收到的支付成功、关单、退款事件都只包含 `orderId`

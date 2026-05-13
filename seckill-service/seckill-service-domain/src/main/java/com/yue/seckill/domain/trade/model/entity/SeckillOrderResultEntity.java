@@ -13,5 +13,4 @@ public class SeckillOrderResultEntity {
 
     private String seckillToken;
     private String orderId;
-    private String outTradeNo;
 }

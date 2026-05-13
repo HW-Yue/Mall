@@ -33,6 +33,12 @@ public class OrderCloseMqProducer implements IOrderClosePublisher {
     @Value("${app.rocketmq.topic.orderCloseSeckill:order-close-seckill}")
     private String orderCloseSeckillTopic;
 
+    @Value("${app.rocketmq.topic.orderCloseGroupBuyMarket:order-close-group-buy-market}")
+    private String orderCloseGroupBuyMarketTopic;
+
+    @Value("${app.rocketmq.topic.orderCloseSeckillMarket:order-close-seckill-market}")
+    private String orderCloseSeckillMarketTopic;
+
     @Override
     public void publishOrderClose(String userId, String orderId, String outTradeNo, String marketType) {
         String topic = resolveTopic(marketType);
@@ -47,14 +53,35 @@ public class OrderCloseMqProducer implements IOrderClosePublisher {
         try {
             rocketMQTemplate.convertAndSend(topic, messageBody);
             log.info("publishOrderClose topic:{} outTradeNo:{}", topic, outTradeNo);
+            publishMarketOrderClose(userId, orderId, marketType);
         } catch (Exception e) {
             log.error("publishOrderClose 失败 topic:{} outTradeNo:{}", topic, outTradeNo, e);
         }
+    }
+
+    private void publishMarketOrderClose(String userId, String orderId, String marketType) {
+        String marketTopic = resolveMarketTopic(marketType);
+        if (marketTopic == null) {
+            return;
+        }
+
+        Map<String, Object> marketMsg = new HashMap<>();
+        marketMsg.put("userId", userId);
+        marketMsg.put("orderId", orderId);
+        marketMsg.put("marketType", marketType);
+        rocketMQTemplate.convertAndSend(marketTopic, JSON.toJSONString(marketMsg));
+        log.info("publishMarketOrderClose topic:{} orderId:{}", marketTopic, orderId);
     }
 
     private String resolveTopic(String marketType) {
         if ("group_buy".equals(marketType)) return orderCloseGroupBuyTopic;
         if ("seckill".equals(marketType)) return orderCloseSeckillTopic;
         return orderCloseNormalTopic;
+    }
+
+    private String resolveMarketTopic(String marketType) {
+        if ("group_buy".equals(marketType)) return orderCloseGroupBuyMarketTopic;
+        if ("seckill".equals(marketType)) return orderCloseSeckillMarketTopic;
+        return null;
     }
 }

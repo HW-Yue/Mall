@@ -18,6 +18,12 @@
 
 - `outTradeNo`
 
+## 后续流转
+
+- `order-service` 先按 `outTradeNo` 更新自身订单退款状态
+- 随后再发布营销侧 topic `order-refund-group-buy`
+- 营销侧消息只包含 `userId + orderId + marketType`，不再继续传播 `outTradeNo`
+
 ## 事实来源
 
 - `pay/pay-app/src/main/resources/application-dev.yml`

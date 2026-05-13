@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.skill.rocketmq;
 
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
+import com.yue.opsagent.springai.skill.support.SkillToolHelp;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -11,6 +12,8 @@ import java.util.Set;
 public class RocketMqSkillRegistry implements OpsSkillRegistry {
 
     public static final String SKILL_NAME = "rocketmq_inspect";
+
+    private static final Set<String> DATA_TOOLS = Set.of("mq_topic_stats", "mq_consumer_status", "mq_dead_letter");
 
     private final RocketMqToolkit toolkit;
 
@@ -30,11 +33,7 @@ public class RocketMqSkillRegistry implements OpsSkillRegistry {
 
     @Override
     public String promptFragment() {
-        return """
-                - mq_topic_stats: topic(string 可选，空则列 topic)
-                - mq_consumer_status: consumerGroup(string 必填), topic(string 可选)
-                - mq_dead_letter: topic(string 可选), consumerGroup(string 可选)，返回 DLQ 排查提示与路由
-                """;
+        return RocketMqToolDocumentation.aggregatePromptFragment();
     }
 
     @Override
@@ -47,22 +46,21 @@ public class RocketMqSkillRegistry implements OpsSkillRegistry {
     }
 
     @Override
-    public String toolSpecification(String toolName) {
-        return switch (toolName) {
-            case "mq_topic_stats" -> "mq_topic_stats: topic 可选";
-            case "mq_consumer_status" -> "mq_consumer_status: consumerGroup 必填, topic 可选";
-            case "mq_dead_letter" -> "mq_dead_letter: topic/group 可选";
-            default -> OpsSkillRegistry.super.toolSpecification(toolName);
-        };
+    public Set<String> toolNames() {
+        return SkillToolHelp.toolNamesWithHelp(DATA_TOOLS, this);
     }
 
     @Override
-    public Set<String> toolNames() {
-        return Set.of("mq_topic_stats", "mq_consumer_status", "mq_dead_letter");
+    public String documentationForDataTool(String dataToolName) {
+        return RocketMqToolDocumentation.docFor(dataToolName);
     }
 
     @Override
     public ToolResult execute(String toolName, Map<String, Object> args) {
+        ToolResult help = SkillToolHelp.tryExecute(this, toolName, args);
+        if (help != null) {
+            return help;
+        }
         Map<String, Object> a = args == null ? Map.of() : args;
         return switch (toolName) {
             case "mq_topic_stats" -> toolkit.topicStats(str(a, "topic"));

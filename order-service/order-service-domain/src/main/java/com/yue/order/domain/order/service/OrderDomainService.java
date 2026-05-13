@@ -19,10 +19,10 @@ import com.yue.order.domain.order.model.valobj.MarketTypeVO;
 import com.yue.order.domain.order.model.valobj.OrderEvent;
 import com.yue.order.domain.order.model.valobj.OrderStateMachine;
 import com.yue.order.domain.order.model.valobj.OrderStatusVO;
+import com.yue.order.domain.order.service.support.OrderIdGenerator;
 import com.yue.order.types.enums.ResponseCode;
 import com.yue.order.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -38,6 +38,8 @@ import java.util.Map;
 @Slf4j
 @Service
 public class OrderDomainService implements IOrderDomainService {
+
+    private final OrderIdGenerator orderIdGenerator = new OrderIdGenerator();
 
     @Resource
     private IOrderRepository orderRepository;
@@ -88,31 +90,18 @@ public class OrderDomainService implements IOrderDomainService {
                     ResponseCode.ILLEGAL_PARAMETER.getCode(),
                     "普通商品请走商城 create_normal_order 接口，直连 create_order 已关闭");
         }
-        // 生成外部交易单号（若未提供）
-        String outTradeNo = StringUtils.isNotBlank(command.getOutTradeNo())
-                ? command.getOutTradeNo().trim()
-                : RandomStringUtils.randomNumeric(12);
-        command.setOutTradeNo(outTradeNo);
-
-        OrderEntity existing = orderRepository.queryByOutTradeNo(outTradeNo);
-        if (existing != null) {
-            if (!StringUtils.equals(existing.getUserId(), command.getUserId())) {
-                throw new AppException(ResponseCode.ORDER_STATUS_ERROR.getCode(), "outTradeNo 已被其他用户使用");
-            }
-            log.info("createOrder 幂等返回 userId:{} orderId:{} outTradeNo:{}",
-                    command.getUserId(), existing.getOrderId(), outTradeNo);
-            return existing.getOrderId();
-        }
-
         MarketTypeVO marketType = MarketTypeVO.fromCode(command.getMarketType());
+        String orderId = orderIdGenerator.nextOrderId();
+        String outTradeNo = orderIdGenerator.nextOutTradeNo();
 
         // 拼团：异步落库（生成 ID → 写 Redis 标记 → 发 MQ → 立即返回），与普通单形态对齐
         if (MarketTypeVO.GROUP_BUY == marketType) {
-            return submitGroupBuyOrderAsync(command, outTradeNo);
+            return submitGroupBuyOrderAsync(command, orderId, outTradeNo);
         }
 
         // 构建订单实体
         OrderEntity order = OrderEntity.builder()
+                .orderId(orderId)
                 .userId(command.getUserId())
                 .goodsId(command.getGoodsId())
                 .goodsName(command.getGoodsName())
@@ -129,14 +118,12 @@ public class OrderDomainService implements IOrderDomainService {
                 .build();
 
         // 保存订单（对 normal 类型同时锁 SKU 库存）
-        String orderId = orderRepository.saveOrder(order);
-        log.info("createOrder 完成 userId:{} orderId:{} marketType:{}", command.getUserId(), orderId, command.getMarketType());
-        return orderId;
+        String savedOrderId = orderRepository.saveOrder(order);
+        log.info("createOrder 完成 userId:{} orderId:{} marketType:{}", command.getUserId(), savedOrderId, command.getMarketType());
+        return savedOrderId;
     }
 
-    private String submitGroupBuyOrderAsync(CreateOrderCommand command, String outTradeNo) {
-        String orderId = RandomStringUtils.randomNumeric(12);
-
+    private String submitGroupBuyOrderAsync(CreateOrderCommand command, String orderId, String outTradeNo) {
         Map<String, Object> msg = new HashMap<>();
         msg.put("orderId", orderId);
         msg.put("outTradeNo", outTradeNo);
@@ -185,11 +172,8 @@ public class OrderDomainService implements IOrderDomainService {
         if (StringUtils.isAnyBlank(command.getUserId(), command.getGoodsId()) || command.getPayPrice() == null) {
             throw new AppException(ResponseCode.ILLEGAL_PARAMETER.getCode(), "userId、goodsId、payPrice 不能为空");
         }
-        String outTradeNo = StringUtils.isNotBlank(command.getOutTradeNo())
-                ? command.getOutTradeNo().trim()
-                : RandomStringUtils.randomNumeric(12);
-        command.setOutTradeNo(outTradeNo);
-        String orderId = RandomStringUtils.randomNumeric(12);
+        String orderId = orderIdGenerator.nextOrderId();
+        String outTradeNo = orderIdGenerator.nextOutTradeNo();
 
         Map<String, Object> msg = new HashMap<>();
         msg.put("orderId", orderId);
@@ -215,7 +199,7 @@ public class OrderDomainService implements IOrderDomainService {
             throw e;
         }
         log.info("submitNormalOrderFromMall 已入队 userId:{} orderId:{}", command.getUserId(), orderId);
-        return NormalOrderEnqueueResult.builder().orderId(orderId).outTradeNo(outTradeNo).build();
+        return NormalOrderEnqueueResult.builder().orderId(orderId).build();
     }
 
     @Override

@@ -11,7 +11,6 @@ import com.yue.groupbuy.infrastructure.event.GroupBuyTimeoutRefundProducer;
 import com.yue.groupbuy.infrastructure.event.dto.TeamSuccessNotifyMessage;
 import com.yue.order.api.IOrderDubboService;
 import com.yue.order.api.dto.CreateOrderResponseDTO;
-import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
 import com.yue.groupbuy.domain.trade.model.entity.NotifyTaskEntity;
 import com.yue.groupbuy.domain.trade.model.valobj.NotifyTypeEnumVO;
 import com.yue.groupbuy.types.enums.NotifyTaskHTTPEnumVO;
@@ -68,10 +67,10 @@ class GroupBuyInfrastructureTest {
         ReflectionTestUtils.setField(refundProducer, "rocketMQTemplate", rocketMQTemplate);
         ReflectionTestUtils.setField(refundProducer, "orderCloseGroupBuyTopic", "order-close-group");
         ReflectionTestUtils.setField(refundProducer, "payRefundGroupBuyTopic", "pay-refund-group");
-        refundProducer.sendOrderCloseMessage("OUT-1", "u1");
-        refundProducer.sendPayRefundMessage("OUT-2", "u2");
-        verify(rocketMQTemplate).convertAndSend(eq("order-close-group"), contains("\"outTradeNo\":\"OUT-1\""));
-        verify(rocketMQTemplate).convertAndSend(eq("pay-refund-group"), contains("\"outTradeNo\":\"OUT-2\""));
+        refundProducer.sendOrderCloseMessage("OID-1", "u1");
+        refundProducer.sendPayRefundMessage("OID-2", "u2");
+        verify(rocketMQTemplate).convertAndSend(eq("order-close-group"), contains("\"orderId\":\"OID-1\""));
+        verify(rocketMQTemplate).convertAndSend(eq("pay-refund-group"), contains("\"orderId\":\"OID-2\""));
 
         GroupBuyTimeoutRefundProducer timeoutProducer = new GroupBuyTimeoutRefundProducer();
         ReflectionTestUtils.setField(timeoutProducer, "rocketMQTemplate", rocketMQTemplate);
@@ -81,18 +80,15 @@ class GroupBuyInfrastructureTest {
     }
 
     @Test
-    void orderServicePortFallsBackToQueryByOutTradeNoAndPersistsOrderGroup() {
+    void orderServicePortPersistsOrderGroupWhenCreateOrderReturnsOrderId() {
         OrderServicePort port = new OrderServicePort();
         ReflectionTestUtils.setField(port, "orderDubboService", orderDubboService);
         ReflectionTestUtils.setField(port, "tOrderGroupDao", orderGroupDao);
-        // createOrder 返回 null orderId 触发 fallback
-        when(orderDubboService.createOrder(any())).thenReturn(CreateOrderResponseDTO.builder().build());
-        CreateOrderResponseDTO queryDto = CreateOrderResponseDTO.builder().orderId("OID-9").build();
-        when(orderDubboService.queryOrderByOutTradeNo(any(QueryOrderByOutTradeNoRequestDTO.class))).thenReturn(queryDto);
+        when(orderDubboService.createOrder(any())).thenReturn(CreateOrderResponseDTO.builder().orderId("OID-9").build());
 
         String orderId = port.createOrder("u1", "g1", "goods", "img",
                 new BigDecimal("100"), new BigDecimal("10"), new BigDecimal("90"),
-                "s01", "c01", "OUT-9", "T9", 1L, new java.util.Date(0), new java.util.Date(1));
+                "s01", "c01", "T9", 1L, new java.util.Date(0), new java.util.Date(1));
 
         assertThat(orderId).isEqualTo("OID-9");
         verify(orderGroupDao).insert(any(TOrderGroup.class));

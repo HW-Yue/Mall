@@ -20,7 +20,36 @@ sop-markdown: |
   写清拒绝发生的服务、线程池、接口、主要诱因和建议动作优先级。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "increase(dubbo_thread_pool_reject_thread_count[1m])"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboThreadPoolRejected。
+      查询 ${primaryService} 的 reject 增量、active/max、queue、provider RT 和 QPS，判断拒绝是否由流量突刺或处理变慢触发。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboThreadPoolRejected。
+      检索 ${primaryService} 的 RejectedExecution、thread pool exhausted、Dubbo timeout，按实例和接口聚合。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 DubboThreadPoolRejected。
+      查询 ${primaryService} 实例数与 Dubbo 线程池配置，只读确认是否缩容、线程池过小或近期变更。
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 DubboThreadPoolRejected。
+      若日志或指标指向 DB 慢，排查 slow query、processlist、locks。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 DubboThreadPoolRejected。
+      若日志或指标指向 Redis 慢，排查 slowlog、blocked clients、memory。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 DubboThreadPoolRejected。
+      查看 ${primaryService} 容器资源、重启和错误日志，确认单实例过载或进程异常。
+    on-error: continue

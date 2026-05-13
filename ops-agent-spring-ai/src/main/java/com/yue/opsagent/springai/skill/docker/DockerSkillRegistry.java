@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.skill.docker;
 
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
+import com.yue.opsagent.springai.skill.support.SkillToolHelp;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -11,6 +12,8 @@ import java.util.Set;
 public class DockerSkillRegistry implements OpsSkillRegistry {
 
     public static final String SKILL_NAME = "docker_ops";
+
+    private static final Set<String> DATA_TOOLS = Set.of("docker_logs", "docker_stats", "docker_inspect", "docker_exec");
 
     private final DockerToolkit toolkit;
 
@@ -30,17 +33,7 @@ public class DockerSkillRegistry implements OpsSkillRegistry {
 
     @Override
     public String promptFragment() {
-        return """
-                - docker_logs: container(string), tail(number 可选)
-                - docker_stats: container(string)
-                - docker_inspect: container(string)
-                - docker_exec: container(string), command(string)，在容器内执行 sh -c
-
-                服务存在性优先：
-                - 若任务是确认服务是否部署，优先 docker_inspect container=<application 或 instance 中的容器名>。
-                - inspect/logs/stats 返回 not found、No such container 或空结果时，直接报告“Docker 未发现该服务容器”，不要继续执行无关命令。
-                - 只有容器存在后，才查 docker_logs / docker_stats。
-                """;
+        return DockerToolDocumentation.aggregatePromptFragment();
     }
 
     @Override
@@ -54,23 +47,21 @@ public class DockerSkillRegistry implements OpsSkillRegistry {
     }
 
     @Override
-    public String toolSpecification(String toolName) {
-        return switch (toolName) {
-            case "docker_logs" -> "docker_logs: container, tail(可选)";
-            case "docker_stats" -> "docker_stats: container";
-            case "docker_inspect" -> "docker_inspect: container。not found 是服务未部署/容器名不匹配的关键证据。";
-            case "docker_exec" -> "docker_exec: container, command";
-            default -> OpsSkillRegistry.super.toolSpecification(toolName);
-        };
+    public Set<String> toolNames() {
+        return SkillToolHelp.toolNamesWithHelp(DATA_TOOLS, this);
     }
 
     @Override
-    public Set<String> toolNames() {
-        return Set.of("docker_logs", "docker_stats", "docker_inspect", "docker_exec");
+    public String documentationForDataTool(String dataToolName) {
+        return DockerToolDocumentation.docFor(dataToolName);
     }
 
     @Override
     public ToolResult execute(String toolName, Map<String, Object> args) {
+        ToolResult help = SkillToolHelp.tryExecute(this, toolName, args);
+        if (help != null) {
+            return help;
+        }
         Map<String, Object> a = args == null ? Map.of() : args;
         return switch (toolName) {
             case "docker_logs" -> toolkit.dockerLogs(str(a, "container"), intArg(a, "tail", 100));

@@ -16,6 +16,26 @@ sop-markdown: |
   设计误用（长阻塞）vs 大 key 删除或持久化；改代码还是运维窗口。
 
 steps:
-  - skill: redis_inspect
-    tool: redis_client_list
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 RedisBlockedClients。
+      查询 client list、slowlog、info，重点看 blocked_clients、flags=B、BLPOP/BRPOP/BLOCKING 类命令和持久化 fork 停顿。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 RedisBlockedClients。
+      检索 ${primaryService} 的阻塞式 Redis 调用、超时、未设置超时、连接池等待日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 RedisBlockedClients。
+      对齐 Redis blocked clients、QPS、RT、业务错误率，判断阻塞是否影响线上请求。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 RedisBlockedClients。
+      查看 Redis 容器资源、日志、重启和磁盘/持久化相关异常。
+    on-error: continue

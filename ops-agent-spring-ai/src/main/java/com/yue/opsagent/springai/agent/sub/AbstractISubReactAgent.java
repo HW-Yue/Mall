@@ -54,18 +54,45 @@ public abstract class AbstractISubReactAgent implements ISubAgent {
     }
 
     private String buildSystemPrompt() {
+        String ht = domainRegistry.helpToolName();
+        String tk = OpsSkillRegistry.HELP_ARG_TOOL;
         return """
                 你是运维子Agent，仅处理一个技术域。你的目标是用最少工具调用回答调度者的明确问题。
                 只允许输出**一段合法 JSON**（不要 markdown），格式二选一：
                 1) {"action":"CALL_TOOL","tool":"<工具名>","args":{...键值...}}
                 2) {"action":"FINAL","answer":"<给调度者的中文摘要>"}
-                CALL_TOOL 时 args 必须与工具要求一致，不可为空对象（除非工具声明无参数）。
+                CALL_TOOL 时 args 必须与工具要求一致。查询某业务工具的完整参数、约束与注意事项时，先调用本 skill 的辅助工具 \
+                """
+                + ht
+                + """
+                ，args 必须包含非空字段 \
+                """
+                + tk
+                + """
+                （值为下方「业务工具」名称之一，勿填 \
+                """
+                + ht
+                + """
+                自身）。无参业务工具允许 args 为 {}。
                 工具返回已经能回答任务时必须 FINAL，不要继续扩展排查范围。
                 如果工具返回空列表、空 result、not found、unknown、404、连接失败或指标为空，要把“查不到”作为事实返回，不要换一堆无关工具试探。
                 如果任务是确认某服务是否存在，只需要给出：存在/不存在/无法确认 + 证据。
 
-                可用工具（仅名称，细则在对话中按需下发）：
+                当前 skill：\
                 """
+                + domainRegistry.name()
+                + " — "
+                + domainRegistry.description()
+                + """
+
+                业务工具与概要（详细用法用 \
+                """
+                + ht
+                + """
+                 查询）：
+                """
+                + domainRegistry.helpToolMenuLine()
+                + "\n"
                 + domainRegistry.toolMenuBrief();
     }
 

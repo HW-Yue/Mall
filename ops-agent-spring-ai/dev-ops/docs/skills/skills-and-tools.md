@@ -33,7 +33,7 @@
 | Parent Tool Name | 对应 Skill ID | 父工具描述 |
 |---|---|---|
 | `docker_skill` | `docker_ops` | Docker Skill：日志、stats、inspect、受控 exec。传入 task 为自然语言任务说明。 |
-| `mysql_skill` | `mysql_inspect` | MySQL Skill：只读诊断会话、状态、锁、慢查询。传入 task 为自然语言任务说明。 |
+| `mysql_skill` | `mysql_inspect` | MySQL Skill：只读诊断会话、状态、锁、慢查询、SELECT 执行计划。传入 task 为自然语言任务说明。 |
 | `redis_skill` | `redis_inspect` | Redis Skill：只读 INFO、慢日志、客户端、内存、GET/SCAN。传入 task 为自然语言任务说明。 |
 | `nacos_skill` | `nacos_config` | Nacos Skill：配置读/写（写可能审批）、服务实例与服务列表。传入 task 为自然语言任务说明。 |
 | `prometheus_skill` | `metrics_ops` | Prometheus Skill：Sentinel/DynamicTP/JVM/业务 PromQL。传入 task 为自然语言任务说明。 |
@@ -67,6 +67,7 @@
 | `mysql_status` | `pattern` (string, 可选) | `SHOW GLOBAL STATUS LIKE <pattern>`，查看全局状态变量。 |
 | `mysql_locks` | 无 | 查询 `performance_schema.metadata_locks` 样例，排查元数据锁。 |
 | `mysql_slow_query` | 无 | 查询 `mysql.slow_log` 最近行（需开启 slow_log 表）。 |
+| `mysql_explain_sql` | `sql` (string, 必填) | 对单条 `SELECT` 或 `WITH ... SELECT` 执行 `EXPLAIN FORMAT=JSON`。 |
 
 ---
 

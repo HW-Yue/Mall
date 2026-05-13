@@ -24,7 +24,32 @@ sop-markdown: |
   主从切换、网络、进程、误杀；恢复步骤与是否已降级。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "up"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 RedisDown。
+      查询 redis exporter up、业务错误率和单节点/多节点探测状态，区分 Redis 真不可用还是采集异常。
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 RedisDown。
+      若仍可连通，查询 redis_info、client list，判断 role、master_link_status、maxclients 或部分节点异常。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 RedisDown。
+      查看 Redis 容器 inspect、logs、stats，确认进程退出、OOM、重启、磁盘或网络异常。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 RedisDown。
+      检索 ${primaryService} 的 Redis 连接拒绝、超时风暴、主从切换相关日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 RedisDown。
+      只读查看 ${primaryService} Redis 地址、超时、连接池配置是否近期变更。
+    on-error: continue

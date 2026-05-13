@@ -46,7 +46,6 @@ public class GroupBuyTradeController implements IGroupBuyTradeController {
                     .activityId(request.getActivityId())
                     .source(request.getSource())
                     .channel(request.getChannel())
-                    .outTradeNo(request.getOutTradeNo())
                     .build();
 
             MarketPayOrderEntity result = groupBuyDomainService.createGroupBuyOrder(command);
@@ -57,7 +56,6 @@ public class GroupBuyTradeController implements IGroupBuyTradeController {
                     .data(CreateGroupBuyOrderResponseDTO.builder()
                             .orderId(result.getOrderId())
                             .teamId(result.getTeamId())
-                            .outTradeNo(command.getOutTradeNo())
                             .originalPrice(result.getOriginalPrice())
                             .deductionPrice(result.getDeductionPrice())
                             .payPrice(result.getPayPrice())

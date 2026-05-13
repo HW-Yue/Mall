@@ -19,6 +19,32 @@ sop-markdown: |
   阻塞 SQL 对、是否可 kill（需 DBA）、应用重试风暴风险。
 
 steps:
-  - skill: mysql_inspect
-    tool: mysql_locks
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 MySqlInnodbRowLockWaitHigh。
+      查询 mysql_locks、processlist、Innodb_row_lock 相关 status，找出阻塞者、等待者、表名 ${table} 和库 ${database}。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 MySqlInnodbRowLockWaitHigh。
+      检索 ${primaryService} 的长事务、批处理、未提交事务、锁等待和 SQL 超时日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 MySqlInnodbRowLockWaitHigh。
+      对齐锁等待、QPS、RT、发布时间或批任务时间线，判断是否应用重试放大。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 MySqlInnodbRowLockWaitHigh。
+      只读查看 ${primaryService} 数据源、事务超时、批任务相关配置是否近期变更。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 MySqlInnodbRowLockWaitHigh。
+      查看 MySQL 容器或 ${primaryService} 容器资源和日志，确认是否存在 CPU/IO 压力放大锁等待。
+    on-error: continue

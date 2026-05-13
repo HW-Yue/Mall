@@ -6,7 +6,6 @@ import com.yue.order.api.dto.CreateOrderResponseDTO;
 import com.yue.order.api.dto.GetPayUrlRequestDTO;
 import com.yue.order.api.dto.QuerySeckillOrderRequestDTO;
 import com.yue.order.api.dto.QuerySeckillOrderResponseDTO;
-import com.yue.order.api.dto.QueryOrderByOutTradeNoRequestDTO;
 import com.yue.order.api.dto.QueryUserOrderListRequestDTO;
 import com.yue.order.api.dto.QueryUserOrderListResponseDTO;
 import com.yue.order.api.dto.RefundRequestDTO;
@@ -78,7 +77,6 @@ public class OrderController implements IOrderController {
                     .payPrice(request.getPayPrice())
                     .source(request.getSource())
                     .channel(request.getChannel())
-                    .outTradeNo(request.getOutTradeNo())
                     .goodsName(request.getGoodsName())
                     .goodsImageUrl(request.getGoodsImageUrl())
                     .build();
@@ -86,7 +84,6 @@ public class OrderController implements IOrderController {
             String orderId = orderDomainService.createOrder(command);
             CreateOrderResponseDTO data = CreateOrderResponseDTO.builder()
                     .orderId(orderId)
-                    .outTradeNo(command.getOutTradeNo())
                     .build();
             return Response.success(data);
         } catch (AppException e) {
@@ -124,14 +121,12 @@ public class OrderController implements IOrderController {
                     .payPrice(request.getPayPrice())
                     .source(request.getSource())
                     .channel(request.getChannel())
-                    .outTradeNo(request.getOutTradeNo())
                     .goodsName(request.getGoodsName())
                     .goodsImageUrl(request.getGoodsImageUrl())
                     .build();
             var result = orderDomainService.submitNormalOrderFromMall(command);
             CreateOrderResponseDTO data = CreateOrderResponseDTO.builder()
                     .orderId(result.getOrderId())
-                    .outTradeNo(result.getOutTradeNo())
                     .build();
             return Response.success(data);
         } catch (AppException e) {
@@ -249,30 +244,6 @@ public class OrderController implements IOrderController {
             return Response.success(QuerySeckillOrderResponseDTO.builder().status(0).build());
         } catch (Exception e) {
             log.error("querySeckillOrder 失败 token:{}", request.getSeckillToken(), e);
-            return Response.error(ResponseCode.UN_ERROR.getCode(), ResponseCode.UN_ERROR.getInfo());
-        }
-    }
-
-    @RequestMapping(value = "query_order_by_out_trade_no", method = RequestMethod.POST)
-    @Override
-    public Response<CreateOrderResponseDTO> queryOrderByOutTradeNo(@RequestBody QueryOrderByOutTradeNoRequestDTO request) {
-        try {
-            if (request == null || StringUtils.isAnyBlank(request.getUserId(), request.getOutTradeNo())) {
-                return Response.error(ResponseCode.ILLEGAL_PARAMETER.getCode(), "userId / outTradeNo 不能为空");
-            }
-            OrderEntity order = orderDomainService.queryByUserIdAndOutTradeNo(request.getUserId(), request.getOutTradeNo());
-            if (order == null) {
-                return Response.error(ResponseCode.ORDER_NOT_FOUND.getCode(), ResponseCode.ORDER_NOT_FOUND.getInfo());
-            }
-            return Response.success(CreateOrderResponseDTO.builder()
-                    .orderId(order.getOrderId())
-                    .outTradeNo(order.getOutTradeNo())
-                    .build());
-        } catch (Exception e) {
-            log.error("queryOrderByOutTradeNo 失败 userId:{} outTradeNo:{}",
-                    request != null ? request.getUserId() : null,
-                    request != null ? request.getOutTradeNo() : null,
-                    e);
             return Response.error(ResponseCode.UN_ERROR.getCode(), ResponseCode.UN_ERROR.getInfo());
         }
     }

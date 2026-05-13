@@ -49,8 +49,8 @@ app:
       orderPaidGroupBuy: order-paid-group_buy
       groupBuySuccessNotify: group-buy-success-notify
       groupBuyTimeoutRefund: group-buy-timeout-refund
-      orderCloseGroupBuy: order-close-group-buy
-      payRefundGroupBuy: pay-refund-group-buy
+      orderCloseGroupBuyMarket: order-close-group-buy-market
+      orderRefundGroupBuy: order-refund-group-buy
     consumerGroup:
       orderPaidGroupBuy: CG_GROUP_BUY_ORDER_PAID
       groupBuyTimeoutRefund: CG_GROUP_BUY_TIMEOUT_REFUND

@@ -19,7 +19,7 @@ import jakarta.annotation.Resource;
 @Component
 @ConditionalOnProperty(prefix = "rocketmq", name = "name-server")
 @RocketMQMessageListener(
-        topic = "${app.rocketmq.topic.payRefundGroupBuy:pay-refund-group-buy}",
+        topic = "${app.rocketmq.topic.orderRefundGroupBuy:order-refund-group-buy}",
         consumerGroup = "${app.rocketmq.consumerGroup.payRefundGroupBuy:CG_GROUP_BUY_PAY_REFUND}"
 )
 public class PayRefundGroupBuyListener implements RocketMQListener<String> {
@@ -32,12 +32,12 @@ public class PayRefundGroupBuyListener implements RocketMQListener<String> {
         log.info("pay-refund-group-buy 收到消息: {}", message);
         try {
             JSONObject dto = JSON.parseObject(message);
-            String outTradeNo = dto.getString("outTradeNo");
-            if (StringUtils.isBlank(outTradeNo)) {
-                log.error("消息缺少 outTradeNo: {}", message);
+            String orderId = dto.getString("orderId");
+            if (StringUtils.isBlank(orderId)) {
+                log.error("消息缺少 orderId: {}", message);
                 return;
             }
-            groupBuyDomainService.handlePayRefund(outTradeNo);
+            groupBuyDomainService.handlePayRefund(orderId);
         } catch (Exception e) {
             log.error("pay-refund-group-buy 处理失败: {}", message, e);
             throw new RuntimeException(e);

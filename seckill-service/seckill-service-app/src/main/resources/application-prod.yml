@@ -8,9 +8,9 @@ app:
     topic:
       seckillOrderCreate: seckill-order-create
       orderPaidSeckill: order-paid-seckill
-      orderCloseSeckill: order-close-seckill
+      orderCloseSeckillMarket: order-close-seckill-market
       seckillStockDeduct: seckill-stock-deduct
-      payRefundSeckill: pay-refund-seckill
+      orderRefundSeckill: order-refund-seckill
     consumerGroup:
       seckillOrderCreate: CG_SECKILL_ORDER_CREATE
       orderPaidSeckill: CG_ORDER_PAID_SECKILL

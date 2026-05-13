@@ -33,35 +33,35 @@ public class GroupBuyRefundMqProducer implements IGroupBuyRefundMqProducer {
     /**
      * 发送未支付订单关单消息
      */
-    public void sendOrderCloseMessage(String outTradeNo, String userId) {
-        Map<String, Object> dto = buildMessageBody(outTradeNo, userId);
+    public void sendOrderCloseMessage(String orderId, String userId) {
+        Map<String, Object> dto = buildMessageBody(orderId, userId);
         String messageBody = JSON.toJSONString(dto);
-        log.info("发送拼团未支付关单消息 topic:{} outTradeNo:{}", orderCloseGroupBuyTopic, outTradeNo);
+        log.info("发送拼团未支付关单消息 topic:{} orderId:{}", orderCloseGroupBuyTopic, orderId);
         try {
             rocketMQTemplate.convertAndSend(orderCloseGroupBuyTopic, messageBody);
         } catch (Exception e) {
-            log.error("发送拼团未支付关单消息失败 topic:{} outTradeNo:{}", orderCloseGroupBuyTopic, outTradeNo, e);
+            log.error("发送拼团未支付关单消息失败 topic:{} orderId:{}", orderCloseGroupBuyTopic, orderId, e);
         }
     }
 
     /**
      * 发送已支付订单退款消息
      */
-    public void sendPayRefundMessage(String outTradeNo, String userId) {
-        Map<String, Object> dto = buildMessageBody(outTradeNo, userId);
+    public void sendPayRefundMessage(String orderId, String userId) {
+        Map<String, Object> dto = buildMessageBody(orderId, userId);
         String messageBody = JSON.toJSONString(dto);
-        log.info("发送拼团已支付退款消息 topic:{} outTradeNo:{}", payRefundGroupBuyTopic, outTradeNo);
+        log.info("发送拼团已支付退款消息 topic:{} orderId:{}", payRefundGroupBuyTopic, orderId);
         try {
             rocketMQTemplate.convertAndSend(payRefundGroupBuyTopic, messageBody);
         } catch (Exception e) {
-            log.error("发送拼团已支付退款消息失败 topic:{} outTradeNo:{}", payRefundGroupBuyTopic, outTradeNo, e);
+            log.error("发送拼团已支付退款消息失败 topic:{} orderId:{}", payRefundGroupBuyTopic, orderId, e);
         }
     }
 
-    private Map<String, Object> buildMessageBody(String outTradeNo, String userId) {
+    private Map<String, Object> buildMessageBody(String orderId, String userId) {
         Map<String, Object> dto = new HashMap<>();
         dto.put("userId", userId);
-        dto.put("outTradeNo", outTradeNo);
+        dto.put("orderId", orderId);
         dto.put("marketType", "group_buy");
         dto.put("outTradeTime", new Date());
         dto.put("source", "");

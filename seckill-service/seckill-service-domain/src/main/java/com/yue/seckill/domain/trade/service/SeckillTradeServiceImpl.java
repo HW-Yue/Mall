@@ -86,7 +86,6 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
 
         // 5. 生成秒杀令牌并写入 Redis
         String seckillToken = RandomStringUtils.randomAlphanumeric(32);
-        String outTradeNo = "SK" + RandomStringUtils.randomNumeric(18);
         seckillStockPort.saveSeckillToken(seckillToken, userId, productId, activityId);
 
         String orderId = null;
@@ -100,27 +99,25 @@ public class SeckillTradeServiceImpl implements ISeckillTradeService {
                     .channel(channel)
                     .goodsName(StringUtils.defaultIfBlank(goodsName, "秒杀商品"))
                     .goodsImageUrl(StringUtils.defaultString(goodsImageUrl))
-                    .outTradeNo(outTradeNo)
                     .originalPrice(originalPrice)
                     .deductionPrice(deductionPrice)
                     .payPrice(payPrice)
                     .build();
             seckillOrderTaskPort.sendCreateOrderTask(message);
-            log.info("秒杀建单任务已发送 userId:{} seckillToken:{} outTradeNo:{} activityId:{}",
-                    userId, seckillToken, outTradeNo, activityId);
+            log.info("秒杀建单任务已发送 userId:{} seckillToken:{} activityId:{}",
+                    userId, seckillToken, activityId);
         } catch (Exception e) {
-            log.warn("秒杀建单任务发送失败，开始回滚 userId:{} seckillToken:{} outTradeNo:{} activityId:{}",
-                    userId, seckillToken, outTradeNo, activityId, e);
+            log.warn("秒杀建单任务发送失败，开始回滚 userId:{} seckillToken:{} activityId:{}",
+                    userId, seckillToken, activityId, e);
             seckillStockPort.rollbackSeckillOrder(activityId, productId, userId, seckillToken);
             throw new AppException(ResponseCode.CREATE_ORDER_FAILED);
         }
 
-        log.info("秒杀下单成功 userId:{} seckillToken:{} outTradeNo:{} activityId:{}",
-                userId, seckillToken, outTradeNo, activityId);
+        log.info("秒杀下单成功 userId:{} seckillToken:{} activityId:{}",
+                userId, seckillToken, activityId);
         return SeckillOrderResultEntity.builder()
                 .seckillToken(seckillToken)
                 .orderId(orderId)
-                .outTradeNo(outTradeNo)
                 .build();
     }
 

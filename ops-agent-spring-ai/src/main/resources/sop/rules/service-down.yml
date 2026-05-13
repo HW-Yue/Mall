@@ -23,11 +23,30 @@ sop-markdown: |
   写清根因类别（进程、网络、配置、依赖、假死）、证据（指标或日志摘要）、建议动作（重启、扩容、回滚、修注册）。信息不足时写明缺哪些标签（如 pod、container_id）。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "up"
-  - skill: nacos_config
-    tool: nacos_list_instances
-    args:
-      serviceName: "${application}"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 ServiceDown。
+      查询 ${primaryService} 的 up、job、instance 和 JVM 基础指标，判断是单实例不可用、整组采集失败还是标签不匹配。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 ServiceDown。
+      查询 ${primaryService} 在 Nacos 的健康实例、IP、端口、metadata；若实例为空，直接返回服务未注册证据。
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 ServiceDown。
+      查询 ${primaryService} 或 ${application} 对应容器是否存在；若存在，查看 inspect、stats、logs，确认 OOMKilled、重启、健康检查失败。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 ServiceDown。
+      检索 ${primaryService} 的启动失败、端口占用、连接拒绝、健康检查失败、5xx 日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 ServiceDown。
+      只读查看 ${primaryService} bootstrap、端口、management endpoint、Nacos discovery 配置是否近期发布变更。
+    on-error: continue

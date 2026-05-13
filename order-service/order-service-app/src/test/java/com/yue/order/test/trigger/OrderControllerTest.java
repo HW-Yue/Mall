@@ -60,7 +60,7 @@ class OrderControllerTest {
     @Test
     void createOrderNormalFromMallReturnsOrderId() {
         when(orderDomainService.submitNormalOrderFromMall(any()))
-                .thenReturn(NormalOrderEnqueueResult.builder().orderId("OID-1").outTradeNo("OUT-1").build());
+                .thenReturn(NormalOrderEnqueueResult.builder().orderId("OID-1").build());
 
         Response<CreateOrderResponseDTO> response = controller.createOrderNormalFromMall(
                 CreateOrderRequestDTO.builder().userId("u1").productId("g1").payPrice(new BigDecimal("1")).build(),

@@ -1,4 +1,5 @@
 window.RunWorkbench = (() => {
+    const LAST_RUN_STORAGE_KEY = 'yue-ops-agent.last-run-id';
     const alertExamples = [
         { key: 'ServiceDown', group: 'system', severity: 'critical', application: 'mall-service' },
         { key: 'JvmHeapUsageHigh', group: 'system', severity: 'warning', application: 'order-service' },
@@ -33,6 +34,21 @@ window.RunWorkbench = (() => {
             annotations: {
                 summary: 'mall 商品查询限流频繁',
                 description: '模拟商城首页商品分页被 Sentinel 限流；resource 使用服务内 URI /api/v1/mall/index/query_goods_page',
+            },
+        },
+        {
+            key: 'DubboProviderErrorRateHigh',
+            group: 'dubbo',
+            severity: 'critical',
+            application: 'order-service',
+            labels: {
+                interface: 'com.yue.order.api.IOrderService',
+                method: 'createOrder',
+                side: 'provider',
+            },
+            annotations: {
+                summary: 'order-service Dubbo provider 错误率升高',
+                description: '模拟 Dubbo provider 侧错误率异常；application 使用 provider 服务名，interface/method 对齐 Dubbo 指标标签。',
             },
         },
         { key: 'HikariConnectionsSaturated', group: 'hikari', severity: 'critical', application: 'order-service' },
@@ -77,6 +93,7 @@ window.RunWorkbench = (() => {
 
     Object.assign(examples, {
         http5xx: examples.Http5xxErrorRateHigh,
+        dubbo: examples.DubboProviderErrorRateHigh,
         nacos: {
             ...examples.NacosConfigDrill,
             value: alertPayload({
@@ -109,6 +126,7 @@ window.RunWorkbench = (() => {
         dom.input = document.getElementById('route-input');
         dom.submit = document.getElementById('run-submit');
         dom.cancel = document.getElementById('run-cancel');
+        dom.openHistory = document.getElementById('run-open-history');
         dom.runId = document.getElementById('run-id');
         dom.status = document.getElementById('run-status');
         dom.timeline = document.getElementById('timeline');
@@ -139,9 +157,11 @@ window.RunWorkbench = (() => {
         });
         dom.refresh.addEventListener('click', refresh);
         dom.cancel.addEventListener('click', cancel);
+        dom.openHistory.addEventListener('click', openHistory);
 
         renderAlertExamples();
         fillExample('http5xx');
+        restoreLastRunId();
         renderTimeline();
         renderRunResult();
 
@@ -262,6 +282,8 @@ window.RunWorkbench = (() => {
             dom.runId.textContent = runId;
             dom.refresh.disabled = false;
             dom.cancel.disabled = false;
+            dom.openHistory.disabled = false;
+            persistLastRunId(runId);
             connect(runId);
             await refresh();
             window.Approvals?.sync?.();
@@ -317,6 +339,7 @@ window.RunWorkbench = (() => {
             const body = await res.json();
             dom.status.textContent = `${body.status || '-'} · ${body.currentNode || '-'}`;
             dom.cancel.disabled = !state.runId || isTerminalStatus(body.status);
+            dom.openHistory.disabled = !state.runId;
             if (Array.isArray(body.events) && body.events.length > state.events.length) {
                 state.events = body.events;
                 renderTimeline();
@@ -425,6 +448,28 @@ window.RunWorkbench = (() => {
             dom.status.textContent = `暂停失败: ${error.message}`;
             dom.cancel.disabled = false;
         }
+    }
+
+    function openHistory() {
+        if (!state.runId) return;
+        persistLastRunId(state.runId);
+        const url = new URL('runs.html', window.location.href);
+        url.searchParams.set('runId', state.runId);
+        window.location.href = url.toString();
+    }
+
+    function restoreLastRunId() {
+        const runId = localStorage.getItem(LAST_RUN_STORAGE_KEY);
+        if (!runId) return;
+        state.runId = runId;
+        dom.runId.textContent = runId;
+        dom.refresh.disabled = false;
+        dom.openHistory.disabled = false;
+    }
+
+    function persistLastRunId(runId) {
+        if (!runId) return;
+        localStorage.setItem(LAST_RUN_STORAGE_KEY, runId);
     }
 
     function isTerminalEvent(type) {

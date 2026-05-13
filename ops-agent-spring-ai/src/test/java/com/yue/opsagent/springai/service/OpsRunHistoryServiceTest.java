@@ -1,10 +1,14 @@
 package com.yue.opsagent.springai.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.yue.opsagent.springai.domain.opsroute.OpsRunStatus;
+import com.yue.opsagent.springai.domain.opsroute.OpsRunSummary;
+import com.yue.opsagent.springai.domain.opsroute.RouteInputType;
 import com.yue.opsagent.springai.skill.elasticsearch.ElasticsearchToolkit;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -28,30 +32,13 @@ class OpsRunHistoryServiceTest {
             }
             """;
 
-    private static final String SAMPLE_BUCKETS = """
-            {
-              "aggregations": {
-                "runs": {
-                  "buckets": [
-                    {
-                      "key":"r1","doc_count":12,
-                      "latest":{"value":1.7e12,"value_as_string":"2026-05-07T10:00:30Z"},
-                      "first_event":{"hits":{"hits":[{"_source":{"@timestamp":"2026-05-07T10:00:00Z","eventType":"start","node":"Root","eventMessage":"运行已创建","data":{}}}]}},
-                      "last_event":{"hits":{"hits":[{"_source":{"@timestamp":"2026-05-07T10:00:30Z","eventType":"end","node":"End","eventMessage":"完成","data":{}}}]}}
-                    }
-                  ]
-                }
-              }
-            }
-            """;
-
     @Test
     void timelineQueriesByRunIdKeywordSortedAsc() {
         ElasticsearchToolkit toolkit = mock(ElasticsearchToolkit.class);
         when(toolkit.searchRawJson(eq("logstash-*"), anyString())).thenReturn(SAMPLE_HITS);
 
         OpsRunHistoryService service = new OpsRunHistoryService(
-                toolkit, new ObjectMapper(), "logstash-*", "yue-ops-agent");
+                toolkit, OpsRunSummaryRepository.noop(), new ObjectMapper(), "logstash-*", "yue-ops-agent");
 
         List<Map<String, Object>> events = service.timeline("r1");
 
@@ -68,28 +55,36 @@ class OpsRunHistoryServiceTest {
     }
 
     @Test
-    void recentRunsParsesBucketsIntoSummaries() {
+    void recentRunsReadsFromSummaryRepository() {
         ElasticsearchToolkit toolkit = mock(ElasticsearchToolkit.class);
-        when(toolkit.searchRawJson(eq("logstash-*"), anyString())).thenReturn(SAMPLE_BUCKETS);
+        OpsRunSummaryRepository repository = mock(OpsRunSummaryRepository.class);
+        when(repository.findRecentRuns(50)).thenReturn(List.of(new OpsRunSummary(
+                "r1",
+                RouteInputType.TEXT,
+                OpsRunStatus.COMPLETED,
+                "End",
+                12,
+                "start",
+                "运行已创建",
+                "end",
+                "完成",
+                Instant.parse("2026-05-07T10:00:00Z"),
+                Instant.parse("2026-05-07T10:00:30Z"),
+                "db"
+        )));
 
         OpsRunHistoryService service = new OpsRunHistoryService(
-                toolkit, new ObjectMapper(), "logstash-*", "yue-ops-agent");
+                toolkit, repository, new ObjectMapper(), "logstash-*", "yue-ops-agent");
 
-        List<Map<String, Object>> runs = service.recentRuns(50);
+        List<OpsRunSummary> runs = service.recentRuns(50);
 
-        ArgumentCaptor<String> queryCap = ArgumentCaptor.forClass(String.class);
-        verify(toolkit).searchRawJson(eq("logstash-*"), queryCap.capture());
-        String dsl = queryCap.getValue();
-        assertThat(dsl).contains("\"service.keyword\":\"yue-ops-agent\"");
-        assertThat(dsl).contains("\"field\":\"runId.keyword\"");
-        assertThat(dsl).contains("\"size\":50");
+        verify(repository).findRecentRuns(50);
 
         assertThat(runs).hasSize(1);
-        Map<String, Object> r = runs.get(0);
-        assertThat(r).containsEntry("runId", "r1");
-        assertThat(r).containsEntry("eventCount", 12L);
-        assertThat(r.get("firstEvent")).isInstanceOf(Map.class);
-        assertThat(r.get("lastEvent")).isInstanceOf(Map.class);
+        OpsRunSummary r = runs.getFirst();
+        assertThat(r.runId()).isEqualTo("r1");
+        assertThat(r.eventCount()).isEqualTo(12);
+        assertThat(r.source()).isEqualTo("db");
     }
 
     @Test
@@ -98,7 +93,7 @@ class OpsRunHistoryServiceTest {
         when(toolkit.searchRawJson(anyString(), anyString())).thenThrow(new RuntimeException("boom"));
 
         OpsRunHistoryService service = new OpsRunHistoryService(
-                toolkit, new ObjectMapper(), "logstash-*", "yue-ops-agent");
+                toolkit, OpsRunSummaryRepository.noop(), new ObjectMapper(), "logstash-*", "yue-ops-agent");
 
         assertThat(service.timeline("r1")).isEmpty();
     }

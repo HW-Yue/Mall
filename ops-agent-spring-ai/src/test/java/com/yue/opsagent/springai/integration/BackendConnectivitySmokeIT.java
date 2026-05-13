@@ -133,6 +133,11 @@ class BackendConnectivitySmokeIT {
         assertOk(r, "MysqlToolkit.slowQuerySample");
     }
 
+    @Test
+    void mysql_explainSql() {
+        assertOk(mysqlToolkit.explainSql("SELECT 1"), "MysqlToolkit.explainSql");
+    }
+
     // --- RedisToolkit ---
 
     @Test

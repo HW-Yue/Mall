@@ -8,11 +8,11 @@ public interface IGroupBuyRefundMqProducer {
     /**
      * 发送未支付订单关单消息（order-close-group-buy）
      */
-    void sendOrderCloseMessage(String outTradeNo, String userId);
+    void sendOrderCloseMessage(String orderId, String userId);
 
     /**
      * 发送已支付订单退款消息（pay-refund-group-buy）
      */
-    void sendPayRefundMessage(String outTradeNo, String userId);
+    void sendPayRefundMessage(String orderId, String userId);
 
 }

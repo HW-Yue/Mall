@@ -20,7 +20,37 @@ sop-markdown: |
   区分 provider 慢、网络慢、consumer 本地资源不足、重试放大；给出下一步证据。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "dubbo_consumer_rt_milliseconds_p99"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboConsumerRtP99High。
+      围绕 ${primaryService} 查询 consumer P99 RT、QPS、失败率、interface、method，判断是否集中在单接口或单 provider。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 DubboConsumerRtP99High。
+      查询 ${primaryService} 与相关 provider 的实例数、健康状态、IP 端口和注册配置，判断路由或实例异常。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboConsumerRtP99High。
+      检索 ${primaryService} 的 timeout、retry、No provider、连接异常、调用链 trace，区分 provider 慢和 consumer 本地排队。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 DubboConsumerRtP99High。
+      查看 ${primaryService} 容器资源、CPU throttle、内存压力和重启情况，判断 consumer 本地资源不足。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 DubboConsumerRtP99High。
+      仅当日志或指标指向 DB 下游时，排查 MySQL 慢查询、锁等待和连接池压力。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 DubboConsumerRtP99High。
+      仅当日志或指标指向 Redis 下游时，排查 Redis 慢命令、阻塞客户端和内存压力。
+    on-error: continue

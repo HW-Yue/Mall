@@ -26,6 +26,6 @@ public class MysqlISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "MySQL Skill：只读诊断会话、状态、锁、慢查询。传入 task 为自然语言任务说明。";
+        return "MySQL Skill：只读诊断会话、状态、锁、慢查询、SELECT 执行计划。传入 task 为自然语言任务说明。";
     }
 }

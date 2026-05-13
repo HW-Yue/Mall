@@ -22,9 +22,9 @@ public class TradeLockOrderService implements ITradeLockOrderService {
     private BusinessLinkedList<TradeLockRuleCommandEntity, TradeLockRuleFilterFactory.TradeLockLinkContext, TradeLockRuleFilterBackEntity> tradeRuleFilter;
 
     @Override
-    public MarketPayOrderEntity queryNoPayMarketPayOrderByOutTradeNo(String userId, String outTradeNo) {
-        log.info("拼团交易-查询未支付营销订单 userId:{} outTradeNo:{}", userId, outTradeNo);
-        return repository.queryMarketPayOrderEntityByOutTradeNo(userId, outTradeNo);
+    public MarketPayOrderEntity queryNoPayMarketPayOrderByOrderId(String userId, String orderId) {
+        log.info("拼团交易-查询未支付营销订单 userId:{} orderId:{}", userId, orderId);
+        return repository.queryMarketPayOrderEntityByOrderId(userId, orderId);
     }
 
     @Override

@@ -21,7 +21,7 @@ public class TradePaySettlementEntity {
     private String teamId;
     /** 活动ID */
     private Long activityId;
-    /** 外部交易单号 */
-    private String outTradeNo;
+    /** 订单ID */
+    private String orderId;
 
 }

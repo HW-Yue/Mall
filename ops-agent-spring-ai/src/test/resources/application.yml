@@ -2,6 +2,10 @@
 logstash:
   enabled: false
 
+ops-ai:
+  history:
+    enabled: false
+
 spring:
   cloud:
     nacos:

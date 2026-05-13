@@ -10,6 +10,6 @@ import java.util.Date;
 public class SettlementCommand {
 
     private String userId;
-    private String outTradeNo;
+    private String orderId;
     private Date outTradeTime;
 }

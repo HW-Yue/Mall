@@ -22,6 +22,35 @@ steps:
   - type: delegate_subagent
     sub-agent-id: rocketmq_inspect
     task: |
-      告警 RocketMqDlqMessageAppeared，应用 ${application}。
+      告警 RocketMqDlqMessageAppeared，应用 ${primaryService}。
       执行 mq_dead_letter、mq_topic_stats、mq_consumer_status，结合 labels 里 topic、consumerGroup 说明来源与处理步骤。
-    context: {}
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 RocketMqDlqMessageAppeared。
+      检索 ${primaryService} 与 topic=${topic}、group=${consumerGroup} 相关的消费异常、业务校验失败、重试和 msgId/keys 线索。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 RocketMqDlqMessageAppeared。
+      若消费者 ${primaryService} 依赖 MySQL，排查 DB 慢查询、锁等待或数据异常是否导致反复重试进 DLQ。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 RocketMqDlqMessageAppeared。
+      若消费者 ${primaryService} 依赖 Redis，排查 Redis 超时、慢命令、阻塞是否导致消费失败。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 RocketMqDlqMessageAppeared。
+      查询 ${primaryService} 实例数、健康状态和 MQ consumer 配置，只读确认是否近期变更。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 RocketMqDlqMessageAppeared。
+      查看 ${primaryService} 消费容器资源、重启和错误日志，确认是否容器异常导致消费失败。
+    on-error: continue

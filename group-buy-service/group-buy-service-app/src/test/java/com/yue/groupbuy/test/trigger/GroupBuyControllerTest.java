@@ -80,7 +80,7 @@ class GroupBuyControllerTest {
         when(marketService.queryInProgressUserGroupBuyOrderDetailList("g1", "u1", 1, 2))
                 .thenReturn(List.of(UserGroupBuyOrderDetailEntity.builder()
                         .userId("u2").teamId("T1").activityId(1L).targetCount(3).completeCount(1).lockCount(1)
-                        .validStartTime(new Date(0)).validEndTime(new Date(System.currentTimeMillis() + 60_000)).outTradeNo("OUT-1")
+                        .validStartTime(new Date(0)).validEndTime(new Date(System.currentTimeMillis() + 60_000))
                         .build()));
         when(marketService.queryTeamStatisticByGoodsId("g1"))
                 .thenReturn(TeamStatisticVO.builder().allTeamCount(2).allTeamCompleteCount(1).allTeamUserCount(4).build());

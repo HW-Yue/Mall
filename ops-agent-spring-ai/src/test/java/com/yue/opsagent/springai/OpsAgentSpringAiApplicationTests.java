@@ -64,7 +64,7 @@ class OpsAgentSpringAiApplicationTests {
     @Test
     void externalSopRuleFilesLoaded() {
         var rules = opsAiProperties.getSop().getRules();
-        assertThat(rules).hasSize(24);
+        assertThat(rules).hasSize(33);
         assertThat(rules)
                 .extracting(r -> r.getMatchAlertname().toLowerCase())
                 .contains(

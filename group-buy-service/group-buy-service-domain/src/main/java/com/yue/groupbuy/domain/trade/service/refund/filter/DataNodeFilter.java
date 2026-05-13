@@ -21,9 +21,9 @@ public class DataNodeFilter implements ILogicHandler<TradeRefundCommandEntity, T
 
     @Override
     public TradeRefundBehaviorEntity apply(TradeRefundCommandEntity tradeRefundCommandEntity, TradeRefundRuleFilterFactory.RefundLinkContext dynamicContext) throws Exception {
-        log.info("逆向流程-退单操作，数据加载节点 userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
+        log.info("逆向流程-退单操作，数据加载节点 userId:{} orderId:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOrderId());
 
-        MarketPayOrderEntity marketPayOrderEntity = repository.queryMarketPayOrderEntityByOutTradeNo(tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
+        MarketPayOrderEntity marketPayOrderEntity = repository.queryMarketPayOrderEntityByOrderId(tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOrderId());
         String teamId = marketPayOrderEntity.getTeamId();
 
         GroupBuyTeamEntity groupBuyTeamEntity = repository.queryGroupBuyTeamByTeamId(teamId);

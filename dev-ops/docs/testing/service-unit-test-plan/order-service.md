@@ -30,10 +30,11 @@
 
 ## Required Scenarios
 
-- 创建订单幂等、普通单开关、`outTradeNo` 冲突
+- 创建订单幂等、普通单开关、服务端生成 `orderId/outTradeNo`
 - `submitNormalOrderFromMall` 入队消息体组装
 - `getPayUrl` 重试、订单不存在、状态非法
 - 支付成功、拼团成功、关单、退款、发货任务状态推进
+- 对营销服务发布的消息不包含 `outTradeNo`
 - MQ consumer 对不同 market 事件的分发与容错
 - `PayServicePort` 返回空值、失败码、异常传播
 - 无 MQ 配置时 stub 行为

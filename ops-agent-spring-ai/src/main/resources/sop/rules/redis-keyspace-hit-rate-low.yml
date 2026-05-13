@@ -18,7 +18,26 @@ sop-markdown: |
   容量不足、键设计、TTL 过短；扩容或本地缓存建议。
 
 steps:
-  - skill: redis_inspect
-    tool: redis_info
-    args:
-      section: "stats"
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 RedisKeyspaceHitRateLow。
+      查询 redis_info stats、memory 和 keyspace，确认 hits/misses、淘汰、过期和内存压力。
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 RedisKeyspaceHitRateLow。
+      对齐 miss 曲线、QPS、RT、发布或扩缩容时间，判断是否批量失效或流量形态变化。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 RedisKeyspaceHitRateLow。
+      检索 ${primaryService} 的缓存穿透、随机 key、批量失效、TTL 过短相关日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 RedisKeyspaceHitRateLow。
+      只读查看 ${primaryService} 缓存 TTL、本地缓存、Redis 连接和序列化相关配置是否近期变更。
+    on-error: continue

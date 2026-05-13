@@ -36,6 +36,12 @@ public class OrderRefundMqProducer implements IOrderRefundPublisher {
     @Value("${app.rocketmq.topic.payRefundSeckill:pay-refund-seckill}")
     private String payRefundSeckillTopic;
 
+    @Value("${app.rocketmq.topic.orderRefundGroupBuy:order-refund-group-buy}")
+    private String orderRefundGroupBuyTopic;
+
+    @Value("${app.rocketmq.topic.orderRefundSeckill:order-refund-seckill}")
+    private String orderRefundSeckillTopic;
+
     @Override
     public void publishPayRefund(String userId, String outTradeNo, String marketType) {
         String topic = resolveTopic(marketType);
@@ -64,9 +70,37 @@ public class OrderRefundMqProducer implements IOrderRefundPublisher {
         }
     }
 
+    @Override
+    public void publishMarketRefund(String userId, String orderId, String marketType) {
+        String topic = resolveMarketRefundTopic(marketType);
+        if (topic == null) {
+            return;
+        }
+
+        Map<String, Object> msg = new HashMap<>();
+        msg.put("userId", userId);
+        msg.put("orderId", orderId);
+        msg.put("marketType", marketType);
+        msg.put("outTradeTime", new Date());
+
+        try {
+            rocketMQTemplate.convertAndSend(topic, msg);
+            log.info("publishMarketRefund topic:{} orderId:{}", topic, orderId);
+        } catch (Exception e) {
+            log.error("publishMarketRefund 失败 topic:{} orderId:{}", topic, orderId, e);
+            throw e instanceof RuntimeException ? (RuntimeException) e : new RuntimeException(e);
+        }
+    }
+
     private String resolveTopic(String marketType) {
         if ("group_buy".equals(marketType)) return payRefundGroupBuyTopic;
         if ("seckill".equals(marketType)) return payRefundSeckillTopic;
         return payRefundNormalTopic;
+    }
+
+    private String resolveMarketRefundTopic(String marketType) {
+        if ("group_buy".equals(marketType)) return orderRefundGroupBuyTopic;
+        if ("seckill".equals(marketType)) return orderRefundSeckillTopic;
+        return null;
     }
 }

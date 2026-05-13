@@ -19,10 +19,9 @@ import java.util.concurrent.TimeUnit;
  * 秒杀支付成功消费者（order-paid-seckill）
  *
  * <p>流程：
- * 1. 通过 outTradeNo 从 Redis 反向查出 seckillToken
- * 2. 通过 seckillToken 解析出 activityId 和 productId
- * 3. Lua 原子扣减 Redis 真实库存（seckill:stock:real:...）
- * 4. 扣减成功后发 seckill-stock-deduct MQ，异步更新 MySQL sc_sku_activity.stock_count
+ * 1. 通过 orderId 反查秒杀上下文
+ * 2. Lua 原子扣减 Redis 真实库存（seckill:stock:real:...）
+ * 3. 扣减成功后发 seckill-stock-deduct MQ，异步更新 MySQL sc_sku_activity.stock_count
  */
 @Slf4j
 @Component
@@ -36,7 +35,7 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
     private static final String TOKEN_BY_ORDER_KEY_PREFIX = "seckill:token:by:order:";
     private static final String TOKEN_KEY_PREFIX = "seckill:token:";
     private static final String ORDER_META_KEY_PREFIX = "seckill:order:meta:";
-    private static final String ORDER_BY_TRADE_KEY_PREFIX = "seckill:order:by-trade:";
+    private static final String REFUND_ORDER_META_KEY_PREFIX = "seckill:refund:order:";
     private static final long REFUND_INDEX_TTL_HOURS = 24L;
 
     @Resource
@@ -51,15 +50,6 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
         log.info("order-paid-seckill 收到消息: {}", message);
         try {
             JSONObject dto = JSON.parseObject(message);
-            String outTradeNo = dto.getString("outTradeNo");
-
-            if (StringUtils.isBlank(outTradeNo)) {
-                log.error("[秒杀支付成功] 消息缺少 outTradeNo: {}", message);
-                return;
-            }
-
-            // orderId 是内部订单号，建单时 SeckillOrderCreateListener 用它写了反向索引
-            // outTradeNo 是支付宝交易号，两者不同，必须用 orderId 查 token
             String orderId = dto.getString("orderId");
             if (StringUtils.isBlank(orderId)) {
                 log.error("[秒杀支付成功] 消息缺少 orderId: {}", message);
@@ -71,21 +61,19 @@ public class OrderPaidSeckillListener implements RocketMQListener<String> {
             // 3. Lua 原子扣减 Redis 真实库存
             int realResult = seckillStockPort.deductRealStockByLua(stockContext.getActivityId(), stockContext.getProductId());
             if (realResult == 1) {
-                // 4. 扣减成功 → 发 MQ 异步更新 MySQL stock_count
                 seckillStockDeductPort.sendDeductStockTask(stockContext.getActivityId(), stockContext.getProductId());
-                // 4.1 写反向索引：退款链路靠 outTradeNo 反查 activity/product
                 stringRedisTemplate.opsForValue().set(
-                        ORDER_BY_TRADE_KEY_PREFIX + outTradeNo,
+                        REFUND_ORDER_META_KEY_PREFIX + orderId,
                         stockContext.getActivityId() + ":" + stockContext.getProductId(),
                         REFUND_INDEX_TTL_HOURS, TimeUnit.HOURS);
-                log.info("[真实库存] 扣减成功，已发 MySQL 更新 MQ outTradeNo:{} activityId:{} productId:{}",
-                        outTradeNo, stockContext.getActivityId(), stockContext.getProductId());
+                log.info("[真实库存] 扣减成功，已发 MySQL 更新 MQ orderId:{} activityId:{} productId:{}",
+                        orderId, stockContext.getActivityId(), stockContext.getProductId());
             } else if (realResult == 0) {
-                log.warn("[真实库存] 库存不足（Redis real=0） outTradeNo:{} activityId:{} productId:{}",
-                        outTradeNo, stockContext.getActivityId(), stockContext.getProductId());
+                log.warn("[真实库存] 库存不足（Redis real=0） orderId:{} activityId:{} productId:{}",
+                        orderId, stockContext.getActivityId(), stockContext.getProductId());
             } else {
-                log.warn("[真实库存] 扣减异常 result:{} outTradeNo:{} activityId:{} productId:{}",
-                        realResult, outTradeNo, stockContext.getActivityId(), stockContext.getProductId());
+                log.warn("[真实库存] 扣减异常 result:{} orderId:{} activityId:{} productId:{}",
+                        realResult, orderId, stockContext.getActivityId(), stockContext.getProductId());
             }
 
         } catch (Exception e) {

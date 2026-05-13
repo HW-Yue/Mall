@@ -21,6 +21,38 @@ sop-markdown: |
   扩容线程池、优化任务、降级；写清证据与变更风险。
 
 steps:
-  - skill: metrics_ops
-    tool: dynamictp_metrics
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 ThreadPoolQueueUsageHigh。
+      查询 ${primaryService} 的 DynamicTP 队列长度、活跃线程、完成数、拒绝数、JVM CPU/堆，判断队列高是流量突刺还是任务完成变慢。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 ThreadPoolQueueUsageHigh。
+      检索 ${primaryService} 的 pool is full、RejectedExecution、业务队列告警、慢任务日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 ThreadPoolQueueUsageHigh。
+      只读查看 ${primaryService} DynamicTP core、max、queue capacity、reject policy 是否近期变更。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 ThreadPoolQueueUsageHigh。
+      若任务偏 DB IO 或日志指向 DB，排查 MySQL 慢查询、锁等待、连接占用。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 ThreadPoolQueueUsageHigh。
+      若任务偏 Redis IO 或日志指向缓存，排查 Redis 慢命令、阻塞客户端、连接问题。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 ThreadPoolQueueUsageHigh。
+      查看 ${primaryService} 容器 CPU、内存、重启和关键日志，判断单机资源瓶颈。
+    on-error: continue

@@ -12,14 +12,12 @@
 
 - `userId`
 - `orderId`
-- `outTradeNo`
 - `marketType=seckill`
 - `outTradeTime`
 
 消费者实际依赖：
 
 - `orderId`
-- `outTradeNo`
 
 ## 事实来源
 

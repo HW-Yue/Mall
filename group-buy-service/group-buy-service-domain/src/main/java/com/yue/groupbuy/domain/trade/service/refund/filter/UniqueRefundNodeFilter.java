@@ -15,13 +15,13 @@ public class UniqueRefundNodeFilter implements ILogicHandler<TradeRefundCommandE
 
     @Override
     public TradeRefundBehaviorEntity apply(TradeRefundCommandEntity tradeRefundCommandEntity, TradeRefundRuleFilterFactory.RefundLinkContext dynamicContext) throws Exception {
-        log.info("逆向流程-退单操作，重复退单检查 userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
+        log.info("逆向流程-退单操作，重复退单检查 userId:{} orderId:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOrderId());
 
         MarketPayOrderEntity marketPayOrderEntity = dynamicContext.getMarketPayOrderEntity();
         TradeOrderStatusEnumVO tradeOrderStatusEnumVO = marketPayOrderEntity.getTradeOrderStatusEnumVO();
 
         if (TradeOrderStatusEnumVO.CLOSED.equals(tradeOrderStatusEnumVO)) {
-            log.info("逆向流程，退单操作(幂等-重复退单) userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
+            log.info("逆向流程，退单操作(幂等-重复退单) userId:{} orderId:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOrderId());
             return stop(
                     tradeRefundCommandEntity,
                     dynamicContext,

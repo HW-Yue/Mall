@@ -171,7 +171,7 @@ class SeckillActivityAndControllerTest {
         request.setSource("s01");
         request.setChannel("c01");
         when(seckillTradeService.createSeckillOrder(eq("u1"), eq("g1"), eq(1001L), eq("s01"), eq("c01"), any(), any(), eq(false)))
-                .thenReturn(SeckillOrderResultEntity.builder().seckillToken("tk").orderId("OID-1").outTradeNo("OTN-1").build());
+                .thenReturn(SeckillOrderResultEntity.builder().seckillToken("tk").orderId("OID-1").build());
 
         Response<?> createResponse = tradeController.createPayOrder(request);
         assertThat(createResponse.getCode()).isEqualTo(ResponseCode.SUCCESS.getCode());

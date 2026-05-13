@@ -12,14 +12,13 @@
 
 - `userId`
 - `orderId`
-- `outTradeNo`
 - `marketType=group_buy`
 - `outTradeTime`
 
 消费者实际依赖：
 
 - `userId`
-- `outTradeNo`
+- `orderId`
 - `outTradeTime`
 
 ## 事实来源

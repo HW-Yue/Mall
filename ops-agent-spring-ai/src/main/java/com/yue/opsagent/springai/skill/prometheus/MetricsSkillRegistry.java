@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.skill.prometheus;
 
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
+import com.yue.opsagent.springai.skill.support.SkillToolHelp;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -14,6 +15,9 @@ import java.util.Set;
 public class MetricsSkillRegistry implements OpsSkillRegistry {
 
     public static final String SKILL_NAME = "metrics_ops";
+
+    private static final Set<String> DATA_TOOLS =
+            Set.of("sentinel_metrics", "dynamictp_metrics", "jvm_metrics", "business_metrics");
 
     private final PrometheusToolkit toolkit;
 
@@ -33,18 +37,7 @@ public class MetricsSkillRegistry implements OpsSkillRegistry {
 
     @Override
     public String promptFragment() {
-        return """
-                工具（args 均可选 promql:string 覆盖默认值）：
-                - sentinel_metrics: Sentinel 相关示例查询
-                - dynamictp_metrics: 线程池 / DynamicTP 相关示例查询
-                - jvm_metrics: JVM 进程指标示例查询
-                - business_metrics: 业务自定义指标示例查询
-
-                服务存在性优先：
-                - 确认服务是否被 Prometheus 采集时，优先查 up{application="<app>"}、up{app="<app>"}、up{job="<app>"}。
-                - 如果这些查询 result 为空，直接报告“Prometheus 未发现该服务时序/标签可能不一致”，不要继续猜业务指标名。
-                - 若要查 5xx，再基于已有标签查 http_server_requests_seconds_count / *_requests_total 等；没有基础 up 时先返回不存在证据。
-                """;
+        return MetricsToolDocumentation.aggregatePromptFragment();
     }
 
     @Override
@@ -58,27 +51,21 @@ public class MetricsSkillRegistry implements OpsSkillRegistry {
     }
 
     @Override
-    public String toolSpecification(String toolName) {
-        return switch (toolName) {
-            case "sentinel_metrics" -> "sentinel_metrics：args 可选 promql，默认 up";
-            case "dynamictp_metrics" -> "dynamictp_metrics：args 可选 promql，默认 process_threads";
-            case "jvm_metrics" -> "jvm_metrics：args 可选 promql，默认 jvm_memory_used_bytes";
-            case "business_metrics" -> """
-                    business_metrics：args 可选 promql，默认 up。
-                    服务存在性示例：
-                    up{application="<app>"} or up{app="<app>"} or up{job="<app>"}
-                    """;
-            default -> OpsSkillRegistry.super.toolSpecification(toolName);
-        };
+    public Set<String> toolNames() {
+        return SkillToolHelp.toolNamesWithHelp(DATA_TOOLS, this);
     }
 
     @Override
-    public Set<String> toolNames() {
-        return Set.of("sentinel_metrics", "dynamictp_metrics", "jvm_metrics", "business_metrics");
+    public String documentationForDataTool(String dataToolName) {
+        return MetricsToolDocumentation.docFor(dataToolName);
     }
 
     @Override
     public ToolResult execute(String toolName, Map<String, Object> args) {
+        ToolResult help = SkillToolHelp.tryExecute(this, toolName, args);
+        if (help != null) {
+            return help;
+        }
         String override = promql(args);
         return switch (toolName) {
             case "sentinel_metrics" -> toolkit.queryInstant(!override.isBlank() ? override : "up");

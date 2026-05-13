@@ -8,7 +8,6 @@
         <result column="team_id" property="teamId"/>
         <result column="activity_id" property="activityId"/>
         <result column="goods_id" property="goodsId"/>
-        <result column="out_trade_no" property="outTradeNo"/>
         <result column="status" property="status"/>
         <result column="original_price" property="originalPrice"/>
         <result column="deduction_price" property="deductionPrice"/>
@@ -23,35 +22,29 @@
     <insert id="insert" parameterType="com.yue.groupbuy.infrastructure.dao.po.TOrderGroup">
         insert into t_order(
             order_id, user_id, team_id, activity_id, goods_id,
-            out_trade_no, status, original_price, deduction_price, pay_price,
+            status, original_price, deduction_price, pay_price,
             start_time, end_time, create_time, update_time
         ) values(
             #{orderId}, #{userId}, #{teamId}, #{activityId}, #{goodsId},
-            #{outTradeNo}, 0, #{originalPrice}, #{deductionPrice}, #{payPrice},
+            0, #{originalPrice}, #{deductionPrice}, #{payPrice},
             #{startTime}, #{endTime}, now(), now()
         )
     </insert>
 
-    <select id="queryByUserIdAndOutTradeNo" resultMap="dataMap">
-        select order_id, user_id, team_id, activity_id, goods_id,
-               out_trade_no, status, original_price, deduction_price, pay_price, out_trade_time
-        from t_order
-        where user_id = #{userId} and out_trade_no = #{outTradeNo}
-        limit 1
-    </select>
-
     <select id="queryByUserIdAndOrderId" resultMap="dataMap">
-        select order_id, user_id, team_id, out_trade_no, status
+        select order_id, user_id, team_id, activity_id, goods_id,
+               status, original_price, deduction_price, pay_price, out_trade_time,
+               start_time, end_time, create_time, update_time
         from t_order
         where user_id = #{userId} and order_id = #{orderId}
         limit 1
     </select>
 
-    <!-- 通过 outTradeNo 查询 teamId + activityId -->
-    <select id="queryTeamInfoByOutTradeNo" parameterType="java.lang.String" resultType="java.util.Map">
+    <!-- 通过 orderId 查询 teamId + activityId -->
+    <select id="queryTeamInfoByOrderId" parameterType="java.lang.String" resultType="java.util.Map">
         select team_id as teamId, activity_id as activityId
         from t_order
-        where out_trade_no = #{outTradeNo}
+        where order_id = #{orderId}
         limit 1
     </select>
 
@@ -77,16 +70,16 @@
         where goods_id = #{goodsId} and user_id = #{userId} and status not in (2, 4)
     </select>
 
-    <!-- 查询队伍已完成订单的 outTradeNo 列表 -->
-    <select id="queryCompleteOutTradeNoListByTeamId" resultType="java.lang.String">
-        select out_trade_no
+    <!-- 查询队伍已完成订单的 orderId 列表 -->
+    <select id="queryCompleteOrderIdListByTeamId" resultType="java.lang.String">
+        select order_id
         from t_order
         where team_id = #{teamId} and status = 1
     </select>
 
     <!-- 查询指定商品进行中（status=0）的用户参团记录 -->
     <select id="queryInProgressOrdersByActivityAndUser" resultType="java.util.Map">
-        select user_id as userId, team_id as teamId, out_trade_no as outTradeNo
+        select user_id as userId, team_id as teamId
         from t_order
         where goods_id = #{goodsId} and user_id = #{userId} and status = 0
         limit #{count}
@@ -94,7 +87,7 @@
 
     <!-- 查询指定商品进行中（status=0）的所有参团记录 -->
     <select id="queryInProgressOrdersByActivity" resultType="java.util.Map">
-        select user_id as userId, team_id as teamId, out_trade_no as outTradeNo
+        select user_id as userId, team_id as teamId
         from t_order
         where goods_id = #{goodsId} and status = 0
     </select>
@@ -103,7 +96,7 @@
     <update id="updateStatus2Complete">
         update t_order
         set status = 1, out_trade_time = #{outTradeTime}, update_time = now()
-        where out_trade_no = #{outTradeNo} and status = 0
+        where order_id = #{orderId} and status = 0
     </update>
 
     <!-- 标记退款处理中：status = 2 -->
@@ -117,19 +110,19 @@
     <update id="update2Refunded">
         update t_order
         set status = 4, update_time = now()
-        where out_trade_no = #{outTradeNo} and status = 2
+        where order_id = #{orderId} and status = 2
     </update>
 
     <!-- 查询团队中已支付的个人订单 -->
     <select id="queryPaidOrdersByTeamId" parameterType="java.lang.String" resultMap="dataMap">
-        select order_id, user_id, out_trade_no, status
+        select order_id, user_id, status
         from t_order
         where team_id = #{teamId} and status = 1
     </select>
 
     <!-- 查询团队中未支付的个人订单 -->
     <select id="queryUnpaidOrdersByTeamId" parameterType="java.lang.String" resultMap="dataMap">
-        select order_id, user_id, out_trade_no, status
+        select order_id, user_id, status
         from t_order
         where team_id = #{teamId} and status = 0
     </select>
@@ -141,11 +134,11 @@
         where team_id = #{teamId} and status = 0
     </update>
 
-    <!-- 按 outTradeNo 关闭单笔未支付订单（status = 0 -> 3），CAS 幂等 -->
-    <update id="closeUnpaidByOutTradeNo" parameterType="java.lang.String">
+    <!-- 按 orderId 关闭单笔未支付订单（status = 0 -> 3），CAS 幂等 -->
+    <update id="closeUnpaidByOrderId" parameterType="java.lang.String">
         update t_order
         set status = 3, update_time = now()
-        where out_trade_no = #{outTradeNo} and status = 0
+        where order_id = #{orderId} and status = 0
     </update>
 
 </mapper>

@@ -18,9 +18,13 @@ app:
       orderCloseNormal: order-close-normal
       orderCloseGroupBuy: order-close-group-buy
       orderCloseSeckill: order-close-seckill
+      orderCloseGroupBuyMarket: order-close-group-buy-market
+      orderCloseSeckillMarket: order-close-seckill-market
       payRefundNormal: pay-refund-normal
       payRefundGroupBuy: pay-refund-group-buy
       payRefundSeckill: pay-refund-seckill
+      orderRefundGroupBuy: order-refund-group-buy
+      orderRefundSeckill: order-refund-seckill
       payRefundNormalResult: pay-refund-normal-result
       payRefundGroupBuyResult: pay-refund-group-buy-result
       payRefundSeckillResult: pay-refund-seckill-result

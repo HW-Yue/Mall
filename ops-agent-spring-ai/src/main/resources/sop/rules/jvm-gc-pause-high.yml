@@ -11,15 +11,52 @@ sop-markdown: |
   dynamictp_metrics：队列与活跃线程突增会间接推高分配与 GC 压力。
 
   3 容器 docker_ops:
-  docker_stats：CPU throttle、内存压力会放大 STW 感知。
+  docker_inspect、docker_stats：确认容器存在、CPU throttle、内存压力是否放大 STW 感知。
+  docker_exec：容器内优先用 jcmd 采集 GC.heap_info、Thread.print -l；若无 jcmd 再退回 jstack。
 
   4 日志 elasticsearch_ops:
   es_search：Pause、GC、safepoint，可对齐 trace 看尾延迟。
 
-  5 FINAL:
-  归纳堆过大过小、元空间、池大小、突发流量中主因；调参方向（具体值需环境评审）。
+  5 配置 nacos_config:
+  nacos_get_config：只读确认 Xms/Xmx、G1/CMS 参数、Metaspace、线程池和连接池配置是否近期变更。
+
+  6 FINAL:
+  归纳是 Full GC 频繁、Young GC 过长、容器资源挤压、线程阻塞还是配置不当；给出下一步动作。
 
 steps:
-  - skill: metrics_ops
-    tool: jvm_metrics
-    args: {}
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 JvmGcPauseHigh。
+      围绕主服务 ${primaryService} 分析 JVM 与业务指标：区分 Full GC 频繁还是 Young GC 过长，
+      判断是否伴随分配速率陡升、老年代增长、QPS 抖动、DynamicTP 活跃线程或队列升高。
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 JvmGcPauseHigh。
+      先确认 ${primaryService} 或 ${application} 对应容器是否存在。
+      若存在，查看 docker_inspect 与 docker_stats，确认是否有 CPU throttle、内存 limit 过小、重启或 OOMKilled 迹象。
+      若不存在，直接返回“容器未发现”的证据，不要继续猜测容器名。
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 JvmGcPauseHigh。
+      在已确认容器存在的前提下，对 ${primaryService} 或 ${application} 对应容器执行 JVM 现场诊断。
+      优先用 docker_exec 在容器内执行 jcmd 定位 Java PID，并采集 jcmd <pid> GC.heap_info、jcmd <pid> Thread.print -l。
+      如果容器内没有 jcmd，再退回 jstack -l <pid>。
+      关注 Full GC、safepoint、GC 线程、BLOCKED/RUNNABLE 热点线程，以及是否有明显卡顿证据。
+      若容器内无 Java 进程或命令不存在，直接返回该事实。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 JvmGcPauseHigh。
+      检索 ${primaryService} 的 GC pause、Full GC、safepoint、OutOfMemoryError、GC overhead limit exceeded 相关日志，
+      对齐告警时间窗，总结是否有停顿放大或分配异常证据。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 JvmGcPauseHigh。
+      只读查看 ${primaryService} JVM 与运行时配置，确认 Xms/Xmx、垃圾回收器、Metaspace、线程池和连接池参数是否近期变更。
+    on-error: continue

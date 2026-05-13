@@ -61,7 +61,7 @@
 - Dubbo：
   - `OrderServicePort` 保留实现
   - 内部 `IOrderDubboService` mock（`@DubboReference`，通过 `ReflectionTestUtils.setField` 注入）
-  - 验证请求 DTO、失败补偿、按 `outTradeNo` 二次确认逻辑
+  - 验证请求 DTO、失败补偿、按 `orderId` 的退款/关单/结算推进逻辑
 
 ## Priority
 

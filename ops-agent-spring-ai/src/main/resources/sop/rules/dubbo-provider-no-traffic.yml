@@ -20,11 +20,31 @@ sop-markdown: |
   说明是正常无流量、服务下线、注册异常、调用方切流，还是采集缺失。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "dubbo_provider_requests_total"
-  - skill: nacos_config
-    tool: nacos_list_instances
-    args:
-      serviceName: "${application}"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboProviderNoTraffic。
+      查询 ${primaryService} 的 provider requests、up、采集状态，确认是业务流量归零还是 Prometheus 采集缺失。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 DubboProviderNoTraffic。
+      查询 ${primaryService} 健康实例、注册服务名、接口版本和分组，确认 provider 是否还注册在 Nacos。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboProviderNoTraffic。
+      检索 consumer 侧 No provider、路由切换、降级、流量切走，以及 ${primaryService} 发布/下线日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 DubboProviderNoTraffic。
+      查看 ${primaryService} 容器是否存在、是否重启、端口是否暴露，判断服务下线或进程异常。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 DubboProviderNoTraffic。
+      只读查看 Dubbo registry、version、group、调用方路由相关配置，判断是否配置变更导致流量切走。
+    on-error: continue

@@ -19,6 +19,7 @@ public class OpsAiProperties {
     private final Alert alert = new Alert();
     private final Docker docker = new Docker();
     private final Mysql mysql = new Mysql();
+    private final History history = new History();
     private final Rocketmq rocketmq = new Rocketmq();
     private final Redis redis = new Redis();
     private final Otlp otlp = new Otlp();
@@ -58,6 +59,10 @@ public class OpsAiProperties {
 
     public Mysql getMysql() {
         return mysql;
+    }
+
+    public History getHistory() {
+        return history;
     }
 
     public Rocketmq getRocketmq() {
@@ -196,6 +201,54 @@ public class OpsAiProperties {
 
         public void setPassword(String password) {
             this.password = password;
+        }
+    }
+
+    public static class History {
+        private boolean enabled = true;
+        private String jdbcUrl = "jdbc:mysql://127.0.0.1:13306/ops_agent?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai";
+        private String username = "root";
+        private String password = "";
+        private String tableName = "ops_run_summary";
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getJdbcUrl() {
+            return jdbcUrl;
+        }
+
+        public void setJdbcUrl(String jdbcUrl) {
+            this.jdbcUrl = jdbcUrl;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getTableName() {
+            return tableName;
+        }
+
+        public void setTableName(String tableName) {
+            this.tableName = tableName;
         }
     }
 

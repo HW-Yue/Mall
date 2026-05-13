@@ -51,8 +51,8 @@ public class TradeRepository implements ITradeRepository {
     private String topic_team_refund;
 
     @Override
-    public MarketPayOrderEntity queryMarketPayOrderEntityByOutTradeNo(String userId, String outTradeNo) {
-        TOrderGroup res = tOrderGroupDao.queryByUserIdAndOutTradeNo(userId, outTradeNo);
+    public MarketPayOrderEntity queryMarketPayOrderEntityByOrderId(String userId, String orderId) {
+        TOrderGroup res = tOrderGroupDao.queryByUserIdAndOrderId(userId, orderId);
         if (null == res) return null;
 
         return MarketPayOrderEntity.builder()
@@ -180,7 +180,7 @@ public class TradeRepository implements ITradeRepository {
         TradePaySuccessEntity tradePaySuccessEntity = groupBuyTeamSettlementAggregate.getTradePaySuccessEntity();
 
         int updateOrderCount = tOrderGroupDao.updateStatus2Complete(
-                tradePaySuccessEntity.getOutTradeNo(), tradePaySuccessEntity.getOutTradeTime());
+                tradePaySuccessEntity.getOrderId(), tradePaySuccessEntity.getOutTradeTime());
         if (1 != updateOrderCount) {
             throw new AppException(ResponseCode.UPDATE_ZERO);
         }
@@ -196,7 +196,7 @@ public class TradeRepository implements ITradeRepository {
                 throw new AppException(ResponseCode.UPDATE_ZERO);
             }
 
-            List<String> outTradeNoList = tOrderGroupDao.queryCompleteOutTradeNoListByTeamId(groupBuyTeamEntity.getTeamId());
+            List<String> orderIdList = tOrderGroupDao.queryCompleteOrderIdListByTeamId(groupBuyTeamEntity.getTeamId());
 
             NotifyTask notifyTask = new NotifyTask();
             notifyTask.setActivityId(groupBuyTeamEntity.getActivityId());
@@ -207,10 +207,10 @@ public class TradeRepository implements ITradeRepository {
             notifyTask.setNotifyUrl(NotifyTypeEnumVO.HTTP.getCode().equals(notifyConfigVO.getNotifyType()) ? notifyConfigVO.getNotifyUrl() : null);
             notifyTask.setNotifyCount(0);
             notifyTask.setNotifyStatus(0);
-            notifyTask.setUuid(groupBuyTeamEntity.getTeamId() + Constants.UNDERLINE + TaskNotifyCategoryEnumVO.TRADE_SETTLEMENT.getCode() + Constants.UNDERLINE + tradePaySuccessEntity.getOutTradeNo());
+            notifyTask.setUuid(groupBuyTeamEntity.getTeamId() + Constants.UNDERLINE + TaskNotifyCategoryEnumVO.TRADE_SETTLEMENT.getCode() + Constants.UNDERLINE + tradePaySuccessEntity.getOrderId());
             notifyTask.setParameterJson(JSON.toJSONString(new HashMap<String, Object>() {{
                 put("teamId", groupBuyTeamEntity.getTeamId());
-                put("outTradeNoList", outTradeNoList);
+                put("orderIdList", orderIdList);
             }}));
             notifyTaskDao.insert(notifyTask);
 
@@ -357,12 +357,6 @@ public class TradeRepository implements ITradeRepository {
     }
 
     @Override
-    public String queryOutTradeNoByOrderId(String userId, String orderId) {
-        TOrderGroup res = tOrderGroupDao.queryByUserIdAndOrderId(userId, orderId);
-        return null == res ? null : res.getOutTradeNo();
-    }
-
-    @Override
     public int updateTeamStatus2Fail(String teamId) {
         return groupBuyOrderDao.updateOrderStatus2Fail(teamId);
     }
@@ -378,7 +372,6 @@ public class TradeRepository implements ITradeRepository {
             result.add(TeamOrderEntity.builder()
                     .orderId(po.getOrderId())
                     .userId(po.getUserId())
-                    .outTradeNo(po.getOutTradeNo())
                     .status(po.getStatus())
                     .build());
         }
@@ -396,7 +389,6 @@ public class TradeRepository implements ITradeRepository {
             result.add(TeamOrderEntity.builder()
                     .orderId(po.getOrderId())
                     .userId(po.getUserId())
-                    .outTradeNo(po.getOutTradeNo())
                     .status(po.getStatus())
                     .build());
         }
@@ -414,20 +406,20 @@ public class TradeRepository implements ITradeRepository {
     }
 
     @Override
-    public int updateOrder2Refunded(String outTradeNo) {
-        return tOrderGroupDao.update2Refunded(outTradeNo);
+    public int updateOrder2Refunded(String orderId) {
+        return tOrderGroupDao.update2Refunded(orderId);
     }
 
     @Transactional(timeout = 3000)
     @Override
-    public boolean closeUnpaidOrderAndReleaseStock(String outTradeNo) {
-        int closed = tOrderGroupDao.closeUnpaidByOutTradeNo(outTradeNo);
+    public boolean closeUnpaidOrderAndReleaseStock(String orderId) {
+        int closed = tOrderGroupDao.closeUnpaidByOrderId(orderId);
         if (closed == 0) {
             return false;
         }
-        Map<String, Object> teamInfo = tOrderGroupDao.queryTeamInfoByOutTradeNo(outTradeNo);
+        Map<String, Object> teamInfo = tOrderGroupDao.queryTeamInfoByOrderId(orderId);
         if (teamInfo == null || teamInfo.get("teamId") == null) {
-            log.warn("拼团关单回退占用库存跳过，未查到 teamId outTradeNo:{}", outTradeNo);
+            log.warn("拼团关单回退占用库存跳过，未查到 teamId orderId:{}", orderId);
             return true;
         }
         String teamId = String.valueOf(teamInfo.get("teamId"));

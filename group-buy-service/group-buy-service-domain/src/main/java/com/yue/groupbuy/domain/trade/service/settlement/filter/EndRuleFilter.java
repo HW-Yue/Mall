@@ -14,7 +14,7 @@ public class EndRuleFilter implements ILogicHandler<TradeSettlementRuleCommandEn
 
     @Override
     public TradeSettlementRuleFilterBackEntity apply(TradeSettlementRuleCommandEntity requestParameter, TradeSettlementRuleFilterFactory.SettlementLinkContext dynamicContext) throws Exception {
-        log.info("结算规则过滤-结束节点 userId:{} outTradeNo:{}", requestParameter.getUserId(), requestParameter.getOutTradeNo());
+        log.info("结算规则过滤-结束节点 userId:{} orderId:{}", requestParameter.getUserId(), requestParameter.getOrderId());
 
         GroupBuyTeamEntity groupBuyTeamEntity = dynamicContext.getGroupBuyTeamEntity();
 

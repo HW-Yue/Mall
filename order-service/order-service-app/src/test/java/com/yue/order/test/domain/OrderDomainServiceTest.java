@@ -78,27 +78,15 @@ class OrderDomainServiceTest {
     }
 
     @Test
-    void createOrderRejectsOutTradeNoUsedByDifferentUser() {
-        when(orderRepository.queryByOutTradeNo("OUT-1"))
-                .thenReturn(OrderEntity.builder().userId("other").orderId("OID").build());
-
-        CreateOrderCommand command = createCommand("group_buy");
-        command.setOutTradeNo("OUT-1");
-
-        assertThatThrownBy(() -> service.createOrder(command))
-                .isInstanceOf(AppException.class)
-                .hasMessageContaining("其他用户");
-    }
-
-    @Test
     void submitNormalOrderFromMallBuildsPendingMessage() {
         CreateOrderCommand command = createCommand("normal");
-        command.setOutTradeNo("OUT-2");
 
         NormalOrderEnqueueResult result = service.submitNormalOrderFromMall(command);
 
-        assertThat(result.getOutTradeNo()).isEqualTo("OUT-2");
         assertThat(result.getOrderId()).isNotBlank();
+        ArgumentCaptor<String> outTradeNoCaptor = ArgumentCaptor.forClass(String.class);
+        verify(orderCacheRepository).markPending(eq("u1"), eq(result.getOrderId()), outTradeNoCaptor.capture(), any());
+        assertThat(outTradeNoCaptor.getValue()).startsWith("OT");
         verify(normalOrderPendingPublisher).publishInsertSync(contains("\"marketType\":\"normal\""));
     }
 
@@ -160,12 +148,13 @@ class OrderDomainServiceTest {
     @Test
     void createOrderGroupBuyMarksRedisAndPublishesMq() {
         CreateOrderCommand command = createCommand("group_buy");
-        command.setOutTradeNo("OUT-GB");
 
         String orderId = service.createOrder(command);
 
         assertThat(orderId).isNotBlank();
-        verify(orderCacheRepository).markPending(eq("u1"), eq(orderId), eq("OUT-GB"), any());
+        ArgumentCaptor<String> outTradeNoCaptor = ArgumentCaptor.forClass(String.class);
+        verify(orderCacheRepository).markPending(eq("u1"), eq(orderId), outTradeNoCaptor.capture(), any());
+        assertThat(outTradeNoCaptor.getValue()).startsWith("OT");
         verify(groupBuyOrderPendingPublisher).publishInsertSync(contains("\"marketType\":\"group_buy\""));
         verify(orderRepository, never()).saveOrder(any());
     }
@@ -173,26 +162,24 @@ class OrderDomainServiceTest {
     @Test
     void createOrderGroupBuyClearsMarkerWhenMqFails() {
         CreateOrderCommand command = createCommand("group_buy");
-        command.setOutTradeNo("OUT-GB-FAIL");
         doThrow(new RuntimeException("mq down")).when(groupBuyOrderPendingPublisher).publishInsertSync(anyString());
 
         assertThatThrownBy(() -> service.createOrder(command))
                 .isInstanceOf(RuntimeException.class);
 
-        verify(orderCacheRepository).markPending(eq("u1"), anyString(), eq("OUT-GB-FAIL"), any());
+        verify(orderCacheRepository).markPending(eq("u1"), anyString(), anyString(), any());
         verify(orderCacheRepository).clearPending(eq("u1"), anyString());
     }
 
     @Test
     void submitNormalOrderFromMallClearsMarkerWhenMqFails() {
         CreateOrderCommand command = createCommand("normal");
-        command.setOutTradeNo("OUT-NM-FAIL");
         doThrow(new RuntimeException("mq down")).when(normalOrderPendingPublisher).publishInsertSync(anyString());
 
         assertThatThrownBy(() -> service.submitNormalOrderFromMall(command))
                 .isInstanceOf(RuntimeException.class);
 
-        verify(orderCacheRepository).markPending(eq("u1"), anyString(), eq("OUT-NM-FAIL"), any());
+        verify(orderCacheRepository).markPending(eq("u1"), anyString(), anyString(), any());
         verify(orderCacheRepository).clearPending(eq("u1"), anyString());
     }
 

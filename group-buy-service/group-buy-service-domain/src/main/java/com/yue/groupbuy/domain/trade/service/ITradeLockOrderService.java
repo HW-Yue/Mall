@@ -8,7 +8,7 @@ import com.yue.groupbuy.domain.trade.model.valobj.GroupBuyProgressVO;
 
 public interface ITradeLockOrderService {
 
-    MarketPayOrderEntity queryNoPayMarketPayOrderByOutTradeNo(String userId, String outTradeNo);
+    MarketPayOrderEntity queryNoPayMarketPayOrderByOrderId(String userId, String orderId);
 
     GroupBuyProgressVO queryGroupBuyProgress(String teamId);
 

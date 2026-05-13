@@ -5,7 +5,7 @@
 ## 页面入口
 
 - `index.html`：运行工作台
-- `runs.html`：运行历史
+- `runs.html`：运行历史（优先看当前进程内 recent runs，再补充 DB 摘要，详情仍查 ES）
 - `approvals.html`：审批队列
 - `tools.html`：工具调用
 
@@ -14,7 +14,7 @@
 默认请求：
 
 ```text
-http://localhost:8090/gw/api/v1/ops-ai
+http://100.86.250.112:8090/gw/api/v1/ops-ai
 ```
 
 覆盖优先级：
@@ -26,7 +26,7 @@ http://localhost:8090/gw/api/v1/ops-ai
 示例：
 
 ```text
-http://localhost:8089/index.html?api=http://127.0.0.1:8090/gw/api/v1/ops-ai
+http://100.86.250.112:8089/index.html?api=http://100.86.250.112:8090/gw/api/v1/ops-ai
 ```
 
 ## 本地打开

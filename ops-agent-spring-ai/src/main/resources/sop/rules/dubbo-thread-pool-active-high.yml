@@ -20,7 +20,36 @@ sop-markdown: |
   给出容量不足、下游慢、流量突刺或阈值过紧的判断。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "dubbo_thread_pool_active_size / clamp_min(dubbo_thread_pool_max_size, 1)"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboThreadPoolActiveHigh。
+      查询 ${primaryService} 的 dubbo active/max/queue、RPC RT/QPS、失败率，判断容量不足、流量突刺或慢调用。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboThreadPoolActiveHigh。
+      检索 ${primaryService} 的线程池耗尽、timeout、RejectedExecution、业务慢日志，按接口归纳慢点。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 DubboThreadPoolActiveHigh。
+      查询 ${primaryService} 实例数和 Dubbo 线程池、协议端口相关配置，只读确认是否缩容或配置变化。
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 DubboThreadPoolActiveHigh。
+      若慢点指向 DB，排查 slow query、processlist、locks。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 DubboThreadPoolActiveHigh。
+      若慢点指向 Redis，排查 slowlog、blocked clients、memory。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 DubboThreadPoolActiveHigh。
+      查看 ${primaryService} 容器 CPU、内存、重启和关键日志，判断单机过载。
+    on-error: continue

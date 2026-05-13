@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.skill.mysql;
 
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
+import com.yue.opsagent.springai.skill.support.SkillToolHelp;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -11,6 +12,9 @@ import java.util.Set;
 public class MysqlSkillRegistry implements OpsSkillRegistry {
 
     public static final String SKILL_NAME = "mysql_inspect";
+
+    private static final Set<String> DATA_TOOLS =
+            Set.of("mysql_processlist", "mysql_status", "mysql_locks", "mysql_slow_query", "mysql_explain_sql");
 
     private final MysqlToolkit toolkit;
 
@@ -25,17 +29,12 @@ public class MysqlSkillRegistry implements OpsSkillRegistry {
 
     @Override
     public String description() {
-        return "MySQL 只读：会话、状态、锁、慢查询样例";
+        return "MySQL 只读：会话、状态、锁、慢查询样例、SELECT 执行计划";
     }
 
     @Override
     public String promptFragment() {
-        return """
-                - mysql_processlist: 无参
-                - mysql_status: pattern(string 可选，传给 SHOW GLOBAL STATUS LIKE)
-                - mysql_locks: performance_schema.metadata_locks 样例
-                - mysql_slow_query: mysql.slow_log 最近行（需开启 slow_log 表）
-                """;
+        return MysqlToolDocumentation.aggregatePromptFragment();
     }
 
     @Override
@@ -45,33 +44,33 @@ public class MysqlSkillRegistry implements OpsSkillRegistry {
                 - mysql_status: 全局状态
                 - mysql_locks: 元数据锁
                 - mysql_slow_query: 慢查询表样例
+                - mysql_explain_sql: SELECT 执行计划(JSON)
                 """;
     }
 
     @Override
-    public String toolSpecification(String toolName) {
-        return switch (toolName) {
-            case "mysql_processlist" -> "mysql_processlist: args {}";
-            case "mysql_status" -> "mysql_status: pattern 可选";
-            case "mysql_locks" -> "mysql_locks: args {}";
-            case "mysql_slow_query" -> "mysql_slow_query: args {}";
-            default -> OpsSkillRegistry.super.toolSpecification(toolName);
-        };
+    public Set<String> toolNames() {
+        return SkillToolHelp.toolNamesWithHelp(DATA_TOOLS, this);
     }
 
     @Override
-    public Set<String> toolNames() {
-        return Set.of("mysql_processlist", "mysql_status", "mysql_locks", "mysql_slow_query");
+    public String documentationForDataTool(String dataToolName) {
+        return MysqlToolDocumentation.docFor(dataToolName);
     }
 
     @Override
     public ToolResult execute(String toolName, Map<String, Object> args) {
+        ToolResult help = SkillToolHelp.tryExecute(this, toolName, args);
+        if (help != null) {
+            return help;
+        }
         Map<String, Object> a = args == null ? Map.of() : args;
         return switch (toolName) {
             case "mysql_processlist" -> toolkit.processlist();
             case "mysql_status" -> toolkit.globalStatusLike(str(a, "pattern"));
             case "mysql_locks" -> toolkit.metadataLocks();
             case "mysql_slow_query" -> toolkit.slowQuerySample();
+            case "mysql_explain_sql" -> toolkit.explainSql(str(a, "sql"));
             default -> ToolResult.error("unknown tool: " + toolName);
         };
     }

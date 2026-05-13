@@ -15,5 +15,4 @@ import lombok.NoArgsConstructor;
 public class NormalOrderEnqueueResult {
 
     private String orderId;
-    private String outTradeNo;
 }

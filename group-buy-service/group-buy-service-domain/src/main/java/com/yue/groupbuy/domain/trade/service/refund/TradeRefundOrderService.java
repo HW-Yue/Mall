@@ -29,7 +29,7 @@ public class TradeRefundOrderService implements ITradeRefundOrderService {
 
     @Override
     public TradeRefundBehaviorEntity refundOrder(TradeRefundCommandEntity tradeRefundCommandEntity) throws Exception {
-        log.info("逆向流程，退单操作 userId:{} outTradeNo:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOutTradeNo());
+        log.info("逆向流程，退单操作 userId:{} orderId:{}", tradeRefundCommandEntity.getUserId(), tradeRefundCommandEntity.getOrderId());
         return tradeRefundRuleFilter.apply(tradeRefundCommandEntity, new TradeRefundRuleFilterFactory.RefundLinkContext());
     }
 

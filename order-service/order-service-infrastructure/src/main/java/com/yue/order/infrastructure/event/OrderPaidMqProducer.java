@@ -40,16 +40,18 @@ public class OrderPaidMqProducer implements IOrderPaidPublisher {
         Map<String, Object> msg = new HashMap<>();
         msg.put("userId", userId);
         msg.put("orderId", orderId);
-        msg.put("outTradeNo", outTradeNo);
+        if (!"group_buy".equals(marketType) && !"seckill".equals(marketType)) {
+            msg.put("outTradeNo", outTradeNo);
+        }
         msg.put("marketType", marketType);
         msg.put("outTradeTime", outTradeTime != null ? outTradeTime.getTime() : null);
 
         String messageBody = JSON.toJSONString(msg);
         try {
             rocketMQTemplate.convertAndSend(topic, messageBody);
-            log.info("publishOrderPaid topic:{} outTradeNo:{}", topic, outTradeNo);
+            log.info("publishOrderPaid topic:{} orderId:{}", topic, orderId);
         } catch (Exception e) {
-            log.error("publishOrderPaid 失败 topic:{} outTradeNo:{}", topic, outTradeNo, e);
+            log.error("publishOrderPaid 失败 topic:{} orderId:{}", topic, orderId, e);
         }
     }
 

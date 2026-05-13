@@ -20,7 +20,31 @@ sop-markdown: |
   写清是否影响新发布/新调用、失败集中服务、建议恢复动作。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "{__name__=~\"dubbo_metadata_.*failed_total\"}"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboMetadataFailure。
+      查询 dubbo metadata failed 指标、up 和相关服务错误率，判断失败是否集中在 ${primaryService} 或全局扩散。
+  - type: delegate_subagent
+    sub-agent-id: nacos_config
+    task: |
+      告警 DubboMetadataFailure。
+      查询 ${primaryService} 实例、注册中心连接配置、metadata/report/registry 相关配置，确认地址、namespace、group 是否异常。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboMetadataFailure。
+      检索 ${primaryService} 的 metadata、MetadataReport、ServiceNotFound、NacosException、serialization 相关日志。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: docker_ops
+    task: |
+      告警 DubboMetadataFailure。
+      查看 ${primaryService} 和 Nacos 容器的存在性、重启、网络或资源异常证据。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboMetadataFailure。
+      复核 consumer/provider 错误率和 RT 是否同步升高，判断元数据失败是否已影响新调用或新实例发现。
+    on-error: continue

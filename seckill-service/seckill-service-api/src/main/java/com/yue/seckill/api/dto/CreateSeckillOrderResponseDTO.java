@@ -13,5 +13,4 @@ public class CreateSeckillOrderResponseDTO {
 
     private String seckillToken;
     private String orderId;
-    private String outTradeNo;
 }

@@ -11,7 +11,6 @@ import com.yue.groupbuy.domain.trade.model.valobj.NotifyTypeEnumVO;
 import com.yue.groupbuy.types.enums.ResponseCode;
 import com.yue.groupbuy.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -48,10 +47,6 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
 
         log.info("拼团锁单开始 userId:{} activityId:{}", userId, activityId);
 
-        if (StringUtils.isBlank(command.getOutTradeNo())) {
-            command.setOutTradeNo(RandomStringUtils.randomNumeric(12));
-        }
-
         // 查询活动定价
         ActivityPricingEntity pricing = repository.queryActivityPricing(activityId, goodsId);
         if (pricing == null) {
@@ -79,7 +74,6 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
                 .originalPrice(pricing.getOriginalPrice())
                 .deductionPrice(pricing.getDeductionPrice())
                 .payPrice(pricing.getPayPrice())
-                .outTradeNo(command.getOutTradeNo())
                 .notifyConfigVO(NotifyConfigVO.builder()
                         .notifyType(NotifyTypeEnumVO.MQ.getCode())
                         .notifyUrl(null)
@@ -102,7 +96,7 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
             orderId = orderServicePort.createOrder(
                     userId, goodsId, pricing.getActivityName(), null,
                     pricing.getOriginalPrice(), pricing.getDeductionPrice(), pricing.getPayPrice(),
-                    command.getSource(), command.getChannel(), command.getOutTradeNo(),
+                    command.getSource(), command.getChannel(),
                     marketPayOrderEntity.getTeamId(), activityId,
                     payActivityEntity.getStartTime(), payActivityEntity.getEndTime());
         } catch (Exception e) {
@@ -129,20 +123,20 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
 
     @Override
     public void settlementGroupBuyOrder(SettlementCommand command) {
-        log.info("拼团结算开始 userId:{} outTradeNo:{}", command.getUserId(), command.getOutTradeNo());
+        log.info("拼团结算开始 userId:{} orderId:{}", command.getUserId(), command.getOrderId());
 
         TradePaySuccessEntity tradePaySuccessEntity = TradePaySuccessEntity.builder()
                 .source("")
                 .channel("")
                 .userId(command.getUserId())
-                .outTradeNo(command.getOutTradeNo())
+                .orderId(command.getOrderId())
                 .outTradeTime(command.getOutTradeTime())
                 .build();
 
         try {
             tradeSettlementOrderService.settlementMarketPayOrder(tradePaySuccessEntity);
         } catch (Exception e) {
-            log.error("拼团结算失败 userId:{} outTradeNo:{}", command.getUserId(), command.getOutTradeNo(), e);
+            log.error("拼团结算失败 userId:{} orderId:{}", command.getUserId(), command.getOrderId(), e);
             if (e instanceof AppException) throw (AppException) e;
         }
     }
@@ -151,20 +145,16 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
     public void refundGroupBuyOrder(String userId, String orderId) {
         log.info("拼团退款开始 userId:{} orderId:{}", userId, orderId);
 
-        String outTradeNo = tradeRepository.queryOutTradeNoByOrderId(userId, orderId);
-        if (StringUtils.isBlank(outTradeNo)) {
-            throw new AppException(ResponseCode.ORDER_NOT_FOUND);
-        }
-
         TradeRefundCommandEntity refundCommandEntity = TradeRefundCommandEntity.builder()
                 .userId(userId)
-                .outTradeNo(outTradeNo)
+                .orderId(orderId)
                 .source("")
                 .channel("")
                 .build();
 
         try {
             tradeRefundOrderService.refundOrder(refundCommandEntity);
+            orderServicePort.refundExecute(userId, orderId);
         } catch (Exception e) {
             log.error("拼团退款失败 userId:{} orderId:{}", userId, orderId, e);
             if (e instanceof AppException) throw (AppException) e;
@@ -182,27 +172,25 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
             return;
         }
 
-        // 2. 处理未支付订单：发 order-close-group-buy MQ，由本服务 listener 统一原子关单 + 回退 lock_count
+        // 2. 处理未支付订单：统一调用 order-service 执行关闭/退款，由订单侧再回推 market 事件
         List<TeamOrderEntity> unpaidOrders = tradeRepository.queryUnpaidOrdersByTeamId(teamId);
         if (unpaidOrders != null && !unpaidOrders.isEmpty()) {
             for (TeamOrderEntity order : unpaidOrders) {
                 try {
-                    groupBuyRefundMqProducer.sendOrderCloseMessage(order.getOutTradeNo(), order.getUserId());
+                    orderServicePort.refundExecute(order.getUserId(), order.getOrderId());
                 } catch (Exception e) {
                     log.error("拼团超时退款处理，发送未支付关单 MQ 失败 teamId:{} userId:{} orderId:{}", teamId, order.getUserId(), order.getOrderId(), e);
                 }
             }
         }
 
-        // 3. 处理已支付订单：本地标记退款处理中 + 发送 pay-refund-group-buy MQ
+        // 3. 处理已支付订单：本地标记退款处理中 + 调 order-service 统一退款
         List<TeamOrderEntity> paidOrders = tradeRepository.queryPaidOrdersByTeamId(teamId);
         if (paidOrders != null && !paidOrders.isEmpty()) {
             for (TeamOrderEntity order : paidOrders) {
                 try {
-                    // 本地先更新为退款处理中，最终完成以后再由 pay/order 链路确认
                     tradeRepository.updateOrder2Refund(order.getUserId(), order.getOrderId());
-                    // 发送 MQ 给 order-service 和 pay-service
-                    groupBuyRefundMqProducer.sendPayRefundMessage(order.getOutTradeNo(), order.getUserId());
+                    orderServicePort.refundExecute(order.getUserId(), order.getOrderId());
                 } catch (Exception e) {
                     log.error("拼团超时退款处理，发送已支付退款 MQ 失败 teamId:{} userId:{} orderId:{}", teamId, order.getUserId(), order.getOrderId(), e);
                 }
@@ -216,23 +204,23 @@ public class GroupBuyDomainService implements IGroupBuyDomainService {
     }
 
     @Override
-    public void handlePayRefund(String outTradeNo) {
-        int updated = tradeRepository.updateOrder2Refunded(outTradeNo);
+    public void handlePayRefund(String orderId) {
+        int updated = tradeRepository.updateOrder2Refunded(orderId);
         if (updated == 0) {
-            log.info("拼团退款完成回执跳过，订单状态未命中退款处理中 outTradeNo:{}", outTradeNo);
+            log.info("拼团退款完成回执跳过，订单状态未命中退款处理中 orderId:{}", orderId);
             return;
         }
-        log.info("拼团退款完成回执处理成功 outTradeNo:{}", outTradeNo);
+        log.info("拼团退款完成回执处理成功 orderId:{}", orderId);
     }
 
     @Override
-    public void handleOrderClose(String outTradeNo) {
-        boolean done = tradeRepository.closeUnpaidOrderAndReleaseStock(outTradeNo);
+    public void handleOrderClose(String orderId) {
+        boolean done = tradeRepository.closeUnpaidOrderAndReleaseStock(orderId);
         if (!done) {
-            log.info("拼团关单跳过，订单非未支付态 outTradeNo:{}", outTradeNo);
+            log.info("拼团关单跳过，订单非未支付态 orderId:{}", orderId);
             return;
         }
-        log.info("拼团关单完成，已回退占用库存 outTradeNo:{}", outTradeNo);
+        log.info("拼团关单完成，已回退占用库存 orderId:{}", orderId);
     }
 
     private void scheduleTeamTimeoutIfNecessary(String teamId) {

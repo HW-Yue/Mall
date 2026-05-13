@@ -155,10 +155,10 @@ services:
     container_name: nexus-ops-agent-spring-ai
     environment:
       TZ: Asia/Shanghai
-      JAVA_OPTS: "${OPS_AGENT_JAVA_OPTS:--Xms256m -Xmx512m -server -XX:+HeapDumpOnOutOfMemoryError -javaagent:/opt/skywalking/skywalking-agent/skywalking-agent.jar -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-100.86.250.112:11800} -Dskywalking.agent.service_name=ops-agent-spring-ai -Dskywalking.trace.ignore_path=/actuator/**,*:/actuator/**,SpringScheduled/**,HikariCP/**,SpringCloudGateway/GatewayFilter,Mysql/JDBC/PreparedStatement/execute}"
+      JAVA_OPTS: "${OPS_AGENT_JAVA_OPTS:--Xms256m -Xmx512m -server -XX:+HeapDumpOnOutOfMemoryError -javaagent:/opt/skywalking/skywalking-agent/skywalking-agent.jar -Dskywalking.collector.backend_service=${SKYWALKING_BACKEND_SERVICE:-skywalking-oap:11800} -Dskywalking.agent.service_name=ops-agent-spring-ai -Dskywalking.trace.ignore_path=/actuator/**,*:/actuator/**,SpringScheduled/**,HikariCP/**,SpringCloudGateway/GatewayFilter,Mysql/JDBC/PreparedStatement/execute}"
       NACOS_SERVER_ADDR: "${NACOS_SERVER_ADDR:-nacos:8848}"
       OPS_AI_NACOS_SERVER_ADDR: "${OPS_AI_NACOS_SERVER_ADDR:-nacos:8848}"
-      PARAMS: "--server.port=8096 --spring.profiles.active=${SPRING_PROFILES_ACTIVE:-test} --rocketmq.name-server=${ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876} --ops-ai.otlp.enabled=${OPS_AI_OTLP_ENABLED:-true} --ops-ai.otlp.endpoint=${OPS_AI_OTLP_ENDPOINT:-http://100.86.250.112:11800} --ops-ai.otlp.service-name=${OPS_AI_OTLP_SERVICE_NAME:-ops-agent-spring-ai}"
+      PARAMS: "--server.port=8096 --spring.profiles.active=${SPRING_PROFILES_ACTIVE:-test} --rocketmq.name-server=${ROCKETMQ_NAME_SERVER:-rmq-namesrv:9876} --ops-ai.otlp.enabled=${OPS_AI_OTLP_ENABLED:-true} --ops-ai.otlp.endpoint=${OPS_AI_OTLP_ENDPOINT:-http://skywalking-oap:11800} --ops-ai.otlp.service-name=${OPS_AI_OTLP_SERVICE_NAME:-ops-agent-spring-ai}"
     ports:
       - "${OPS_AGENT_PORT:-8096}:8096"
     volumes:

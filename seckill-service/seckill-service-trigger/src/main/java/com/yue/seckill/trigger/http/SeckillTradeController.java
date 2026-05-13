@@ -65,7 +65,6 @@ public class SeckillTradeController implements ISeckillTradeController {
                     .data(CreateSeckillOrderResponseDTO.builder()
                             .seckillToken(result.getSeckillToken())
                             .orderId(result.getOrderId())
-                            .outTradeNo(result.getOutTradeNo())
                             .build())
                     .build();
         } catch (AppException e) {

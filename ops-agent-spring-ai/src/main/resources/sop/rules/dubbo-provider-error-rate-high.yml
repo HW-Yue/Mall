@@ -20,12 +20,37 @@ sop-markdown: |
   结论区分 provider 业务异常、下游依赖、实例异常、调用方流量突增；列出接口、方法、主要异常和下一步。
 
 steps:
-  - skill: metrics_ops
-    tool: business_metrics
-    args:
-      promql: "dubbo_provider_requests_failed_total"
+  - type: delegate_subagent
+    sub-agent-id: metrics_ops
+    task: |
+      告警 DubboProviderErrorRateHigh。
+      查询 ${primaryService} 的 provider 错误率、QPS、interface、method，判断是否集中单接口、单实例或伴随流量突增。
   - type: delegate_subagent
     sub-agent-id: nacos_config
     task: |
-      查询 Nacos 中 ${application} 的健康实例，核对是否存在实例数下降、注册 IP/端口异常。
-    context: {}
+      告警 DubboProviderErrorRateHigh。
+      查询 Nacos 中 ${primaryService} 的健康实例，核对实例数下降、注册 IP/端口异常、发布或扩缩容线索。
+  - type: delegate_subagent
+    sub-agent-id: elasticsearch_ops
+    task: |
+      告警 DubboProviderErrorRateHigh。
+      检索 ${primaryService} 的 ERROR、RpcException、业务异常、timeout，按接口和方法归纳主要异常。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: mysql_inspect
+    task: |
+      告警 DubboProviderErrorRateHigh。
+      仅当日志或指标指向 DB 时，排查 processlist、slow query、锁等待。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: redis_inspect
+    task: |
+      告警 DubboProviderErrorRateHigh。
+      仅当日志或指标指向 Redis 时，排查 slowlog、client list、memory。
+    on-error: continue
+  - type: delegate_subagent
+    sub-agent-id: rocketmq_inspect
+    task: |
+      告警 DubboProviderErrorRateHigh。
+      仅当日志或 labels 中出现 topic/group 线索时，结合 ${topic} / ${consumerGroup} 排查 MQ 发送或消费异常。
+    on-error: continue
