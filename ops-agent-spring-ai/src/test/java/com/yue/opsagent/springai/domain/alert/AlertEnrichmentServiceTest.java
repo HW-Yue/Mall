@@ -77,4 +77,20 @@ class AlertEnrichmentServiceTest {
         assertThat(context.table()).isEqualTo("t_order");
         assertThat(context.pool()).isEqualTo("order_hikaricp");
     }
+
+    @Test
+    void resolvesServiceFromContainerAliasInText() {
+        AlertEvent event = new AlertEvent(
+                "firing",
+                "PlainTextOpsRequest",
+                "warning",
+                "",
+                Map.of("category", "text"),
+                Map.of("summary", "nexus-order-service 最近下单接口超时"));
+
+        EnrichedAlertContext context = service.enrich(event);
+
+        assertThat(context.primaryService()).isEqualTo("order-service");
+        assertThat(context.candidateServices()).contains("order-service");
+    }
 }

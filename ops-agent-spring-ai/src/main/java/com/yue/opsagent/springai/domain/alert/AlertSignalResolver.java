@@ -46,6 +46,13 @@ public class AlertSignalResolver {
         addService(values, event.application());
         addService(values, labels.get("application"));
         addService(values, labels.get("app"));
+        for (String alias : catalog.knownServiceAliases()) {
+            for (String text : texts) {
+                if (containsServiceAlias(text, alias)) {
+                    addService(values, alias);
+                }
+            }
+        }
         for (String text : texts) {
             addService(values, text);
         }
@@ -102,6 +109,32 @@ public class AlertSignalResolver {
 
     private static boolean containsToken(String text, String token) {
         return text != null && token != null && !token.isBlank() && text.contains(token);
+    }
+
+    private static boolean containsServiceAlias(String text, String alias) {
+        if (text == null || alias == null || alias.isBlank()) {
+            return false;
+        }
+        if (alias.indexOf('/') >= 0 || alias.indexOf('.') >= 0) {
+            return text.contains(alias);
+        }
+        int idx = text.indexOf(alias);
+        while (idx >= 0) {
+            boolean leftBoundary = idx == 0 || !isAsciiLetterOrDigit(text.charAt(idx - 1));
+            int end = idx + alias.length();
+            boolean rightBoundary = end >= text.length() || !isAsciiLetterOrDigit(text.charAt(end));
+            if (leftBoundary && rightBoundary) {
+                return true;
+            }
+            idx = text.indexOf(alias, idx + 1);
+        }
+        return false;
+    }
+
+    private static boolean isAsciiLetterOrDigit(char ch) {
+        return (ch >= 'a' && ch <= 'z')
+                || (ch >= 'A' && ch <= 'Z')
+                || (ch >= '0' && ch <= '9');
     }
 
     private static String extractUri(String text) {

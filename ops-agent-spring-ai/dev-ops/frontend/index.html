@@ -37,13 +37,28 @@
             <div class="panel-head">
                 <div>
                     <h2>运行工作台</h2>
-                    <p>标准告警先硬匹配 SOP，纯文本直接进入 AI SOP 选择。</p>
+                    <p id="route-summary">读取预警策略中；纯文本请求固定允许自主规划。</p>
                 </div>
                 <div class="segmented" role="group" aria-label="请求类型">
                     <button type="button" class="segment active" data-route-mode="alert">Alert JSON</button>
                     <button type="button" class="segment" data-route-mode="text">Plain Text</button>
                 </div>
             </div>
+
+            <section class="policy-row" aria-label="预警路由策略">
+                <div class="policy-copy">
+                    <div class="policy-title">预警自主规划</div>
+                    <p class="policy-desc" id="alert-policy-desc">关闭时仅允许硬匹配；开启后允许参考 SOP 自主规划。纯文本请求始终允许自主规划。</p>
+                </div>
+                <label class="switch-card" for="alert-autonomous-toggle">
+                    <input type="checkbox" id="alert-autonomous-toggle">
+                    <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+                    <span class="switch-meta">
+                        <strong id="alert-policy-state">读取中</strong>
+                        <span>仅影响结构化预警</span>
+                    </span>
+                </label>
+            </section>
 
             <div class="prompt-row">
                 <label class="example-picker">

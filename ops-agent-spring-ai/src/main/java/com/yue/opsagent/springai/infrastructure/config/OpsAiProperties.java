@@ -125,8 +125,15 @@ public class OpsAiProperties {
     }
 
     public static class Alert {
-        /** react: SOP 注入 OpsAgent ReAct；deterministic: 逐步 SopStepRunner */
+        /**
+         * 兼容旧配置：
+         * react -> 结构化告警默认允许自主规划；
+         * deterministic -> 结构化告警默认仅允许硬匹配。
+         * 新代码优先读取 autonomousPlanningEnabled。
+         */
         private String mode = "deterministic";
+        /** 结构化告警是否允许参考 SOP 自主规划；纯文本请求固定走自主规划。 */
+        private boolean autonomousPlanningEnabled = false;
 
         public String getMode() {
             return mode;
@@ -134,6 +141,14 @@ public class OpsAiProperties {
 
         public void setMode(String mode) {
             this.mode = mode;
+        }
+
+        public boolean isAutonomousPlanningEnabled() {
+            return autonomousPlanningEnabled;
+        }
+
+        public void setAutonomousPlanningEnabled(boolean autonomousPlanningEnabled) {
+            this.autonomousPlanningEnabled = autonomousPlanningEnabled;
         }
     }
 

@@ -2,20 +2,64 @@
   "serviceAliases": {
     "mall": "mall-service",
     "mall-service": "mall-service",
+    "nexus-mall": "mall-service",
     "order": "order-service",
     "order-service": "order-service",
+    "nexus-order-service": "order-service",
     "group-buy": "group-buy-service",
     "group_buy": "group-buy-service",
     "group-buy-service": "group-buy-service",
+    "nexus-group-buy-service": "group-buy-service",
     "seckill": "seckill-service",
     "seckill-service": "seckill-service",
+    "nexus-seckill-service": "seckill-service",
     "pay": "pay-service",
     "pay-service": "pay-service",
+    "nexus-pay": "pay-service",
     "gateway": "gateway",
     "springcloud-gateway": "gateway",
+    "nexus-gateway": "gateway",
     "ops-agent-spring-ai": "ops-agent-spring-ai",
     "yue-ops-agent": "ops-agent-spring-ai",
+    "nexus-ops-agent-spring-ai": "ops-agent-spring-ai",
     "shared": "shared"
+  },
+  "serviceProfiles": {
+    "mall-service": {
+      "application": "mall-service",
+      "composeService": "mall",
+      "containerName": "nexus-mall"
+    },
+    "order-service": {
+      "application": "order-service",
+      "composeService": "order-service",
+      "containerName": "nexus-order-service"
+    },
+    "group-buy-service": {
+      "application": "group-buy-service",
+      "composeService": "group-buy-service",
+      "containerName": "nexus-group-buy-service"
+    },
+    "seckill-service": {
+      "application": "seckill-service",
+      "composeService": "seckill-service",
+      "containerName": "nexus-seckill-service"
+    },
+    "pay-service": {
+      "application": "pay-service",
+      "composeService": "pay",
+      "containerName": "nexus-pay"
+    },
+    "gateway": {
+      "application": "springcloud-gateway",
+      "composeService": "gateway",
+      "containerName": "nexus-gateway"
+    },
+    "ops-agent-spring-ai": {
+      "application": "ops-agent-spring-ai",
+      "composeService": "ops-agent-spring-ai",
+      "containerName": "nexus-ops-agent-spring-ai"
+    }
   },
   "resourceOwners": {
     "/api/v1/mall/index/query_category_type_list": "mall-service",

@@ -12,6 +12,8 @@
 | POST | `/api/v1/approvals/{id}/approve` | 审批通过 |
 | POST | `/api/v1/approvals/{id}/reject` | 拒绝审批 |
 | POST | `/api/v1/ops/route-text` | 纯文本路由 |
+| GET | `/api/v1/ops/config/routing-policy` | 查看当前路由策略 |
+| PUT | `/api/v1/ops/config/routing-policy` | 动态更新预警自主规划开关 |
 | GET | `/api/v1/ops/runs/recent` | 查看当前进程内最近运行摘要 |
 | GET | `/api/v1/ops/runs/{runId}` | 查看运行状态 |
 | GET | `/api/v1/ops/runs/{runId}/events` | 运行事件流 |
@@ -22,10 +24,24 @@
 
 - 前端目录：`dev-ops/frontend/`
 - `index.html`：运行工作台
+- 运行工作台支持动态切换“预警仅硬匹配 / 预警参考 SOP 自主规划”；纯文本请求固定允许自主规划。
 - `runs.html`：运行历史，优先展示 `recent`，再补充 DB `history`
 - `approvals.html`：审批队列
 - `tools.html`：工具调用
 - 默认 API 基址：`http://127.0.0.1:8090/gw/api/v1/ops-ai`
+
+## 路由策略接口说明
+
+- `GET /api/v1/ops/config/routing-policy`
+  返回当前运行时路由策略快照。`alertAutonomousPlanningEnabled=false` 表示结构化预警仅允许硬匹配；纯文本请求固定允许自主规划。
+- `PUT /api/v1/ops/config/routing-policy`
+  请求体：
+  ```json
+  {
+    "alertAutonomousPlanningEnabled": true
+  }
+  ```
+  立即更新当前进程内的预警自主规划开关。该配置为运行时内存态，服务重启后会回到 `application.yml` 默认值。
 
 ## 运行历史接口说明
 

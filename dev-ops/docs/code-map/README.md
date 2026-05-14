@@ -10,6 +10,7 @@
 - [seckill-service](./seckill-service.md)
 - [mall](./mall.md)
 - [pay](./pay.md)
+- [ops-agent-spring-ai](../../ops-agent-spring-ai/README.md)
 
 ## 使用方式
 
@@ -17,6 +18,7 @@
 - 想看核心业务：再看 `domain/service`
 - 想看下游调用和 MQ：看 `infrastructure/adapter/port`、`infrastructure/event`、`trigger/listener`
 - 想看运行配置：看 `*-app/src/main/resources/application-*.yml`
+- 想看运维 Agent 的技能体系和告警编排：先看 `ops-agent-spring-ai/README.md`
 
 ## 维护规则
 

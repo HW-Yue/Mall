@@ -8,9 +8,10 @@
 
 - Spring Boot + Spring AI Alibaba 实现的运维 Agent
 - SOP 驱动的告警处理链路，支持规则匹配和 AI 辅助匹配
-- 进程内工具体系，覆盖 Docker、MySQL、Redis、Nacos、RocketMQ、Prometheus、Elasticsearch
+- 进程内工具体系，覆盖 Docker、MySQL、Redis、Nacos、RocketMQ、Prometheus、Elasticsearch，以及静态知识 Catalog
 - 审批流支持受控写操作，适合展示“安全可控的自动化”
 - 独立 Web 控制台，能直接演示对话、工具调用、审批队列和运行时间线
+- 运行工作台支持动态切换“预警仅硬匹配 / 预警参考 SOP 自主规划”
 - 可观测性接入了日志、Prometheus、OpenTelemetry / SkyWalking 相关链路
 
 ## 总体架构
@@ -29,7 +30,7 @@ flowchart LR
     Router --> Match[SOP 匹配<br/>硬匹配 + AI 匹配]
     Match --> React[OpsAgent / ParentReactAgent]
     React --> AgentTools[AgentToolRegistry]
-    AgentTools --> Skills[七域 Skill Registry]
+    AgentTools --> Skills[Skill Registry + Catalog Skill]
     Skills --> Exec[工具执行 / 受控写操作]
     Exec --> ApprovalFlow[审批队列]
 
@@ -65,7 +66,12 @@ sequenceDiagram
         Agent->>Tool: delegate tool / sub agent
         Tool-->>Agent: result
         Agent-->>Route: summary
-    else 未命中 SOP
+    else 文本预警
+        Route->>Agent: runForText(text, matchedSop)
+        Agent->>Tool: delegate tool / sub agent
+        Tool-->>Agent: result
+        Agent-->>Route: summary
+    else 结构化告警未命中 SOP
         Route-->>Route: 生成排查草案
     end
     Route-->>API: run session / result
@@ -100,6 +106,21 @@ flowchart TD
 - `domain/`：运行态、告警、审批等领域对象
 - `infrastructure/`：配置、日志、追踪、SOP 外部加载
 - `dev-ops/frontend/`：独立 Web 控制台
+
+## Skill 体系
+
+`ops-agent-spring-ai` 当前对外暴露 8 个技能域：
+
+- `docker_ops`：容器、进程、日志、资源和命令排查
+- `mysql_inspect`：MySQL 指标、慢查询、锁等待、连接池
+- `rocketmq_ops`：消息积压、消费异常、Topic / Group
+- `prometheus_ops`：业务指标、错误率、延迟、告警面板
+- `elasticsearch_ops`：日志检索、异常样本、关键字归因
+- `redis_inspect`：慢命令、阻塞客户端、连接和缓存问题
+- `nacos_config`：实例、注册、配置和受控写操作
+- `catalog_ops`：静态知识查询，负责服务归因、`application` / 容器名映射和资源 owner 反查
+
+其中 `catalog_ops` 不做运行时探测，只提供静态知识；文本预警场景应优先用它把服务和运行实体对齐，再决定调用哪个运行时技能。
 
 ## 前端页面
 
@@ -157,6 +178,8 @@ docker compose -f ../dev-ops/docker-compose-apps-test.yml up -d ops-agent-fronte
 | POST | `/api/v1/approvals/{id}/approve` | 审批通过 |
 | POST | `/api/v1/approvals/{id}/reject` | 拒绝审批 |
 | POST | `/api/v1/ops/route-text` | 纯文本路由 |
+| GET | `/api/v1/ops/config/routing-policy` | 查看当前路由策略 |
+| PUT | `/api/v1/ops/config/routing-policy` | 动态更新预警自主规划开关 |
 | GET | `/api/v1/ops/runs/{runId}` | 查看运行状态 |
 | GET | `/api/v1/ops/runs/{runId}/events` | 运行事件流 |
 | POST | `/api/v1/ops/runs/{runId}/cancel` | 取消运行 |

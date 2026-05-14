@@ -5,12 +5,14 @@ import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
 import com.yue.opsagent.springai.agent.react.ReactAgentSpec;
 import com.yue.opsagent.springai.agent.react.ReactRunner;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
+import com.yue.opsagent.springai.domain.alert.EnrichedAlertContext;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,51 +42,74 @@ public class OpsAgent {
     /**
      * 单次告警 + 匹配到的 SOP 规则（含 sopMarkdown）；在 finally 中清理线程上下文。
      */
-    public String runForAlert(AlertEvent event, OpsAiProperties.Sop.Rule rule) {
-        Map<String, Object> ctx = new HashMap<>();
-        ctx.put("alert", Map.of(
-                "status", event.status() == null ? "" : event.status(),
-                "alertname", event.alertname() == null ? "" : event.alertname(),
-                "severity", event.severity() == null ? "" : event.severity(),
-                "application", event.application() == null ? "" : event.application(),
-                "labels", event.labels() == null ? Map.of() : event.labels(),
-                "annotations", event.annotations() == null ? Map.of() : event.annotations()));
-        ctx.put("sopMarkdown", rule.getSopMarkdown() == null ? "" : rule.getSopMarkdown());
+    public String runForAlert(AlertEvent event, EnrichedAlertContext enrichment, OpsAiProperties.Sop.Rule rule) {
+        Map<String, Object> ctx = baseContext(event);
+        ctx.put("enrichment", enrichment == null ? EnrichedAlertContext.empty() : enrichment);
+        ctx.put("sopMarkdown", nullToEmpty(rule.getSopMarkdown()));
+        log.info("[OpsAgent] 开始处理告警 alertname={} application={} labels={} annotations={}",
+                event.alertname(),
+                event.application(),
+                event.labels(),
+                event.annotations());
+        return runReact(
+                "OpsAgent",
+                "ops-agent-react",
+                buildAlertSystemPrompt(rule),
+                buildAlertUserMessage(event, enrichment),
+                ctx,
+                event.alertname());
+    }
+
+    public String runForText(
+            String text,
+            AlertEvent event,
+            EnrichedAlertContext enrichment,
+            Map<String, Object> matchData,
+            String sopMarkdown) {
+        Map<String, Object> ctx = baseContext(event);
+        ctx.put("textInput", nullToEmpty(text));
+        ctx.put("match", matchData == null ? Map.of("matched", false) : new HashMap<>(matchData));
+        ctx.put("enrichment", enrichment == null ? EnrichedAlertContext.empty() : enrichment);
+        ctx.put("sopMarkdown", nullToEmpty(sopMarkdown));
+        log.info("[OpsAgent] 开始处理文本预警 textChars={} primaryService={} matched={}",
+                text == null ? 0 : text.length(),
+                enrichment == null ? "" : enrichment.primaryService(),
+                matchData != null && Boolean.TRUE.equals(matchData.get("matched")));
+        return runReact(
+                "OpsTextAgent",
+                "ops-text-react",
+                buildTextSystemPrompt(),
+                buildTextUserMessage(text, event, enrichment, matchData),
+                ctx,
+                event == null ? "PlainTextOpsRequest" : event.alertname());
+    }
+
+    private String runReact(
+            String agentName,
+            String traceName,
+            String systemPrompt,
+            String userMessage,
+            Map<String, Object> ctx,
+            String logKey) {
         contextHolder.set(ctx);
         try {
-            log.info("[OpsAgent] 开始处理告警 alertname={} application={} labels={} annotations={}",
-                    event.alertname(),
-                    event.application(),
-                    event.labels(),
-                    event.annotations());
-            String system = buildOpsAgentSystem(rule);
-            String user = """
-                    请根据上述 SOP 与下列告警信息排查。
-                    要求：
-                    1. 先确认告警里的 application/service 是否真实存在，再分析依赖或容量。
-                    2. 如果 Prometheus 没有该服务指标、Nacos 没有该服务实例、Docker 也没有该服务容器或 inspect 不存在，立即给 FINAL：服务未注册/未部署/名称不一致，别继续查数据库、缓存、MQ。
-                    3. 每个子域只问一个明确问题，不要让子 Agent 做泛泛排查。
-                    4. 最终回复必须包含：结论、证据、下一步动作。证据不足时直接说缺哪条证据。
-
-                    """
-                    + formatAlert(event);
             String out = reactRunner.run(new ReactAgentSpec(
-                    "OpsAgent",
-                    "ops-agent-react",
-                    system,
-                    user,
+                    agentName,
+                    traceName,
+                    systemPrompt,
+                    userMessage,
                     ctx,
                     agentToolRegistry.reactTools(contextHolder::mutableCopyForSubAgent),
                     maxParentIters));
-            log.info("[OpsAgent] 父 Agent 本轮排查结束 alertname={} replyChars={}（完整回复见上方 [LLM] 大模型回复）",
-                    event.alertname(), out == null ? 0 : out.length());
+            log.info("[OpsAgent] {} 本轮排查结束 replyChars={}（完整回复见上方 [LLM] 大模型回复）",
+                    logKey, out == null ? 0 : out.length());
             return out;
         } finally {
             contextHolder.clear();
         }
     }
 
-    private static String buildOpsAgentSystem(OpsAiProperties.Sop.Rule rule) {
+    private String buildAlertSystemPrompt(OpsAiProperties.Sop.Rule rule) {
         String sop = rule.getSopMarkdown() == null ? "" : rule.getSopMarkdown();
         return """
                 你是运维编排 Agent，负责按标准作业程序（SOP）处理告警。目标是尽快给出可执行结论，而不是把所有工具跑一遍。
@@ -105,13 +130,109 @@ public class OpsAgent {
                 - Nacos 无健康实例但 Docker 有容器：结论优先为服务启动或注册失败，下一步看容器日志。
                 - Prometheus 有指标、Nacos 有实例、Docker 有容器后，才继续查日志和依赖。
 
+                可用委派工具（名称即函数名；子域内部会自行选择更具体的方法）：
+                """
+                + agentToolRegistry.buildMenu()
+                + """
+
                 ## 标准作业程序（SOP）
 
                 """
                 + sop;
     }
 
+    private String buildTextSystemPrompt() {
+        return """
+                你是运维编排 Agent，负责处理文本预警或运维排查请求。目标是根据文本、服务归因、参考 SOP 和工具事实，自主规划最短排查路径。
+                你必须只输出一段合法 JSON（不要 markdown），格式二选一：
+                1) {"action":"CALL_TOOL","tool":"<子Agent工具名>","args":{"task":"<委派给子Agent的明确任务>"}}
+                2) {"action":"FINAL","answer":"<给用户的中文结论>"}
+
+                调度原则：
+                - 如果上下文提供了 SOP，只把它当作参考材料，不要机械逐步执行。
+                - 如果服务名、application 或容器名不明确，优先调用 Catalog Skill 做静态归因，再决定查日志、指标、Nacos、Docker 或依赖。
+                - 每次只把一个明确问题委派给一个子域，避免“全面排查”。
+                - 先利用文本与上下文里的 primaryService、candidateServices 判断主服务，再决定先查指标、日志、Nacos、Docker 或依赖。
+                - 没有命中 SOP 也必须继续排查，不要退回草案。
+                - 工具结果已经足够支撑结论时，立即 FINAL。
+                - 最终回复必须包含：结论、证据、下一步动作。证据不足时直接说明缺哪条证据。
+
+                可用委派工具（名称即函数名；子域内部会自行选择更具体的方法）：
+                """
+                + agentToolRegistry.buildMenu();
+    }
+
+    private static String buildAlertUserMessage(AlertEvent event, EnrichedAlertContext enrichment) {
+        return """
+                请根据上述 SOP 与下列告警信息排查。
+                要求：
+                1. 先确认告警里的 application/service 是否真实存在，再分析依赖或容量。
+                2. 如果 Prometheus 没有该服务指标、Nacos 没有该服务实例、Docker 也没有该服务容器或 inspect 不存在，立即给 FINAL：服务未注册/未部署/名称不一致，别继续查数据库、缓存、MQ。
+                3. 每个子域只问一个明确问题，不要让子 Agent 做泛泛排查。
+                4. 最终回复必须包含：结论、证据、下一步动作。证据不足时直接说缺哪条证据。
+
+                """
+                + "服务归因:\n"
+                + "primaryService=" + (enrichment == null ? "" : nullToEmpty(enrichment.primaryService())) + '\n'
+                + "candidateServices=" + (enrichment == null ? List.of() : enrichment.candidateServices()) + '\n'
+                + "evidence=" + (enrichment == null ? Map.of() : enrichment.evidence()) + "\n\n"
+                + formatAlert(event);
+    }
+
+    private static String buildTextUserMessage(
+            String text,
+            AlertEvent event,
+            EnrichedAlertContext enrichment,
+            Map<String, Object> matchData) {
+        return """
+                请根据下面的文本预警自主规划排查路径。
+                如果有参考 SOP，可以吸收其中方向，但允许跳过不适用步骤或调整顺序。
+
+                文本预警：
+                """
+                + nullToEmpty(text)
+                + """
+
+                参考 SOP 匹配：
+                """
+                + (matchData == null ? Map.of("matched", false) : matchData)
+                + """
+
+                服务归因：
+                primaryService=
+                """
+                + (enrichment == null ? "" : nullToEmpty(enrichment.primaryService()))
+                + """
+                candidateServices=
+                """
+                + (enrichment == null ? List.of() : enrichment.candidateServices())
+                + """
+                evidence=
+                """
+                + (enrichment == null ? Map.of() : enrichment.evidence())
+                + """
+
+                兼容告警上下文：
+                """
+                + formatAlert(event);
+    }
+
+    private static Map<String, Object> baseContext(AlertEvent event) {
+        Map<String, Object> ctx = new HashMap<>();
+        ctx.put("alert", Map.of(
+                "status", event == null ? "" : nullToEmpty(event.status()),
+                "alertname", event == null ? "" : nullToEmpty(event.alertname()),
+                "severity", event == null ? "" : nullToEmpty(event.severity()),
+                "application", event == null ? "" : nullToEmpty(event.application()),
+                "labels", event == null || event.labels() == null ? Map.of() : event.labels(),
+                "annotations", event == null || event.annotations() == null ? Map.of() : event.annotations()));
+        return ctx;
+    }
+
     private static String formatAlert(AlertEvent e) {
+        if (e == null) {
+            return "status=\nalertname=\nseverity=\napplication=\nlabels={}\nannotations={}\n";
+        }
         StringBuilder sb = new StringBuilder();
         sb.append("status=").append(e.status()).append('\n');
         sb.append("alertname=").append(e.alertname()).append('\n');
@@ -120,5 +241,9 @@ public class OpsAgent {
         sb.append("labels=").append(e.labels()).append('\n');
         sb.append("annotations=").append(e.annotations()).append('\n');
         return sb.toString();
+    }
+
+    private static String nullToEmpty(String value) {
+        return value == null ? "" : value;
     }
 }

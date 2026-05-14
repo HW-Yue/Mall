@@ -36,6 +36,82 @@ public class OpsKnowledgeCatalog {
         return snapshot.serviceAliases().getOrDefault(norm(value), "");
     }
 
+    public Optional<ServiceProfile> serviceProfile(String serviceOrAlias) {
+        String canonical = canonicalService(serviceOrAlias);
+        if (canonical.isBlank()) {
+            canonical = norm(serviceOrAlias);
+        }
+        if (canonical.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(snapshot.serviceProfiles().get(canonical));
+    }
+
+    public Set<String> knownServiceAliases() {
+        return snapshot.serviceAliases().keySet();
+    }
+
+    public List<String> aliasesForService(String serviceOrAlias) {
+        String canonical = canonicalService(serviceOrAlias);
+        if (canonical.isBlank()) {
+            canonical = norm(serviceOrAlias);
+        }
+        if (canonical.isBlank()) {
+            return List.of();
+        }
+        String target = canonical;
+        return snapshot.serviceAliases().entrySet().stream()
+                .filter(e -> e.getValue().equals(target))
+                .map(Map.Entry::getKey)
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    public List<String> resourcesByService(String serviceOrAlias) {
+        return reverseSingleOwner(snapshot.resourceOwners(), serviceOrAlias);
+    }
+
+    public List<String> producedTopicsByService(String serviceOrAlias) {
+        String canonical = canonical(serviceOrAlias);
+        if (canonical.isBlank()) {
+            return List.of();
+        }
+        return snapshot.topics().entrySet().stream()
+                .filter(e -> e.getValue().producers().contains(canonical))
+                .map(Map.Entry::getKey)
+                .sorted()
+                .toList();
+    }
+
+    public List<String> consumedTopicsByService(String serviceOrAlias) {
+        String canonical = canonical(serviceOrAlias);
+        if (canonical.isBlank()) {
+            return List.of();
+        }
+        return snapshot.topics().entrySet().stream()
+                .filter(e -> e.getValue().consumers().contains(canonical))
+                .map(Map.Entry::getKey)
+                .sorted()
+                .toList();
+    }
+
+    public List<String> consumerGroupsByService(String serviceOrAlias) {
+        return reverseMultiOwner(snapshot.consumerGroups(), serviceOrAlias);
+    }
+
+    public List<String> tablesByService(String serviceOrAlias) {
+        return reverseMultiOwner(snapshot.tableOwners(), serviceOrAlias);
+    }
+
+    public List<String> databasesByService(String serviceOrAlias) {
+        return reverseMultiOwner(snapshot.databaseOwners(), serviceOrAlias);
+    }
+
+    public List<String> poolsByService(String serviceOrAlias) {
+        return reverseSingleOwner(snapshot.poolOwners(), serviceOrAlias);
+    }
+
     public Optional<String> ownerByResource(String resource) {
         if (resource == null || resource.isBlank()) {
             return Optional.empty();
@@ -89,6 +165,45 @@ public class OpsKnowledgeCatalog {
         return snapshot.poolOwners().keySet();
     }
 
+    private String canonical(String serviceOrAlias) {
+        String canonical = canonicalService(serviceOrAlias);
+        if (!canonical.isBlank()) {
+            return canonical;
+        }
+        String normalized = norm(serviceOrAlias);
+        if (normalized.isBlank()) {
+            return "";
+        }
+        if (snapshot.serviceProfiles().containsKey(normalized)) {
+            return normalized;
+        }
+        return "";
+    }
+
+    private List<String> reverseSingleOwner(Map<String, String> values, String serviceOrAlias) {
+        String canonical = canonical(serviceOrAlias);
+        if (canonical.isBlank()) {
+            return List.of();
+        }
+        return values.entrySet().stream()
+                .filter(e -> canonical.equals(e.getValue()))
+                .map(Map.Entry::getKey)
+                .sorted()
+                .toList();
+    }
+
+    private List<String> reverseMultiOwner(Map<String, List<String>> values, String serviceOrAlias) {
+        String canonical = canonical(serviceOrAlias);
+        if (canonical.isBlank()) {
+            return List.of();
+        }
+        return values.entrySet().stream()
+                .filter(e -> e.getValue().contains(canonical))
+                .map(Map.Entry::getKey)
+                .sorted()
+                .toList();
+    }
+
     private static Snapshot loadSnapshot(String location, ResourceLoader resourceLoader, ObjectMapper objectMapper) {
         try {
             Resource resource = resourceLoader.getResource(location);
@@ -101,13 +216,14 @@ public class OpsKnowledgeCatalog {
         }
     }
 
-    static String norm(String value) {
+    public static String norm(String value) {
         return value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public record Snapshot(
             Map<String, String> serviceAliases,
+            Map<String, ServiceProfile> serviceProfiles,
             Map<String, String> resourceOwners,
             Map<String, TopicProfile> topics,
             Map<String, List<String>> consumerGroups,
@@ -118,6 +234,7 @@ public class OpsKnowledgeCatalog {
         Snapshot normalized() {
             return new Snapshot(
                     normalizeServiceAliasMap(serviceAliases),
+                    normalizeServiceProfiles(serviceProfiles),
                     normalizeServiceMap(resourceOwners),
                     normalizeTopics(topics),
                     normalizeServiceListMap(consumerGroups),
@@ -139,6 +256,16 @@ public class OpsKnowledgeCatalog {
             return values.entrySet().stream().collect(Collectors.toUnmodifiableMap(
                     e -> norm(e.getKey()),
                     e -> norm(e.getValue()),
+                    (a, b) -> a));
+        }
+
+        private static Map<String, ServiceProfile> normalizeServiceProfiles(Map<String, ServiceProfile> values) {
+            if (values == null) {
+                return Map.of();
+            }
+            return values.entrySet().stream().collect(Collectors.toUnmodifiableMap(
+                    e -> norm(e.getKey()),
+                    e -> e.getValue() == null ? new ServiceProfile("", "", "") : e.getValue().normalized(),
                     (a, b) -> a));
         }
 
@@ -183,6 +310,20 @@ public class OpsKnowledgeCatalog {
                     .filter(s -> !s.isBlank())
                     .distinct()
                     .toList();
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ServiceProfile(
+            String application,
+            String composeService,
+            String containerName
+    ) {
+        ServiceProfile normalized() {
+            return new ServiceProfile(
+                    OpsKnowledgeCatalog.norm(application),
+                    OpsKnowledgeCatalog.norm(composeService),
+                    OpsKnowledgeCatalog.norm(containerName));
         }
     }
 }

@@ -13,6 +13,7 @@ public interface ISubAgent {
     /** Spring AI tool name exposed to the parent agent. */
     default String parentToolName() {
         return switch (domainId()) {
+            case "catalog_ops" -> "catalog_skill";
             case "docker_ops" -> "docker_skill";
             case "mysql_inspect" -> "mysql_skill";
             case "rocketmq_inspect" -> "rocketmq_skill";
@@ -26,6 +27,7 @@ public interface ISubAgent {
 
     default String parentDisplayName() {
         return switch (domainId()) {
+            case "catalog_ops" -> "Catalog Skill";
             case "docker_ops" -> "Docker Skill";
             case "mysql_inspect" -> "MySQL Skill";
             case "rocketmq_inspect" -> "RocketMQ Skill";

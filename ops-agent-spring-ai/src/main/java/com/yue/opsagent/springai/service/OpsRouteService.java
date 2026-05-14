@@ -7,6 +7,7 @@ import com.yue.opsagent.springai.domain.alert.EnrichedAlertContext;
 import com.yue.opsagent.springai.domain.alert.SopDispatcher;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunContextHolder;
 import com.yue.opsagent.springai.domain.opsroute.OpsRunSession;
+import com.yue.opsagent.springai.domain.opsroute.RoutePolicySnapshot;
 import com.yue.opsagent.springai.domain.opsroute.RouteInputType;
 import com.yue.opsagent.springai.domain.opsroute.RouteRequest;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
@@ -15,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -30,7 +32,7 @@ public class OpsRouteService {
     private final SopAiMatcherService sopAiMatcherService;
     private final SopStepRunner sopStepRunner;
     private final OpsAgent opsAgent;
-    private final OpsAiProperties opsAiProperties;
+    private final OpsRoutingPolicyService opsRoutingPolicyService;
     private final AlertEnrichmentService alertEnrichmentService;
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "ops-route-worker");
@@ -44,14 +46,14 @@ public class OpsRouteService {
             SopAiMatcherService sopAiMatcherService,
             SopStepRunner sopStepRunner,
             OpsAgent opsAgent,
-            OpsAiProperties opsAiProperties,
+            OpsRoutingPolicyService opsRoutingPolicyService,
             AlertEnrichmentService alertEnrichmentService) {
         this.opsRunService = opsRunService;
         this.sopDispatcher = sopDispatcher;
         this.sopAiMatcherService = sopAiMatcherService;
         this.sopStepRunner = sopStepRunner;
         this.opsAgent = opsAgent;
-        this.opsAiProperties = opsAiProperties;
+        this.opsRoutingPolicyService = opsRoutingPolicyService;
         this.alertEnrichmentService = alertEnrichmentService;
     }
 
@@ -99,6 +101,12 @@ public class OpsRouteService {
                         "candidateServices", enrichment.candidateServices(),
                         "resolvedLabels", enrichment.resolvedLabels(),
                         "evidence", enrichment.evidence()));
+        RoutePolicySnapshot policy = opsRoutingPolicyService.snapshot();
+        opsRunService.event(runId, "route_policy", "RoutePolicy",
+                policy.alertAutonomousPlanningEnabled()
+                        ? "当前预警策略：允许参考 SOP 自主规划"
+                        : "当前预警策略：仅允许硬匹配",
+                policy.toMap());
         opsRunService.node(runId, "HardSopMatch", "按 alertname/category/severity/application 匹配 SOP");
         Optional<OpsAiProperties.Sop.Rule> hard = sopDispatcher.matchRule(event, enrichment);
         OpsAiProperties.Sop.Rule rule;
@@ -111,6 +119,17 @@ public class OpsRouteService {
                     "primaryService", nullToEmpty(enrichment.primaryService()));
             opsRunService.node(runId, "HardSopMatch", "命中硬匹配 SOP");
         } else {
+            if (!policy.alertAutonomousPlanningEnabled()) {
+                opsRunService.complete(runId, "End", "未命中硬匹配 SOP，运行结束",
+                        Map.of(
+                                "matched", false,
+                                "source", "hard_only",
+                                "reason", "预警自主规划开关关闭，仅允许硬匹配",
+                                "alertname", nullToEmpty(event.alertname()),
+                                "enrichment", enrichment,
+                                "policy", policy.toMap()));
+                return;
+            }
             opsRunService.node(runId, "AiSopMatch", "硬匹配未命中，使用 AI 在已有 SOP 中选择");
             Optional<SopAiMatcherService.MatchResult> ai = sopAiMatcherService.matchEvent(event, enrichment);
             if (ai.isEmpty()) {
@@ -118,13 +137,14 @@ public class OpsRouteService {
                         Map.of(
                                 "matched", false,
                                 "alertname", nullToEmpty(event.alertname()),
-                                "enrichment", enrichment));
+                                "enrichment", enrichment,
+                                "policy", policy.toMap()));
                 return;
             }
             rule = ai.get().rule();
             matchData = ai.get().toMap();
         }
-        executeMatchedRule(runId, event, enrichment, rule, matchData);
+        executeMatchedRule(runId, event, enrichment, rule, matchData, policy);
     }
 
     private void routeText(String runId, String text) {
@@ -132,21 +152,7 @@ public class OpsRouteService {
             opsRunService.fail(runId, "纯文本输入为空");
             return;
         }
-        opsRunService.node(runId, "AiSopMatch", "根据纯文本在已有 SOP 中选择");
-        Optional<SopAiMatcherService.MatchResult> ai = sopAiMatcherService.matchText(text);
-        if (ai.isEmpty()) {
-            opsRunService.complete(runId, "PlanDraft", "未命中已有 SOP，生成排查草案",
-                    Map.of("matched", false, "draft", buildDraft(text)));
-            return;
-        }
-        OpsAiProperties.Sop.Rule rule = ai.get().rule();
-        AlertEvent event = new AlertEvent(
-                "firing",
-                firstNonBlank(rule.getMatchAlertname(), "PlainTextOpsRequest"),
-                firstNonBlank(rule.getMatchSeverity(), "unknown"),
-                firstNonBlank(rule.getMatchApplication(), ""),
-                Map.of("category", firstNonBlank(rule.getMatchCategory(), "text")),
-                Map.of("summary", text));
+        AlertEvent event = buildTextEvent(text);
         EnrichedAlertContext enrichment = alertEnrichmentService.enrich(event);
         opsRunService.event(runId, "alert_enrich", "AlertEnrich", "根据文本推断服务上下文",
                 Map.of(
@@ -154,7 +160,22 @@ public class OpsRouteService {
                         "candidateServices", enrichment.candidateServices(),
                         "resolvedLabels", enrichment.resolvedLabels(),
                         "evidence", enrichment.evidence()));
-        executeMatchedRule(runId, event, enrichment, rule, ai.get().toMap());
+        RoutePolicySnapshot policy = opsRoutingPolicyService.snapshot();
+        opsRunService.event(runId, "route_policy", "RoutePolicy", "纯文本请求固定允许自主规划", policy.toMap());
+        opsRunService.node(runId, "AiSopMatch", "根据纯文本与增强上下文在已有 SOP 中选择");
+        Optional<SopAiMatcherService.MatchResult> ai = sopAiMatcherService.matchEvent(event, enrichment);
+
+        Map<String, Object> matchData = ai.map(SopAiMatcherService.MatchResult::toMap)
+                .orElseGet(OpsRouteService::unmatchedTextMatchData);
+        String sopMarkdown = ai.map(SopAiMatcherService.MatchResult::rule)
+                .map(OpsAiProperties.Sop.Rule::getSopMarkdown)
+                .orElse("");
+
+        String matchMessage = ai.isPresent()
+                ? "已找到可参考 SOP，进入文本 ReAct 编排"
+                : "未命中 SOP，直接进入文本 ReAct 编排";
+        opsRunService.node(runId, "ReactExecute", matchMessage);
+        executeTextReact(runId, text, event, enrichment, matchData, sopMarkdown, policy);
     }
 
     private void executeMatchedRule(
@@ -162,33 +183,66 @@ public class OpsRouteService {
             AlertEvent event,
             EnrichedAlertContext enrichment,
             OpsAiProperties.Sop.Rule rule,
-            Map<String, Object> matchData) {
+            Map<String, Object> matchData,
+            RoutePolicySnapshot policy) {
         if (opsRunService.isCancelled(runId)) {
             return;
         }
-        opsRunService.node(runId, "ReactExecute", "开始执行命中的 SOP");
-        String mode = opsAiProperties.getAlert().getMode();
-        if ("deterministic".equalsIgnoreCase(mode) && rule.getSteps() != null && !rule.getSteps().isEmpty()) {
+        if (!policy.alertAutonomousPlanningEnabled()) {
+            if (rule.getSteps() == null || rule.getSteps().isEmpty()) {
+                opsRunService.complete(runId, "End", "命中硬匹配 SOP，但未配置固定步骤，运行结束",
+                        Map.of("match", matchData, "enrichment", enrichment, "policy", policy.toMap()));
+                return;
+            }
+            opsRunService.node(runId, "LockedSopExecute", "预警自主规划关闭，按硬匹配 SOP 固定执行");
             var result = sopStepRunner.run(event, enrichment, rule.getSteps());
             if (!opsRunService.isCancelled(runId)) {
                 opsRunService.complete(runId, "End", "SOP 步骤执行完成",
-                        Map.of("match", matchData, "enrichment", enrichment, "result", result));
+                        Map.of("match", matchData, "enrichment", enrichment, "result", result, "policy", policy.toMap()));
             }
             return;
         }
-        String summary = opsAgent.runForAlert(event, rule);
+        opsRunService.node(runId, "ReactExecute", "预警自主规划开启，按参考 SOP 进入 ReAct 编排");
+        String summary = opsAgent.runForAlert(event, enrichment, rule);
         if (!opsRunService.isCancelled(runId)) {
             opsRunService.complete(runId, "End", "ReAct 编排完成",
-                    Map.of("match", matchData, "enrichment", enrichment, "summary", summary == null ? "" : summary));
+                    Map.of("match", matchData, "enrichment", enrichment, "summary", summary == null ? "" : summary, "policy", policy.toMap()));
         }
     }
 
-    private static String buildDraft(String text) {
-        return "建议先确认服务是否存在并有健康实例，再按指标、日志、依赖组件、最近变更的顺序排查。输入摘要: " + text;
+    private void executeTextReact(
+            String runId,
+            String text,
+            AlertEvent event,
+            EnrichedAlertContext enrichment,
+            Map<String, Object> matchData,
+            String sopMarkdown,
+            RoutePolicySnapshot policy) {
+        if (opsRunService.isCancelled(runId)) {
+            return;
+        }
+        String summary = opsAgent.runForText(text, event, enrichment, matchData, sopMarkdown);
+        if (!opsRunService.isCancelled(runId)) {
+            opsRunService.complete(runId, "End", "文本 ReAct 编排完成",
+                    Map.of("match", matchData, "enrichment", enrichment, "summary", summary == null ? "" : summary, "policy", policy.toMap()));
+        }
     }
 
-    private static String firstNonBlank(String a, String b) {
-        return a == null || a.isBlank() ? b : a;
+    private static AlertEvent buildTextEvent(String text) {
+        return new AlertEvent(
+                "firing",
+                "PlainTextOpsRequest",
+                "unknown",
+                "",
+                Map.of("category", "text"),
+                Map.of("summary", text));
+    }
+
+    private static Map<String, Object> unmatchedTextMatchData() {
+        Map<String, Object> matchData = new HashMap<>();
+        matchData.put("matched", false);
+        matchData.put("reason", "未命中可参考 SOP，改走通用文本 ReAct");
+        return Map.copyOf(matchData);
     }
 
     private static String nullToEmpty(String value) {

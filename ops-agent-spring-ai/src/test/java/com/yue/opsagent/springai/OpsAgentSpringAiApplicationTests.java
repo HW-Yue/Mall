@@ -43,6 +43,7 @@ class OpsAgentSpringAiApplicationTests {
         assertThat(menu).contains("elasticsearch_ops");
         assertThat(menu).contains("redis_inspect");
         assertThat(menu).contains("nacos_config");
+        assertThat(menu).contains("catalog_ops");
     }
 
     @Test
@@ -51,14 +52,15 @@ class OpsAgentSpringAiApplicationTests {
         assertThat(menu).contains("Docker Skill (tool: docker_skill)");
         assertThat(menu).contains("Prometheus Skill (tool: prometheus_skill)");
         assertThat(menu).contains("Nacos Skill (tool: nacos_skill)");
+        assertThat(menu).contains("Catalog Skill (tool: catalog_skill)");
         assertThat(menu).doesNotContain("tool: nacos_config");
         assertThat(menu).doesNotContain("tool: mysql_inspect");
     }
 
     @Test
-    void sevenSubAgentsRegistered() {
-        assertThat(ISubAgents).hasSize(7);
-        assertThat(ISubAgents.stream().map(ISubAgent::domainId).distinct()).hasSize(7);
+    void eightSubAgentsRegistered() {
+        assertThat(ISubAgents).hasSize(8);
+        assertThat(ISubAgents.stream().map(ISubAgent::domainId).distinct()).hasSize(8);
     }
 
     @Test

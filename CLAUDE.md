@@ -32,7 +32,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 - `group-buy-service` — 拼团服务
 - `seckill-service` — 秒杀服务
 - `pay` — 支付服务（Spring Boot 2.7.12, Java 8），对接支付宝
-- `ops-agent-spring-ai` — 运维 Agent（Spring AI Alibaba，:8096），SOP 驱动 ReAct + 7 域 skill 工具（Docker / MySQL / RocketMQ / Prometheus / Elasticsearch / Redis / Nacos）；详见 `ops-agent-spring-ai/README.md`
+- `ops-agent-spring-ai` — 运维 Agent（Spring AI Alibaba，:8096），SOP 驱动 ReAct + 8 域 skill 工具（Docker / MySQL / RocketMQ / Prometheus / Elasticsearch / Redis / Nacos / Catalog）；详见 `ops-agent-spring-ai/README.md`
 
 ## DDD Module Layout
 
@@ -56,7 +56,7 @@ Multi-module Java enterprise microservices mono-repo，DDD 架构。
 | `seckill-service` | 独立维护秒杀商品，秒杀下单，内部调 order-service |
 | `order-service` | 统一订单创建、支付URL获取、退款执行、订单查询 |
 | `pay` | 对接支付宝，按 marketType 发布 `pay-success-*` 三个 Topic |
-| `ops-agent-spring-ai` | 接收 Alertmanager webhook，按 SOP 规则用 ReAct 调度 7 域 skill 工具诊断；Nacos 写操作走内存审批队列 |
+| `ops-agent-spring-ai` | 接收 Alertmanager webhook，按 SOP 规则用 ReAct 调度 8 域 skill 工具诊断；Nacos 写操作走内存审批队列 |
 
 **商品数据冗余**：拼团/秒杀商品各自独立存储，不依赖 mall 服务，后台配置时同步写入各服务。
 

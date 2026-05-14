@@ -313,6 +313,84 @@ pre, code { font-family: var(--mono); }
     line-height: 1.45;
 }
 
+.policy-row {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-bottom: 1px solid var(--line);
+    background: linear-gradient(180deg, rgba(224, 242, 254, 0.5) 0%, rgba(255, 255, 255, 0) 100%);
+}
+.policy-copy {
+    min-width: 0;
+}
+.policy-title {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+}
+.policy-desc {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+.switch-card {
+    min-width: 220px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    cursor: pointer;
+}
+.switch-card input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.switch-track {
+    width: 48px;
+    height: 28px;
+    padding: 3px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: var(--line-strong);
+    transition: background .18s ease;
+}
+.switch-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.18);
+    transition: transform .18s ease;
+}
+.switch-card input:checked + .switch-track {
+    background: linear-gradient(180deg, #38bdf8, var(--accent-strong));
+}
+.switch-card input:checked + .switch-track .switch-thumb {
+    transform: translateX(20px);
+}
+.switch-card input:disabled + .switch-track {
+    opacity: 0.55;
+}
+.switch-meta {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+}
+.switch-meta strong {
+    color: var(--text);
+    font-size: 12px;
+}
+.switch-meta span {
+    color: var(--muted);
+    font-size: 11px;
+}
+
 .segmented {
     display: inline-flex;
     padding: 3px;
@@ -975,6 +1053,14 @@ pre, code { font-family: var(--mono); }
     .panel-head, .route-actions, .timeline-head {
         grid-template-columns: 1fr;
         flex-direction: column;
+    }
+    .policy-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+    .switch-card {
+        min-width: 0;
+        justify-content: flex-start;
     }
     .route-actions { align-items: stretch; }
     .run-buttons {

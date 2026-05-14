@@ -117,7 +117,8 @@ window.RunWorkbench = (() => {
         mode: 'alert',
         runId: '',
         eventSource: null,
-        events: []
+        events: [],
+        routePolicy: null
     };
     const dom = {};
 
@@ -135,6 +136,10 @@ window.RunWorkbench = (() => {
         dom.resultList = document.getElementById('run-result-list');
         dom.resultMeta = document.getElementById('run-result-meta');
         dom.resultEmpty = document.getElementById('run-result-empty');
+        dom.routeSummary = document.getElementById('route-summary');
+        dom.alertAutonomousToggle = document.getElementById('alert-autonomous-toggle');
+        dom.alertPolicyDesc = document.getElementById('alert-policy-desc');
+        dom.alertPolicyState = document.getElementById('alert-policy-state');
 
         document.querySelectorAll('[data-route-mode]').forEach((button) => {
             button.addEventListener('click', () => {
@@ -151,6 +156,7 @@ window.RunWorkbench = (() => {
             button.addEventListener('click', () => fillExample(button.dataset.runExample));
         });
         dom.alertExample.addEventListener('change', () => fillExample(dom.alertExample.value));
+        dom.alertAutonomousToggle.addEventListener('change', updateRoutePolicy);
         dom.form.addEventListener('submit', (event) => {
             event.preventDefault();
             submit();
@@ -164,6 +170,7 @@ window.RunWorkbench = (() => {
         restoreLastRunId();
         renderTimeline();
         renderRunResult();
+        loadRoutePolicy();
 
         dom.resultList.addEventListener('click', (e) => {
             const btn = e.target.closest('.json-toggle-btn');
@@ -237,6 +244,7 @@ window.RunWorkbench = (() => {
             button.classList.toggle('active', button.dataset.routeMode === mode);
         });
         dom.input.placeholder = mode === 'alert' ? '粘贴 Alertmanager JSON' : '输入纯文本运维描述';
+        syncRouteSummary();
     }
 
     function fillExample(key) {
@@ -433,6 +441,70 @@ window.RunWorkbench = (() => {
         dom.submit.disabled = busy;
     }
 
+    async function loadRoutePolicy() {
+        dom.alertAutonomousToggle.disabled = true;
+        try {
+            const res = await fetch(`${window.API_BASE}/ops/config/routing-policy`);
+            const body = await res.json();
+            if (!res.ok) throw new Error(body.message || `HTTP ${res.status}`);
+            applyRoutePolicy(body);
+        } catch (error) {
+            toast(`加载预警策略失败: ${error.message}`, 'error');
+            applyRoutePolicy({
+                alertAutonomousPlanningEnabled: false,
+                textAutonomousPlanningEnabled: true,
+                alertDescription: '读取失败，暂按仅硬匹配展示。',
+                textDescription: '纯文本请求固定允许自主规划。'
+            });
+        } finally {
+            dom.alertAutonomousToggle.disabled = false;
+        }
+    }
+
+    async function updateRoutePolicy() {
+        const next = dom.alertAutonomousToggle.checked;
+        dom.alertAutonomousToggle.disabled = true;
+        try {
+            const res = await fetch(`${window.API_BASE}/ops/config/routing-policy`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ alertAutonomousPlanningEnabled: next })
+            });
+            const body = await res.json();
+            if (!res.ok) throw new Error(body.message || `HTTP ${res.status}`);
+            applyRoutePolicy(body);
+            toast(next ? '预警自主规划已开启。' : '预警自主规划已关闭。', 'success');
+        } catch (error) {
+            dom.alertAutonomousToggle.checked = !next;
+            toast(`更新预警策略失败: ${error.message}`, 'error');
+            syncRouteSummary();
+        } finally {
+            dom.alertAutonomousToggle.disabled = false;
+        }
+    }
+
+    function applyRoutePolicy(policy) {
+        state.routePolicy = policy || {};
+        const enabled = !!state.routePolicy.alertAutonomousPlanningEnabled;
+        dom.alertAutonomousToggle.checked = enabled;
+        dom.alertPolicyState.textContent = enabled ? '已开启' : '已关闭';
+        dom.alertPolicyDesc.textContent = state.routePolicy.alertDescription
+            || '结构化预警只允许硬匹配；纯文本请求固定允许自主规划。';
+        syncRouteSummary();
+    }
+
+    function syncRouteSummary() {
+        if (!dom.routeSummary) return;
+        const policy = state.routePolicy || {};
+        const alertEnabled = !!policy.alertAutonomousPlanningEnabled;
+        const modeNote = state.mode === 'text'
+            ? '当前为纯文本模式：固定允许自主规划。'
+            : alertEnabled
+                ? '当前为预警模式：硬匹配优先，未命中时允许参考 SOP 自主规划。'
+                : '当前为预警模式：仅允许硬匹配，未命中直接结束。';
+        dom.routeSummary.textContent = `${modeNote} 纯文本请求固定允许自主规划。`;
+    }
+
     async function cancel() {
         if (!state.runId || dom.cancel.disabled) return;
         dom.cancel.disabled = true;
@@ -568,6 +640,17 @@ window.RunWorkbench = (() => {
         if (Array.isArray(value)) return `[…] ${value.length} items`;
         if (typeof value === 'object') return `{…} ${Object.keys(value).length} keys`;
         return String(value).slice(0, 40);
+    }
+
+    function toast(message, kind = 'info') {
+        const node = document.getElementById('toast');
+        if (!node) return;
+        node.textContent = message;
+        node.className = `toast ${kind} show`;
+        clearTimeout(toast.timer);
+        toast.timer = setTimeout(() => {
+            node.className = 'toast';
+        }, 2200);
     }
 
     return { init, refresh };

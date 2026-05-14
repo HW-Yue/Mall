@@ -42,7 +42,9 @@ ops-ai:
     service-name: ${OPS_AI_OTLP_SERVICE_NAME:yue-ops-agent}
     timeout-seconds: 10
   alert:
-    mode: deterministic
+    # 仅作用于结构化告警；false = 仅硬匹配，true = 允许参考 SOP 自主规划。
+    # 纯文本请求固定允许自主规划，不受该开关影响。
+    autonomous-planning-enabled: false
   react:
     max-parent-iters: 6
     max-sub-iters: 4
