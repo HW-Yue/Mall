@@ -3,6 +3,7 @@ package com.yue.opsagent.springai.agent.parent;
 import com.yue.opsagent.springai.agent.AgentContextHolder;
 import com.yue.opsagent.springai.agent.registry.AgentToolRegistry;
 import com.yue.opsagent.springai.agent.react.ReactAgentSpec;
+import com.yue.opsagent.springai.agent.react.ReactRunResult;
 import com.yue.opsagent.springai.agent.react.ReactRunner;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.domain.alert.EnrichedAlertContext;
@@ -42,7 +43,7 @@ public class OpsAgent {
     /**
      * 单次告警 + 匹配到的 SOP 规则（含 sopMarkdown）；在 finally 中清理线程上下文。
      */
-    public String runForAlert(AlertEvent event, EnrichedAlertContext enrichment, OpsAiProperties.Sop.Rule rule) {
+    public ReactRunResult runForAlert(AlertEvent event, EnrichedAlertContext enrichment, OpsAiProperties.Sop.Rule rule) {
         Map<String, Object> ctx = baseContext(event);
         ctx.put("enrichment", enrichment == null ? EnrichedAlertContext.empty() : enrichment);
         ctx.put("sopMarkdown", nullToEmpty(rule.getSopMarkdown()));
@@ -60,7 +61,7 @@ public class OpsAgent {
                 event.alertname());
     }
 
-    public String runForText(
+    public ReactRunResult runForText(
             String text,
             AlertEvent event,
             EnrichedAlertContext enrichment,
@@ -84,7 +85,7 @@ public class OpsAgent {
                 event == null ? "PlainTextOpsRequest" : event.alertname());
     }
 
-    private String runReact(
+    private ReactRunResult runReact(
             String agentName,
             String traceName,
             String systemPrompt,
@@ -93,7 +94,7 @@ public class OpsAgent {
             String logKey) {
         contextHolder.set(ctx);
         try {
-            String out = reactRunner.run(new ReactAgentSpec(
+            ReactRunResult out = reactRunner.runDetailed(new ReactAgentSpec(
                     agentName,
                     traceName,
                     systemPrompt,
@@ -101,8 +102,11 @@ public class OpsAgent {
                     ctx,
                     agentToolRegistry.reactTools(contextHolder::mutableCopyForSubAgent),
                     maxParentIters));
-            log.info("[OpsAgent] {} 本轮排查结束 replyChars={}（完整回复见上方 [LLM] 大模型回复）",
-                    logKey, out == null ? 0 : out.length());
+            log.info("[OpsAgent] {} 本轮排查结束 replyChars={} converged={} finishReason={}（完整回复见上方 [LLM] 大模型回复）",
+                    logKey,
+                    out == null || out.answer() == null ? 0 : out.answer().length(),
+                    out != null && out.converged(),
+                    out == null ? "" : out.finishReason());
             return out;
         } finally {
             contextHolder.clear();
@@ -148,9 +152,15 @@ public class OpsAgent {
                 1) {"action":"CALL_TOOL","tool":"<子Agent工具名>","args":{"task":"<委派给子Agent的明确任务>"}}
                 2) {"action":"FINAL","answer":"<给用户的中文结论>"}
 
+                硬性步骤：
+                - 对纯文本请求，第一条动作必须先调用 Catalog Skill，先查“当前有哪些服务”，再从服务清单里筛选候选服务。
+                - 在拿到服务清单之前，不要直接调用 Docker、Prometheus、MySQL、RocketMQ、Nacos、Redis 或 Elasticsearch。
+                - 如果文本只出现“下单链路”“支付链路”“退款链路”“拼团链路”“秒杀链路”等业务语义，不要把这些词直接当成服务名；必须先从服务清单里确定候选服务。
+                - 筛出候选服务后，优先继续用 Catalog Skill 查看候选服务的 application、container、topic、database、pool，再进入具体排查。
+
                 调度原则：
                 - 如果上下文提供了 SOP，只把它当作参考材料，不要机械逐步执行。
-                - 如果服务名、application 或容器名不明确，优先调用 Catalog Skill 做静态归因，再决定查日志、指标、Nacos、Docker 或依赖。
+                - 调用 Catalog Skill 时，优先把 task 说成“先列出当前服务名，并从中筛出与问题最相关的候选服务；必要时继续查看候选服务拓扑”。
                 - 每次只把一个明确问题委派给一个子域，避免“全面排查”。
                 - 先利用文本与上下文里的 primaryService、candidateServices 判断主服务，再决定先查指标、日志、Nacos、Docker 或依赖。
                 - 没有命中 SOP 也必须继续排查，不要退回草案。
@@ -187,6 +197,10 @@ public class OpsAgent {
         return """
                 请根据下面的文本预警自主规划排查路径。
                 如果有参考 SOP，可以吸收其中方向，但允许跳过不适用步骤或调整顺序。
+
+                额外要求：
+                1. 第一步先查当前有哪些服务，不要直接把“下单链路”“支付链路”等业务词当成服务名。
+                2. 先从服务清单里筛出候选服务，再根据服务去查容器、指标、Nacos、MQ、数据库。
 
                 文本预警：
                 """

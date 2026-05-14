@@ -1,6 +1,6 @@
 # 告警归因知识库
 
-`ops-agent-spring-ai` 运行时会从模块内快照 `src/main/resources/ops-catalog/catalog.json` 加载一份只读知识库，用来把告警里的 `application`、`resource`、`topic`、`consumerGroup`、`table`、`db`、`pool` 归因到具体服务。
+`ops-agent-spring-ai` 运行时会从模块内快照 `src/main/resources/ops-catalog/catalog.json` 加载一份只读知识库，用来把告警里的 `application`、`resource`、`topic`、`consumerGroup`、`table`、`db`、`pool` 归因到具体服务，也给 Catalog Skill 提供“先列对象、再归因”的兜底入口。
 
 ## 结构
 
@@ -43,3 +43,7 @@
 - `AlertSignalResolver`：从 labels / annotations / 文本中提取线索
 - `AlertEnrichmentService`：结合 catalog 输出 `primaryService`、候选服务和归因证据
 - `SopDispatcher` / `SopStepRunner`：消费 enrichment 结果做确定性多步 SOP 编排
+- `Catalog Skill`：
+  - `catalog_list_services` 先列出当前已知服务名
+  - `catalog_list_topics` 先列出当前已知 Topic
+  - `catalog_describe_service` 再查看某个服务对应的 application、容器名、topic、database、pool 等静态拓扑

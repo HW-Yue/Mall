@@ -10,6 +10,7 @@ import com.yue.opsagent.springai.skill.api.ToolResult;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.DefaultResourceLoader;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -54,6 +55,31 @@ class CatalogSkillRegistryTest {
     }
 
     @Test
+    void listServicesAndTopicsReturnStableLightweightCatalogViews() {
+        ToolResult services = registry.execute("catalog_list_services", Map.of());
+        ToolResult topics = registry.execute("catalog_list_topics", Map.of());
+
+        assertThat(services).isInstanceOf(ToolResult.Ok.class);
+        assertThat(topics).isInstanceOf(ToolResult.Ok.class);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> serviceData = (Map<String, Object>) services.toMap().get("data");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> topicData = (Map<String, Object>) topics.toMap().get("data");
+        @SuppressWarnings("unchecked")
+        List<String> serviceNames = (List<String>) serviceData.get("services");
+        @SuppressWarnings("unchecked")
+        List<String> topicNames = (List<String>) topicData.get("topics");
+
+        assertThat(serviceData).containsEntry("count", serviceNames.size());
+        assertThat(topicData).containsEntry("count", topicNames.size());
+        assertThat(serviceNames).contains("mall-service", "order-service", "group-buy-service", "seckill-service", "pay-service");
+        assertThat(serviceNames).isSorted();
+        assertThat(topicNames).contains("group-buy-order-create", "pay-success-normal", "seckill-order-create");
+        assertThat(topicNames).isSorted();
+    }
+
+    @Test
     void lookupOwnerReturnsTopicProducersConsumersAndHelpDocs() {
         ToolResult result = registry.execute("catalog_lookup_resource_owner", Map.of(
                 "kind", "topic",
@@ -68,8 +94,8 @@ class CatalogSkillRegistryTest {
 
         ToolResult help = registry.execute(
                 OpsSkillRegistry.DEFAULT_HELP_TOOL_NAME,
-                Map.of(OpsSkillRegistry.HELP_ARG_TOOL, "catalog_describe_service"));
+                Map.of(OpsSkillRegistry.HELP_ARG_TOOL, "catalog_list_services"));
         assertThat(help).isInstanceOf(ToolResult.Ok.class);
-        assertThat(help.toMap().get("data").toString()).contains("containerName");
+        assertThat(help.toMap().get("data").toString()).contains("services");
     }
 }

@@ -29,9 +29,11 @@ class ReactRunnerTest {
                 {"action":"FINAL","answer":"直接结束"}
                 """);
 
-        String out = runner.run(spec(List.of(), 3));
+        ReactRunResult out = runner.runDetailed(spec(List.of(), 3));
 
-        assertThat(out).isEqualTo("直接结束");
+        assertThat(out.answer()).isEqualTo("直接结束");
+        assertThat(out.converged()).isTrue();
+        assertThat(out.finishReason()).isEqualTo("final");
     }
 
     @Test
@@ -62,9 +64,10 @@ class ReactRunnerTest {
                 {"action":"FINAL","answer":"容器存在"}
                 """);
 
-        String out = runner.run(spec(List.of(tool), 3));
+        ReactRunResult out = runner.runDetailed(spec(List.of(tool), 3));
 
-        assertThat(out).isEqualTo("容器存在");
+        assertThat(out.answer()).isEqualTo("容器存在");
+        assertThat(out.converged()).isTrue();
         assertThat(calls).hasValue(1);
     }
 
@@ -72,9 +75,11 @@ class ReactRunnerTest {
     void promptsAgainForInvalidJsonAndStopsAtMaxIters() {
         ReactRunner runner = runnerWithResponses("not-json", "still-not-json");
 
-        String out = runner.run(spec(List.of(), 2));
+        ReactRunResult out = runner.runDetailed(spec(List.of(), 2));
 
-        assertThat(out).isEqualTo("TestAgent达到最大轮次 (2)，未收敛。");
+        assertThat(out.answer()).isEqualTo("TestAgent达到最大轮次 (2)，未收敛。");
+        assertThat(out.converged()).isFalse();
+        assertThat(out.finishReason()).isEqualTo("max_iters");
     }
 
     private static ReactAgentSpec spec(List<ReactTool> tools, int maxIters) {

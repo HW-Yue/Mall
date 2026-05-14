@@ -52,6 +52,20 @@ public class CatalogToolkit {
         return ToolResult.ok(message, data);
     }
 
+    public ToolResult listServices() {
+        List<String> services = catalog.knownCanonicalServices();
+        return ToolResult.ok("已返回服务名清单", Map.of(
+                "services", services,
+                "count", services.size()));
+    }
+
+    public ToolResult listTopics() {
+        List<String> topics = catalog.topicNames();
+        return ToolResult.ok("已返回 Topic 清单", Map.of(
+                "topics", topics,
+                "count", topics.size()));
+    }
+
     public ToolResult describeService(String service) {
         String canonical = canonicalService(service);
         if (canonical.isBlank()) {

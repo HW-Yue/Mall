@@ -14,7 +14,12 @@ public class CatalogSkillRegistry implements OpsSkillRegistry {
     public static final String SKILL_NAME = "catalog_ops";
 
     private static final Set<String> DATA_TOOLS =
-            Set.of("catalog_resolve_service", "catalog_describe_service", "catalog_lookup_resource_owner");
+            Set.of(
+                    "catalog_resolve_service",
+                    "catalog_list_services",
+                    "catalog_list_topics",
+                    "catalog_describe_service",
+                    "catalog_lookup_resource_owner");
 
     private final CatalogToolkit toolkit;
 
@@ -41,6 +46,8 @@ public class CatalogSkillRegistry implements OpsSkillRegistry {
     public String toolMenuBrief() {
         return """
                 - catalog_resolve_service: 文本或线索归因到标准服务
+                - catalog_list_services: 列出当前静态知识库中的服务名
+                - catalog_list_topics: 列出当前静态知识库中的 Topic 名
                 - catalog_describe_service: 查看服务静态拓扑
                 - catalog_lookup_resource_owner: 按 resource/topic/table/pool 反查归属
                 """;
@@ -74,6 +81,8 @@ public class CatalogSkillRegistry implements OpsSkillRegistry {
                     str(a, "table"),
                     str(a, "database"),
                     str(a, "pool"));
+            case "catalog_list_services" -> toolkit.listServices();
+            case "catalog_list_topics" -> toolkit.listTopics();
             case "catalog_describe_service" -> toolkit.describeService(str(a, "service"));
             case "catalog_lookup_resource_owner" -> toolkit.lookupOwner(str(a, "kind"), str(a, "value"));
             default -> ToolResult.error("unknown tool: " + toolName);

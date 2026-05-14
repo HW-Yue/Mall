@@ -7,6 +7,7 @@
     const activeRunChip = document.getElementById('active-run-id');
     const timelineMeta = document.getElementById('timeline-meta');
     const timelineDesc = document.getElementById('timeline-desc');
+    const timelineSummary = document.getElementById('timeline-summary');
     const refreshBtn = document.getElementById('runs-refresh');
     const runIdInput = document.getElementById('run-id-input');
 
@@ -79,9 +80,8 @@
             const card = document.createElement('div');
             card.className = 'run-card';
             card.dataset.runId = r.runId;
-            const first = r.firstEvent || {};
             const last = r.lastEvent || {};
-            const summary = first.eventMessage || first.node || '(无摘要)';
+            const summary = resolveRunCardSummary(r);
             const lastType = last.eventType || '-';
             const source = sourceLabel(r.source);
             const status = r.status || lastType;
@@ -107,6 +107,7 @@
         const events = payload.events || [];
         timelineEl.innerHTML = '';
         timelineMeta.textContent = `${events.length} 个事件`;
+        renderTimelineSummary(events);
         if (timelineDesc) {
             timelineDesc.textContent = options.desc || '事件按时间升序展示；data 字段渲染为可折叠 JSON。';
         }
@@ -217,6 +218,7 @@
             el.classList.toggle('active', el.dataset.runId === runId);
         });
         timelineEl.innerHTML = '<div class="empty">加载中...</div>';
+        renderTimelineSummary([], { loading: true });
         const run = runMap.get(runId);
         if (run?.source === 'memory') {
             const snapshot = await fetchRun(runId);
@@ -296,10 +298,118 @@
         };
     }
 
+    function resolveRunCardSummary(run) {
+        const summary = normalizeSummaryText(run?.lastEvent?.data?.summary);
+        if (summary) {
+            return firstSummaryLine(summary);
+        }
+        const fallback = normalizeSummaryText(run?.lastEvent?.eventMessage || run?.lastEvent?.message);
+        if (fallback) {
+            return firstSummaryLine(fallback);
+        }
+        const first = run?.firstEvent || {};
+        return first.eventMessage || first.message || first.node || '(无摘要)';
+    }
+
     function sourceLabel(source) {
         if (source === 'memory') return '当前运行';
         if (source === 'db') return 'DB 摘要';
         return '历史归档';
+    }
+
+    function renderTimelineSummary(events, options = {}) {
+        if (!timelineSummary) return;
+        const model = buildSummaryModel(events, options);
+        if (!model) {
+            timelineSummary.hidden = true;
+            timelineSummary.innerHTML = '';
+            timelineSummary.className = 'result-summary-card';
+            return;
+        }
+        timelineSummary.hidden = false;
+        timelineSummary.className = `result-summary-card ${escapeClass(model.kind)}`;
+        timelineSummary.innerHTML = `
+            <div class="result-summary-head">
+                <span class="result-summary-kicker">最终结论</span>
+                <span class="result-summary-badge ${escapeClass(model.kind)}">${escapeHtml(model.badge)}</span>
+            </div>
+            <p class="result-summary-text">${escapeHtml(model.text)}</p>
+            ${model.note ? `<div class="result-summary-note">${escapeHtml(model.note)}</div>` : ''}
+        `;
+    }
+
+    function buildSummaryModel(events, options = {}) {
+        if (options.loading) {
+            return {
+                kind: 'pending',
+                badge: '加载中',
+                text: '正在加载运行详情。',
+                note: ''
+            };
+        }
+        if (!Array.isArray(events) || !events.length) {
+            return {
+                kind: 'pending',
+                badge: '无结论',
+                text: '当前没有可展示的最终结论。',
+                note: '如果这是历史运行，请确认对应 run 的终态事件已经归档。'
+            };
+        }
+        const terminal = findLatestTerminalEvent(events);
+        if (!terminal) {
+            return {
+                kind: 'pending',
+                badge: '运行中',
+                text: '运行中，等待最终结论。',
+                note: '当前只有过程事件，尚未看到终态事件。'
+            };
+        }
+        const data = terminal.data && typeof terminal.data === 'object' ? terminal.data : {};
+        const summary = normalizeSummaryText(data.summary);
+        if (summary) {
+            const isFallback = data.summarySource === 'fallback_on_max_iters' || data.converged === false;
+            return {
+                kind: isFallback ? 'fallback' : 'final',
+                badge: isFallback ? '兜底总结' : 'Agent 结论',
+                text: summary,
+                note: isFallback
+                    ? '主 Agent 未在最大轮次内显式收敛，当前展示的是后端基于已有事件生成的总结。'
+                    : '本次总结由主 Agent 直接产出。'
+            };
+        }
+        const fallback = normalizeSummaryText(terminal.eventMessage || terminal.message);
+        return {
+            kind: terminal.eventType === 'failed' || terminal.type === 'failed' ? 'failed' : 'fallback',
+            badge: terminal.eventType === 'failed' || terminal.type === 'failed' ? '运行失败' : '终态说明',
+            text: fallback || '当前终态事件没有返回可展示的结论。',
+            note: summary ? '' : '当前终态事件没有结构化 summary，已回退为终态消息展示。'
+        };
+    }
+
+    function findLatestTerminalEvent(events) {
+        for (let i = events.length - 1; i >= 0; i -= 1) {
+            const type = events[i]?.eventType || events[i]?.type;
+            if (type === 'end' || type === 'failed' || type === 'approval_rejected' || type === 'cancelled') {
+                return events[i];
+            }
+        }
+        return null;
+    }
+
+    function firstSummaryLine(summary) {
+        const line = normalizeSummaryText(summary)
+            .split('\n')
+            .map((item) => item.trim())
+            .find(Boolean);
+        return line || '(无摘要)';
+    }
+
+    function normalizeSummaryText(value) {
+        return typeof value === 'string' ? value.replace(/\r\n/g, '\n').trim() : '';
+    }
+
+    function escapeClass(value) {
+        return String(value == null ? '' : value).replace(/[^a-zA-Z0-9_-]/g, '');
     }
 
     refreshBtn.addEventListener('click', reload);

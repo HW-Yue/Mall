@@ -51,6 +51,12 @@ public class OpsKnowledgeCatalog {
         return snapshot.serviceAliases().keySet();
     }
 
+    public List<String> knownCanonicalServices() {
+        return snapshot.serviceProfiles().keySet().stream()
+                .sorted()
+                .toList();
+    }
+
     public List<String> aliasesForService(String serviceOrAlias) {
         String canonical = canonicalService(serviceOrAlias);
         if (canonical.isBlank()) {
@@ -147,6 +153,12 @@ public class OpsKnowledgeCatalog {
 
     public Set<String> knownTopics() {
         return snapshot.topics().keySet();
+    }
+
+    public List<String> topicNames() {
+        return snapshot.topics().keySet().stream()
+                .sorted()
+                .toList();
     }
 
     public Set<String> knownConsumerGroups() {

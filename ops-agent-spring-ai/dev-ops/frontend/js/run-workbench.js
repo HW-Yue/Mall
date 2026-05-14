@@ -136,6 +136,7 @@ window.RunWorkbench = (() => {
         dom.resultList = document.getElementById('run-result-list');
         dom.resultMeta = document.getElementById('run-result-meta');
         dom.resultEmpty = document.getElementById('run-result-empty');
+        dom.resultSummary = document.getElementById('run-result-summary');
         dom.routeSummary = document.getElementById('route-summary');
         dom.alertAutonomousToggle = document.getElementById('alert-autonomous-toggle');
         dom.alertPolicyDesc = document.getElementById('alert-policy-desc');
@@ -383,6 +384,11 @@ window.RunWorkbench = (() => {
             dom.resultList.innerHTML = '';
             dom.resultList.hidden = true;
             dom.resultEmpty.hidden = false;
+            if (dom.resultSummary) {
+                dom.resultSummary.hidden = true;
+                dom.resultSummary.innerHTML = '';
+                dom.resultSummary.className = 'result-summary-card';
+            }
             if (dom.resultMeta) {
                 dom.resultMeta.textContent = '提交运行后，这里展示最终输出与当前事件详情。';
             }
@@ -390,11 +396,33 @@ window.RunWorkbench = (() => {
         }
         dom.resultEmpty.hidden = true;
         dom.resultList.hidden = false;
+        renderResultSummary();
         dom.resultList.innerHTML = [...state.events].reverse().map(renderResultEvent).join('');
         if (dom.resultMeta) {
             const latest = state.events[state.events.length - 1];
             dom.resultMeta.textContent = `共 ${state.events.length} 个事件 · 最新: ${latest.type} · ${formatTime(latest.at)}`;
         }
+    }
+
+    function renderResultSummary() {
+        if (!dom.resultSummary) return;
+        const model = buildSummaryModel(state.events);
+        if (!model) {
+            dom.resultSummary.hidden = true;
+            dom.resultSummary.innerHTML = '';
+            dom.resultSummary.className = 'result-summary-card';
+            return;
+        }
+        dom.resultSummary.hidden = false;
+        dom.resultSummary.className = `result-summary-card ${escapeAttr(model.kind)}`;
+        dom.resultSummary.innerHTML = `
+            <div class="result-summary-head">
+                <span class="result-summary-kicker">最终结论</span>
+                <span class="result-summary-badge ${escapeAttr(model.kind)}">${escapeHtml(model.badge)}</span>
+            </div>
+            <p class="result-summary-text">${escapeHtml(model.text)}</p>
+            ${model.note ? `<div class="result-summary-note">${escapeHtml(model.note)}</div>` : ''}
+        `;
     }
 
     function renderResultEvent(event) {
@@ -640,6 +668,65 @@ window.RunWorkbench = (() => {
         if (Array.isArray(value)) return `[…] ${value.length} items`;
         if (typeof value === 'object') return `{…} ${Object.keys(value).length} keys`;
         return String(value).slice(0, 40);
+    }
+
+    function buildSummaryModel(events) {
+        if (!Array.isArray(events) || !events.length) {
+            return null;
+        }
+        const terminal = findLatestTerminalEvent(events);
+        if (!terminal) {
+            return {
+                kind: 'pending',
+                badge: '运行中',
+                text: '运行中，等待最终结论。',
+                note: '当前还没有终态事件，下面的事件列表会持续更新。'
+            };
+        }
+        const data = terminal.data && typeof terminal.data === 'object' ? terminal.data : {};
+        const summary = normalizeSummaryText(data.summary);
+        if (summary) {
+            const isFallback = data.summarySource === 'fallback_on_max_iters' || data.converged === false;
+            return {
+                kind: isFallback ? 'fallback' : 'final',
+                badge: isFallback ? '兜底总结' : 'Agent 结论',
+                text: summary,
+                note: isFallback
+                    ? '主 Agent 未在最大轮次内显式收敛，当前展示的是后端基于已有事件生成的总结。'
+                    : '本次总结由主 Agent 直接产出。'
+            };
+        }
+        const fallbackText = normalizeSummaryText(terminal.message);
+        if (!fallbackText) {
+            return {
+                kind: 'pending',
+                badge: '等待中',
+                text: '运行已结束，但当前终态事件没有返回可展示的结论。',
+                note: ''
+            };
+        }
+        return {
+            kind: terminal.type === 'failed' || terminal.type === 'approval_rejected' ? 'failed' : 'fallback',
+            badge: terminal.type === 'failed' ? '运行失败' : terminal.type === 'approval_rejected' ? '审批拒绝' : '终态说明',
+            text: fallbackText,
+            note: '当前终态事件没有结构化 summary，已回退为终态消息展示。'
+        };
+    }
+
+    function findLatestTerminalEvent(events) {
+        for (let i = events.length - 1; i >= 0; i -= 1) {
+            if (isTerminalEvent(events[i]?.type)) {
+                return events[i];
+            }
+        }
+        return null;
+    }
+
+    function normalizeSummaryText(value) {
+        if (typeof value !== 'string') {
+            return '';
+        }
+        return value.replace(/\r\n/g, '\n').trim();
     }
 
     function toast(message, kind = 'info') {

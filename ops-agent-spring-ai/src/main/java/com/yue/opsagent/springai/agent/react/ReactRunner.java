@@ -31,6 +31,10 @@ public class ReactRunner {
     }
 
     public String run(ReactAgentSpec spec) {
+        return runDetailed(spec).answer();
+    }
+
+    public ReactRunResult runDetailed(ReactAgentSpec spec) {
         Map<String, ReactTool> tools = indexTools(spec.tools());
         List<Message> messages = new ArrayList<>();
         messages.add(new SystemMessage(spec.systemPrompt()));
@@ -54,7 +58,7 @@ public class ReactRunner {
             }
             if (parsed.get() instanceof ReactActionParser.ParsedAction.FinalAction f) {
                 log.info("[ReactRunner] agent={} FINAL answerChars={}", spec.agentName(), f.answer().length());
-                return f.answer();
+                return ReactRunResult.finalAnswer(f.answer());
             }
             if (parsed.get() instanceof ReactActionParser.ParsedAction.CallTool c) {
                 ReactTool tool = tools.get(c.tool());
@@ -80,7 +84,7 @@ public class ReactRunner {
             }
         }
         log.warn("[ReactRunner] agent={} 达到最大轮次 {} 未收敛", spec.agentName(), spec.maxIters());
-        return spec.agentName() + "达到最大轮次 (" + spec.maxIters() + ")，未收敛。";
+        return ReactRunResult.maxIters(spec.agentName() + "达到最大轮次 (" + spec.maxIters() + ")，未收敛。");
     }
 
     private static Map<String, ReactTool> indexTools(List<ReactTool> tools) {

@@ -4,19 +4,20 @@
 
 ## 总览
 
-`ops-agent-spring-ai` 拥有 **7 个运维 Skill 域**，每个域对应：
+`ops-agent-spring-ai` 拥有 **8 个运维 Skill 域**，每个域对应：
 
 1. 一个 `OpsSkillRegistry`（定义了该域的具体 Function Tool）
 2. 一个 `*ISubAgent`（子 ReAct Agent，封装成父 Agent 可调用的单入口工具）
 
 两层调用关系如下：
 
-- **父 ReAct Agent** 看到的是 **7 个 `*_skill`**（如 `docker_skill`、`mysql_skill`），通过 `task` 参数传入自然语言任务。
+- **父 ReAct Agent** 看到的是 **8 个 `*_skill`**（如 `catalog_skill`、`docker_skill`、`mysql_skill`），通过 `task` 参数传入自然语言任务。
 - **子 Agent** 收到任务后，在自己的 ReAct 循环中调用该域的 **具体 Function Tool**（如 `docker_logs`、`mysql_processlist`）。
 
 ```
 父 Agent (ParentReactAgent)
     │
+    ├── catalog_skill ─────┐
     ├── docker_skill ───────┐
     ├── mysql_skill ────────┤
     ├── redis_skill ────────┤
@@ -28,10 +29,11 @@
 
 ## 父 Agent 工具（Sub Agent 入口）
 
-父 Agent 暴露给 LLM 的 7 个工具，由 `AgentToolRegistry` 组装，来源为 `ISubAgent` 接口。
+父 Agent 暴露给 LLM 的 8 个工具，由 `AgentToolRegistry` 组装，来源为 `ISubAgent` 接口。
 
 | Parent Tool Name | 对应 Skill ID | 父工具描述 |
 |---|---|---|
+| `catalog_skill` | `catalog_ops` | Catalog Skill：可先列出当前服务名或 Topic，再查询 service/application/compose service/container 以及 topic/table/pool 静态归属。 |
 | `docker_skill` | `docker_ops` | Docker Skill：日志、stats、inspect、受控 exec。传入 task 为自然语言任务说明。 |
 | `mysql_skill` | `mysql_inspect` | MySQL Skill：只读诊断会话、状态、锁、慢查询、SELECT 执行计划。传入 task 为自然语言任务说明。 |
 | `redis_skill` | `redis_inspect` | Redis Skill：只读 INFO、慢日志、客户端、内存、GET/SCAN。传入 task 为自然语言任务说明。 |
@@ -42,7 +44,23 @@
 
 ## 子 Skill 内部 Function Tool
 
-### 1. `docker_ops` — 详见 [`docker.md`](docker.md)
+### 1. `catalog_ops`
+
+> 底层实现：`CatalogToolkit`，基于 `src/main/resources/ops-catalog/catalog.json` 做只读静态知识库查询。
+
+| 工具名 | 入参 | 描述 |
+|---|---|---|
+| `catalog_resolve_service` | `query` (string, 可选) 或 `service/application/resource/topic/consumerGroup/table/database/pool` | 根据自由文本或结构化线索归因服务。 |
+| `catalog_list_services` | 无 | 列出当前已知标准服务名清单。 |
+| `catalog_list_topics` | 无 | 列出当前已知 Topic 名清单。 |
+| `catalog_describe_service` | `service` (string, 必填) | 返回某个服务对应的 application、compose service、container、topic、database、pool 等静态拓扑。 |
+| `catalog_lookup_resource_owner` | `kind` (string, 必填), `value` (string, 必填) | 按 resource/topic/consumerGroup/table/database/pool 反查归属。 |
+
+**设计原则**：问题很模糊时，先用 `catalog_list_services` 或 `catalog_list_topics` 缩小范围，再用 `catalog_describe_service` 补全容器名、Topic、数据库名等静态线索。
+
+---
+
+### 2. `docker_ops` — 详见 [`docker.md`](docker.md)
 
 > 底层实现：`DockerToolkit`，通过 Docker Engine API（默认 `unix:///var/run/docker.sock`）连接。
 
@@ -57,7 +75,7 @@
 
 ---
 
-### 2. `mysql_inspect` — 详见 [`mysql.md`](mysql.md)
+### 3. `mysql_inspect` — 详见 [`mysql.md`](mysql.md)
 
 > 底层实现：`MysqlToolkit`，通过 JDBC 连接 MySQL 执行只读查询。
 
@@ -71,7 +89,7 @@
 
 ---
 
-### 3. `redis_inspect` — 详见 [`redis.md`](redis.md)
+### 4. `redis_inspect` — 详见 [`redis.md`](redis.md)
 
 > 底层实现：`RedisToolkit`，通过 Redisson 连接 Redis。
 
@@ -85,7 +103,7 @@
 
 ---
 
-### 4. `nacos_config` — 详见 [`nacos.md`](nacos.md)
+### 5. `nacos_config` — 详见 [`nacos.md`](nacos.md)
 
 > 底层实现：`NacosToolkit`，通过 Nacos Java SDK 连接配置中心与服务发现。
 
@@ -100,7 +118,7 @@
 
 ---
 
-### 5. `metrics_ops` — 详见 [`prometheus.md`](prometheus.md)
+### 6. `metrics_ops` — 详见 [`prometheus.md`](prometheus.md)
 
 > 底层实现：`PrometheusToolkit`，通过 HTTP 调用 Prometheus `/api/v1/query`（Instant Query）。
 
@@ -115,7 +133,7 @@
 
 ---
 
-### 6. `elasticsearch_ops` — 详见 [`elasticsearch.md`](elasticsearch.md)
+### 7. `elasticsearch_ops` — 详见 [`elasticsearch.md`](elasticsearch.md)
 
 > 底层实现：`ElasticsearchToolkit`，通过 Elasticsearch REST Client 连接。支持两个集群：
 > - `logs`（默认）：应用日志，索引 `nexus-*`
@@ -130,7 +148,7 @@
 
 ---
 
-### 7. `rocketmq_inspect` — 详见 [`rocketmq.md`](rocketmq.md)
+### 8. `rocketmq_inspect` — 详见 [`rocketmq.md`](rocketmq.md)
 
 > 底层实现：`RocketMqToolkit`，通过 RocketMQ Admin 工具类连接 NameServer。
 

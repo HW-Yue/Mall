@@ -11,6 +11,21 @@ enum CatalogToolDocumentation {
             - query (string)：自由文本，如“下单接口 order-service 超时”“nexus-order-service 死锁”
             - service/application/resource/topic/consumerGroup/table/database/pool (string)：结构化线索，任填其一或多个
             返回：primaryService、candidateServices、serviceProfile、serviceReason、evidence。
+            注意：如果像“下单链路出问题了”这样过于模糊，先用 catalog_list_services 或 catalog_list_topics 缩小范围，再调用本工具。
+            """),
+
+    catalog_list_services("""
+            用途：列出当前静态知识库里的标准服务名清单。
+            args：无。
+            返回：services（canonical service name 列表）和 count。
+            典型用途：问题描述很模糊时，先看当前有哪些服务，再对候选服务调用 catalog_describe_service。
+            """),
+
+    catalog_list_topics("""
+            用途：列出当前静态知识库里的 Topic 名清单。
+            args：无。
+            返回：topics 和 count。
+            典型用途：需要先确认系统里有哪些 MQ Topic，再决定是否继续查 consumerGroup 或某个服务。
             """),
 
     catalog_describe_service("""
@@ -55,7 +70,8 @@ enum CatalogToolDocumentation {
                 + "\n\n"
                 + """
                 推荐顺序：
-                - 服务不明确时先用 catalog_resolve_service。
+                - 描述很模糊、只知道是“某条链路有问题”时，先用 catalog_list_services 或 catalog_list_topics 看现有对象。
+                - 线索里已经带 service/application/resource/topic/table/pool 时，再优先用 catalog_resolve_service。
                 - 确认主服务后用 catalog_describe_service 拿 application、composeService、containerName。
                 - 只知道某个 topic/table/pool 时用 catalog_lookup_resource_owner 反查。
                 """;

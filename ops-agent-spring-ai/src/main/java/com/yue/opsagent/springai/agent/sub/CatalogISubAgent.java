@@ -26,6 +26,6 @@ public class CatalogISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "Catalog Skill：解析服务、application、compose service、container 以及 topic/table/pool 静态归属。";
+        return "Catalog Skill：可先列出当前服务名或 Topic，再查询 service/application/compose service/container 以及 topic/table/pool 静态归属。";
     }
 }

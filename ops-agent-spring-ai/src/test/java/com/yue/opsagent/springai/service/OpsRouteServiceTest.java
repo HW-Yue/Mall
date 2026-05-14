@@ -1,15 +1,21 @@
 package com.yue.opsagent.springai.service;
 
 import com.yue.opsagent.springai.agent.parent.OpsAgent;
+import com.yue.opsagent.springai.agent.react.ReactRunResult;
 import com.yue.opsagent.springai.domain.alert.AlertEnrichmentService;
 import com.yue.opsagent.springai.domain.alert.AlertEvent;
 import com.yue.opsagent.springai.domain.alert.EnrichedAlertContext;
+import com.yue.opsagent.springai.domain.opsroute.OpsRunEvent;
+import com.yue.opsagent.springai.domain.opsroute.OpsRunSession;
+import com.yue.opsagent.springai.domain.opsroute.OpsRunStatus;
+import com.yue.opsagent.springai.domain.opsroute.RouteInputType;
 import com.yue.opsagent.springai.domain.alert.SopDispatcher;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -62,7 +68,7 @@ class OpsRouteServiceTest {
         when(alertEnrichmentService.enrich(any(AlertEvent.class))).thenReturn(enrichment);
         when(sopAiMatcherService.matchEvent(any(AlertEvent.class), eq(enrichment))).thenReturn(Optional.of(match));
         when(opsAgent.runForText(anyString(), any(AlertEvent.class), eq(enrichment), anyMap(), eq("参考 SOP")))
-                .thenReturn("text react summary");
+                .thenReturn(ReactRunResult.finalAnswer("text react summary"));
 
         ReflectionTestUtils.invokeMethod(service, "routeText", "run-text-match", "下单接口 Dubbo 调用失败");
 
@@ -75,6 +81,8 @@ class OpsRouteServiceTest {
         verify(opsRunService).complete(eq("run-text-match"), eq("End"), eq("文本 ReAct 编排完成"), dataCaptor.capture());
         Map<String, Object> data = dataCaptor.getValue();
         assertThat(data).containsEntry("summary", "text react summary");
+        assertThat(data).containsEntry("summarySource", "agent_final");
+        assertThat(data).containsEntry("converged", true);
         assertThat(data).containsEntry("enrichment", enrichment);
         @SuppressWarnings("unchecked")
         Map<String, Object> matchData = (Map<String, Object>) data.get("match");
@@ -104,7 +112,7 @@ class OpsRouteServiceTest {
         when(alertEnrichmentService.enrich(any(AlertEvent.class))).thenReturn(enrichment);
         when(sopAiMatcherService.matchEvent(any(AlertEvent.class), eq(enrichment))).thenReturn(Optional.empty());
         when(opsAgent.runForText(anyString(), any(AlertEvent.class), eq(enrichment), anyMap(), eq("")))
-                .thenReturn("generic react summary");
+                .thenReturn(ReactRunResult.finalAnswer("generic react summary"));
 
         ReflectionTestUtils.invokeMethod(service, "routeText", "run-text-generic", "下单失败，需要排查日志和依赖");
 
@@ -117,10 +125,82 @@ class OpsRouteServiceTest {
         verify(opsRunService).complete(eq("run-text-generic"), eq("End"), eq("文本 ReAct 编排完成"), dataCaptor.capture());
         Map<String, Object> data = dataCaptor.getValue();
         assertThat(data).containsEntry("summary", "generic react summary");
+        assertThat(data).containsEntry("summarySource", "agent_final");
+        assertThat(data).containsEntry("converged", true);
         @SuppressWarnings("unchecked")
         Map<String, Object> matchData = (Map<String, Object>) data.get("match");
         assertThat(matchData).containsEntry("matched", false);
         assertThat(matchData).containsEntry("reason", "未命中可参考 SOP，改走通用文本 ReAct");
+    }
+
+    @Test
+    void routeTextBuildsFallbackSummaryWhenReactHitsMaxIters() {
+        OpsRunService opsRunService = mock(OpsRunService.class);
+        SopDispatcher sopDispatcher = mock(SopDispatcher.class);
+        SopAiMatcherService sopAiMatcherService = mock(SopAiMatcherService.class);
+        SopStepRunner sopStepRunner = mock(SopStepRunner.class);
+        OpsAgent opsAgent = mock(OpsAgent.class);
+        AlertEnrichmentService alertEnrichmentService = mock(AlertEnrichmentService.class);
+
+        OpsRouteService service = new OpsRouteService(
+                opsRunService,
+                sopDispatcher,
+                sopAiMatcherService,
+                sopStepRunner,
+                opsAgent,
+                new OpsRoutingPolicyService(new OpsAiProperties()),
+                alertEnrichmentService);
+
+        EnrichedAlertContext enrichment = EnrichedAlertContext.empty();
+        when(alertEnrichmentService.enrich(any(AlertEvent.class))).thenReturn(enrichment);
+        when(sopAiMatcherService.matchEvent(any(AlertEvent.class), eq(enrichment))).thenReturn(Optional.empty());
+        when(opsAgent.runForText(anyString(), any(AlertEvent.class), eq(enrichment), anyMap(), eq("")))
+                .thenReturn(ReactRunResult.maxIters("OpsTextAgent达到最大轮次 (6)，未收敛。"));
+        when(opsRunService.snapshot("run-text-fallback")).thenReturn(Optional.of(new OpsRunSession(
+                "run-text-fallback",
+                RouteInputType.TEXT,
+                OpsRunStatus.RUNNING,
+                "ReactExecute",
+                Instant.parse("2026-05-14T12:00:00Z"),
+                Instant.parse("2026-05-14T12:00:10Z"),
+                List.of(
+                        OpsRunEvent.of("tool_result", "catalog_ops", "工具调用结果 catalog_list_services", Map.of(
+                                "skill", "catalog_ops",
+                                "tool", "catalog_list_services",
+                                "outcome", "success",
+                                "message", "已返回服务名清单",
+                                "result", Map.of(
+                                        "status", "ok",
+                                        "message", "已返回服务名清单",
+                                        "data", Map.of(
+                                                "services", List.of("mall-service", "order-service", "pay-service"),
+                                                "count", 3)))),
+                        OpsRunEvent.of("tool_result", "catalog_ops", "工具调用结果 catalog_describe_service", Map.of(
+                                "skill", "catalog_ops",
+                                "tool", "catalog_describe_service",
+                                "outcome", "success",
+                                "message", "已返回服务静态拓扑 order-service",
+                                "result", Map.of(
+                                        "status", "ok",
+                                        "message", "已返回服务静态拓扑 order-service",
+                                        "data", Map.of(
+                                                "service", "order-service",
+                                                "profile", Map.of(
+                                                        "application", "order-service",
+                                                        "containerName", "nexus-order-service"))))),
+                        OpsRunEvent.of("sub_agent_result", "catalog_skill", "子Agent调用结果 catalog_skill", Map.of(
+                                "result", "当前更相关的服务是 order-service，已拿到对应的 application 和容器名。"))
+                ))));
+
+        ReflectionTestUtils.invokeMethod(service, "routeText", "run-text-fallback", "下单链路有问题");
+
+        ArgumentCaptor<Map<String, Object>> dataCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(opsRunService).complete(eq("run-text-fallback"), eq("End"), eq("文本 ReAct 编排完成"), dataCaptor.capture());
+        Map<String, Object> data = dataCaptor.getValue();
+        assertThat(data).containsEntry("summarySource", "fallback_on_max_iters");
+        assertThat(data).containsEntry("converged", false);
+        assertThat(String.valueOf(data.get("summary"))).contains("order-service");
+        assertThat(String.valueOf(data.get("summary"))).contains("已获取当前服务清单");
     }
 
     @Test
@@ -254,13 +334,16 @@ class OpsRouteServiceTest {
 
         when(alertEnrichmentService.enrich(event)).thenReturn(enrichment);
         when(sopDispatcher.matchRule(event, enrichment)).thenReturn(Optional.of(rule));
-        when(opsAgent.runForAlert(event, enrichment, rule)).thenReturn("autonomous summary");
+        when(opsAgent.runForAlert(event, enrichment, rule)).thenReturn(ReactRunResult.finalAnswer("autonomous summary"));
 
         ReflectionTestUtils.invokeMethod(service, "routeAlert", "run-alert-react", event);
 
         verify(sopStepRunner, never()).run(any(AlertEvent.class), any(EnrichedAlertContext.class), anyList());
         verify(opsAgent).runForAlert(event, enrichment, rule);
         verify(opsRunService).node("run-alert-react", "ReactExecute", "预警自主规划开启，按参考 SOP 进入 ReAct 编排");
-        verify(opsRunService).complete(eq("run-alert-react"), eq("End"), eq("ReAct 编排完成"), anyMap());
+        ArgumentCaptor<Map<String, Object>> dataCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(opsRunService).complete(eq("run-alert-react"), eq("End"), eq("ReAct 编排完成"), dataCaptor.capture());
+        assertThat(dataCaptor.getValue()).containsEntry("summary", "autonomous summary");
+        assertThat(dataCaptor.getValue()).containsEntry("summarySource", "agent_final");
     }
 }
