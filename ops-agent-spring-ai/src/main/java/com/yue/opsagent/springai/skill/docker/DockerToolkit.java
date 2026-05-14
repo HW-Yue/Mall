@@ -14,6 +14,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -50,8 +52,9 @@ public class DockerToolkit {
         }
         int tail = tailLines <= 0 ? 100 : Math.min(tailLines, 5000);
         try {
+            String resolvedContainer = resolveContainer(containerId.trim());
             StringBuilder out = new StringBuilder();
-            docker.logContainerCmd(containerId.trim())
+            docker.logContainerCmd(resolvedContainer)
                     .withStdOut(true)
                     .withStdErr(true)
                     .withTail(tail)
@@ -76,6 +79,7 @@ public class DockerToolkit {
             return ToolResult.error("container 不能为空");
         }
         try {
+            String resolvedContainer = resolveContainer(containerId.trim());
             AtomicReference<com.github.dockerjava.api.model.Statistics> ref = new AtomicReference<>();
             var cb = new ResultCallback.Adapter<com.github.dockerjava.api.model.Statistics>() {
                 @Override
@@ -83,7 +87,7 @@ public class DockerToolkit {
                     ref.set(object);
                 }
             };
-            docker.statsCmd(containerId.trim()).withNoStream(true).exec(cb);
+            docker.statsCmd(resolvedContainer).withNoStream(true).exec(cb);
             cb.awaitCompletion(15, TimeUnit.SECONDS);
             var s = ref.get();
             return ToolResult.ok("stats", s == null ? "no sample" : s.toString());
@@ -97,7 +101,8 @@ public class DockerToolkit {
             return ToolResult.error("container 不能为空");
         }
         try {
-            var insp = docker.inspectContainerCmd(containerId.trim()).exec();
+            String resolvedContainer = resolveContainer(containerId.trim());
+            var insp = docker.inspectContainerCmd(resolvedContainer).exec();
             return ToolResult.ok("inspect", insp.toString());
         } catch (Exception e) {
             return ToolResult.error("docker_inspect 失败: " + e.getMessage());
@@ -112,7 +117,8 @@ public class DockerToolkit {
             return ToolResult.error("command 不能为空");
         }
         try {
-            ExecCreateCmdResponse create = docker.execCreateCmd(containerId.trim())
+            String resolvedContainer = resolveContainer(containerId.trim());
+            ExecCreateCmdResponse create = docker.execCreateCmd(resolvedContainer)
                     .withAttachStdout(true)
                     .withAttachStderr(true)
                     .withCmd("sh", "-c", command)
@@ -138,5 +144,57 @@ public class DockerToolkit {
         } catch (Exception e) {
             return ToolResult.error("docker ping 失败: " + e.getMessage());
         }
+    }
+
+    private String resolveContainer(String requested) {
+        try {
+            docker.inspectContainerCmd(requested).exec();
+            return requested;
+        } catch (Exception ignored) {
+            // Fall through to service-name based lookup. Docker Java will raise the original not-found
+            // semantics later if no candidate can be resolved.
+        }
+
+        List<String> candidates = new ArrayList<>();
+        String plain = requested.startsWith("/") ? requested.substring(1) : requested;
+        candidates.add(plain);
+        candidates.add("nexus-" + plain);
+
+        try {
+            for (var container : docker.listContainersCmd().withShowAll(true).exec()) {
+                if (matchesContainer(container.getNames(), candidates)
+                        || matchesComposeService(container.getLabels(), plain)) {
+                    return container.getId();
+                }
+            }
+        } catch (Exception ignored) {
+            return requested;
+        }
+        return requested;
+    }
+
+    private static boolean matchesContainer(String[] names, List<String> candidates) {
+        if (names == null || names.length == 0) {
+            return false;
+        }
+        for (String name : names) {
+            if (name == null) {
+                continue;
+            }
+            String normalized = name.startsWith("/") ? name.substring(1) : name;
+            for (String candidate : candidates) {
+                if (normalized.equals(candidate)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesComposeService(Map<String, String> labels, String requested) {
+        if (labels == null || labels.isEmpty()) {
+            return false;
+        }
+        return requested.equals(labels.get("com.docker.compose.service"));
     }
 }
