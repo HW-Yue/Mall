@@ -146,7 +146,7 @@ class OrderTradeControllerTest {
     void createNormalOrderBuildsNormalRequestAndReturnsSuccess() {
         CreateOrderRequestDTO request = baseRequest();
         mockLockSuccess(request);
-        CreateOrderResponseDTO order = CreateOrderResponseDTO.builder().orderId("OID-1").outTradeNo("OTN-1").build();
+        CreateOrderResponseDTO order = CreateOrderResponseDTO.builder().orderId("OID-1").build();
         when(orderDubboService.createOrderNormalFromMall(any())).thenReturn(order);
 
         Response<CreateOrderResponseDTO> response = controller.createNormalOrder(request);
