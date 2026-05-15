@@ -31,9 +31,10 @@ window.ToolConsole = (() => {
             label: 'Elasticsearch',
             tools: {
                 es_indices: { args: { cluster: 'logs' } },
-                es_search: { args: { cluster: 'logs', index: 'nexus-*', query: { match_all: {} }, size: 10 } },
-                es_count: { args: { cluster: 'logs', index: 'nexus-*', query: { match_all: {} } } },
-                es_aggregation: { args: { cluster: 'logs', index: 'nexus-*', query: { match_all: {} }, field: 'service.keyword' } },
+                es_search_service_errors: { args: { cluster: 'logs', service: 'order-service', lookback: '1h', size: 10 } },
+                es_search: { args: { cluster: 'logs', index: 'nexus-*', query: '{"query":{"match_all":{}},"size":10}' } },
+                es_count: { args: { cluster: 'logs', index: 'nexus-*', query: '{"query":{"match_all":{}}}' } },
+                es_aggregation: { args: { cluster: 'logs', index: 'nexus-*', body: '{"size":0,"aggs":{"by_service":{"terms":{"field":"service.keyword","size":5}}}}' } },
             },
         },
         redis_inspect: {
@@ -59,8 +60,8 @@ window.ToolConsole = (() => {
             tools: {
                 nacos_get_config: { args: { dataId: '', group: 'DEFAULT_GROUP' } },
                 nacos_publish_config: { args: { dataId: '', group: 'DEFAULT_GROUP', content: '' } },
-                nacos_list_instances: { args: { serviceName: '', groupName: 'DEFAULT_GROUP' } },
-                nacos_list_services: { args: { groupName: 'DEFAULT_GROUP', pageNo: 1, pageSize: 50 } },
+                nacos_list_instances: { args: { serviceName: '', group: 'DEFAULT_GROUP' } },
+                nacos_list_services: { args: { pageNo: 1, pageSize: 50 } },
             },
         },
     };

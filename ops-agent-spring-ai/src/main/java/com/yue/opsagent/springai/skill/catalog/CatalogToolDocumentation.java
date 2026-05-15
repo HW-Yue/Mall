@@ -31,9 +31,10 @@ enum CatalogToolDocumentation {
     catalog_describe_service("""
             用途：返回某个服务的静态拓扑。
             args：
-            - service (string，必填)：标准服务名或别名
-            返回：application、composeService、containerName、aliases、resources、topicsProduced、topicsConsumed、
-            consumerGroups、tables、databases、pools。
+            - service (string，必填)：标准服务名或别名；一次只允许传一个服务名
+            返回：application、composeService、containerName、configEntries、configDataIds、aliases、resources、
+            topicsProduced、topicsConsumed、consumerGroups、tables、databases、pools。
+            注意：如果有多个候选服务，必须逐个调用，不能把 "order-service, pay-service" 这类列表整体传进来。
             """),
 
     catalog_lookup_resource_owner("""
@@ -72,7 +73,8 @@ enum CatalogToolDocumentation {
                 推荐顺序：
                 - 描述很模糊、只知道是“某条链路有问题”时，先用 catalog_list_services 或 catalog_list_topics 看现有对象。
                 - 线索里已经带 service/application/resource/topic/table/pool 时，再优先用 catalog_resolve_service。
-                - 确认主服务后用 catalog_describe_service 拿 application、composeService、containerName。
+                - 确认主服务后用 catalog_describe_service 拿 application、composeService、containerName、configEntries；如果有多个候选服务，要逐个单独查询。
+                - 要查 Nacos 配置时，只能使用 catalog_describe_service 返回的 configEntries / configDataIds，不要猜 dataId 或 group。
                 - 只知道某个 topic/table/pool 时用 catalog_lookup_resource_owner 反查。
                 """;
     }

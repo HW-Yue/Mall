@@ -28,32 +28,87 @@
     "mall-service": {
       "application": "mall-service",
       "composeService": "mall",
-      "containerName": "nexus-mall"
+      "containerName": "nexus-mall",
+      "configEntries": [
+        {"dataId": "mall-service-dtp-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "mall-service-datasource-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "mall-service-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "mall-service-degrade-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "mall-service-param-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "mall-service-system-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "mall-service-authority-rules.json", "group": "SENTINEL_GROUP"}
+      ]
     },
     "order-service": {
       "application": "order-service",
       "composeService": "order-service",
-      "containerName": "nexus-order-service"
+      "containerName": "nexus-order-service",
+      "configEntries": [
+        {"dataId": "order-service-dtp-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "order-service-datasource-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "order-service-mq-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "order-service-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "order-service-degrade-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "order-service-param-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "order-service-system-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "order-service-authority-rules.json", "group": "SENTINEL_GROUP"}
+      ]
     },
     "group-buy-service": {
       "application": "group-buy-service",
       "composeService": "group-buy-service",
-      "containerName": "nexus-group-buy-service"
+      "containerName": "nexus-group-buy-service",
+      "configEntries": [
+        {"dataId": "group-buy-service-dtp-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "group-buy-service-datasource-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "group-buy-service-mq-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "group-buy-service-runtime-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "group-buy-service-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "group-buy-service-degrade-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "group-buy-service-param-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "group-buy-service-system-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "group-buy-service-authority-rules.json", "group": "SENTINEL_GROUP"}
+      ]
     },
     "seckill-service": {
       "application": "seckill-service",
       "composeService": "seckill-service",
-      "containerName": "nexus-seckill-service"
+      "containerName": "nexus-seckill-service",
+      "configEntries": [
+        {"dataId": "seckill-service-dtp-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "seckill-service-datasource-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "seckill-service-mq-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "seckill-service-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "seckill-service-degrade-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "seckill-service-param-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "seckill-service-system-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "seckill-service-authority-rules.json", "group": "SENTINEL_GROUP"}
+      ]
     },
     "pay-service": {
       "application": "pay-service",
       "composeService": "pay",
-      "containerName": "nexus-pay"
+      "containerName": "nexus-pay",
+      "configEntries": [
+        {"dataId": "pay-service-dtp-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "pay-service-runtime-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "pay-service-datasource-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "pay-service-mq-dev.yml", "group": "DEFAULT_GROUP"},
+        {"dataId": "pay-service-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "pay-service-degrade-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "pay-service-param-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "pay-service-system-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "pay-service-authority-rules.json", "group": "SENTINEL_GROUP"}
+      ]
     },
     "gateway": {
       "application": "springcloud-gateway",
       "composeService": "gateway",
-      "containerName": "nexus-gateway"
+      "containerName": "nexus-gateway",
+      "configEntries": [
+        {"dataId": "springcloud-gateway-gw-flow-rules.json", "group": "SENTINEL_GROUP"},
+        {"dataId": "springcloud-gateway-gw-api-rules.json", "group": "SENTINEL_GROUP"}
+      ]
     },
     "ops-agent-spring-ai": {
       "application": "ops-agent-spring-ai",

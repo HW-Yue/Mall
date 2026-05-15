@@ -26,6 +26,6 @@ public class DockerISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "Docker Skill：日志、stats、inspect、受控 exec。传入 task 为自然语言任务说明。";
+        return "Docker Skill：日志、stats、inspect、受控 exec。进入本子域前必须先从 Catalog 拿到非空 containerName，不能凭空猜容器名。";
     }
 }

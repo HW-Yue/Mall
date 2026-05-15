@@ -10,9 +10,12 @@ import org.springframework.stereotype.Component;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 @Component
 public class CatalogToolkit {
+
+    private static final Pattern SERVICE_SPLITTER = Pattern.compile("[\\s,，;；|]+");
 
     private final OpsKnowledgeCatalog catalog;
     private final AlertEnrichmentService alertEnrichmentService;
@@ -67,6 +70,10 @@ public class CatalogToolkit {
     }
 
     public ToolResult describeService(String service) {
+        List<String> candidates = candidateServices(service);
+        if (candidates.size() > 1) {
+            return ToolResult.error("catalog_describe_service: service 只允许传单个服务名，不能一次传多个候选服务。请逐个调用，例如先查 order-service，再查 pay-service。");
+        }
         String canonical = canonicalService(service);
         if (canonical.isBlank()) {
             return ToolResult.ok("未知服务", Map.of("found", false, "input", nullToEmpty(service)));
@@ -184,6 +191,18 @@ public class CatalogToolkit {
             putObjectIfNotBlank(data, "application", profile.application());
             putObjectIfNotBlank(data, "composeService", profile.composeService());
             putObjectIfNotBlank(data, "containerName", profile.containerName());
+            if (!profile.configEntries().isEmpty()) {
+                List<Map<String, Object>> configEntries = profile.configEntries().stream()
+                        .map(entry -> Map.<String, Object>of(
+                                "dataId", entry.dataId(),
+                                "group", entry.group().isBlank() ? "DEFAULT_GROUP" : entry.group()))
+                        .toList();
+                data.put("configEntries", configEntries);
+                data.put("configDataIds", configEntries.stream()
+                        .map(entry -> String.valueOf(entry.get("dataId")))
+                        .distinct()
+                        .toList());
+            }
         });
         return data;
     }
@@ -205,6 +224,27 @@ public class CatalogToolkit {
 
     private String canonicalService(String serviceOrAlias) {
         return catalog.canonicalService(serviceOrAlias);
+    }
+
+    private static List<String> candidateServices(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        return SERVICE_SPLITTER.splitAsStream(raw.trim())
+                .map(CatalogToolkit::normalizeCandidateToken)
+                .filter(token -> !token.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    private static String normalizeCandidateToken(String token) {
+        if (token == null || token.isBlank()) {
+            return "";
+        }
+        return token
+                .replaceAll("^[\\[\\](){}\"'`]+", "")
+                .replaceAll("[\\[\\](){}\"'`]+$", "")
+                .trim();
     }
 
     private static List<String> mergeDistinct(List<String> left, List<String> right) {

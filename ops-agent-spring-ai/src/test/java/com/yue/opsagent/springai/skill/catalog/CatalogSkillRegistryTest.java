@@ -51,7 +51,17 @@ class CatalogSkillRegistryTest {
         Map<String, Object> profile = (Map<String, Object>) data.get("profile");
         assertThat(profile).containsEntry("application", "springcloud-gateway");
         assertThat(profile).containsEntry("containerName", "nexus-gateway");
+        assertThat(profile.get("configDataIds").toString()).contains("springcloud-gateway-gw-flow-rules.json");
         assertThat(data.get("aliases").toString()).contains("springcloud-gateway");
+    }
+
+    @Test
+    void describeServiceRejectsMultipleCandidates() {
+        ToolResult result = registry.execute("catalog_describe_service", Map.of(
+                "service", "order-service, pay-service"));
+
+        assertThat(result).isInstanceOf(ToolResult.Error.class);
+        assertThat(result.toMap().get("message").toString()).contains("只允许传单个服务名");
     }
 
     @Test

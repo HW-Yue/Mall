@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.agent.registry;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yue.opsagent.springai.agent.registry.rule.AgentCancelRuleFilter;
+import com.yue.opsagent.springai.agent.registry.rule.AgentDockerPrerequisiteRuleFilter;
 import com.yue.opsagent.springai.agent.registry.rule.AgentExecuteRuleFilter;
 import com.yue.opsagent.springai.agent.registry.rule.AgentResolveRuleFilter;
 import com.yue.opsagent.springai.agent.registry.rule.AgentResultRecordRuleFilter;
@@ -99,16 +100,62 @@ class AgentToolRegistryRuleChainTest {
         assertSubAgentEvent(opsRunService, runId, "execute", "success", "nacos_skill");
     }
 
+    @Test
+    void rejectsDockerSkillWhenCatalogHasNotResolvedContainerName() {
+        DockerTestSubAgent agent = new DockerTestSubAgent();
+        OpsRunService opsRunService = new OpsRunService(new ObjectMapper());
+        AgentToolRegistry registry = agentToolRegistry(opsRunService, agent);
+        String runId = opsRunService.create(RouteRequest.text("test")).runId();
+
+        String result = executeWithRun(runId, () ->
+                registry.execute("docker_skill", "检查 order-service 容器状态", Map.of()));
+
+        assertThat(result).contains("必须先通过 catalog_describe_service 获取非空 containerName");
+        assertThat(agent.executions()).isZero();
+        assertSubAgentEvent(opsRunService, runId, "prerequisite", "error", "docker_skill");
+    }
+
+    @Test
+    void allowsDockerSkillAfterCatalogResolvedContainerName() {
+        DockerTestSubAgent agent = new DockerTestSubAgent();
+        OpsRunService opsRunService = new OpsRunService(new ObjectMapper());
+        AgentToolRegistry registry = agentToolRegistry(opsRunService, agent);
+        String runId = opsRunService.create(RouteRequest.text("test")).runId();
+        opsRunService.toolResult(runId, "catalog_ops", "catalog_describe_service", Map.of(
+                "skill", "catalog_ops",
+                "tool", "catalog_describe_service",
+                "outcome", "success",
+                "result", Map.of(
+                        "status", "ok",
+                        "message", "已返回服务静态拓扑 order-service",
+                        "data", Map.of(
+                                "found", true,
+                                "service", "order-service",
+                                "profile", Map.of("containerName", "nexus-order-service")))));
+
+        String result = executeWithRun(runId, () ->
+                registry.execute("docker_skill", "检查 order-service 容器状态", Map.of()));
+
+        assertThat(result).isEqualTo("docker-summary:检查 order-service 容器状态");
+        assertThat(agent.executions()).isEqualTo(1);
+        assertSubAgentEvent(opsRunService, runId, "execute", "success", "docker_skill");
+    }
+
     private static AgentToolRegistry agentToolRegistry(OpsRunService opsRunService, ISubAgent agent) {
+        return agentToolRegistry(opsRunService, java.util.List.of(agent));
+    }
+
+    private static AgentToolRegistry agentToolRegistry(OpsRunService opsRunService, java.util.List<ISubAgent> agents) {
         AgentToolRuleFilterFactory factory = new AgentToolRuleFilterFactory();
         var chain = factory.agentToolRuleFilter(java.util.List.of(
                 new AgentExecuteRuleFilter(),
                 new AgentTaskValidateRuleFilter(),
+                new AgentDockerPrerequisiteRuleFilter(opsRunService),
                 new AgentTraceStartRuleFilter(),
                 new AgentResolveRuleFilter(),
                 new AgentCancelRuleFilter(opsRunService),
                 new AgentResultRecordRuleFilter(opsRunService, new ObjectMapper())));
-        return new AgentToolRegistry(java.util.List.of(agent), chain);
+        return new AgentToolRegistry(agents, chain);
     }
 
     private static String executeWithRun(String runId, java.util.function.Supplier<String> supplier) {
@@ -156,6 +203,31 @@ class AgentToolRegistryRuleChainTest {
         public String runReact(String task, Map<String, Object> context) {
             executions.incrementAndGet();
             return "summary:" + task;
+        }
+
+        int executions() {
+            return executions.get();
+        }
+    }
+
+    private static class DockerTestSubAgent implements ISubAgent {
+
+        private final AtomicInteger executions = new AtomicInteger();
+
+        @Override
+        public String domainId() {
+            return "docker_ops";
+        }
+
+        @Override
+        public String parentToolDescription() {
+            return "Docker Skill test";
+        }
+
+        @Override
+        public String runReact(String task, Map<String, Object> context) {
+            executions.incrementAndGet();
+            return "docker-summary:" + task;
         }
 
         int executions() {

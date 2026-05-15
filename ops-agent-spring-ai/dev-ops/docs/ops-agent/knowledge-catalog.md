@@ -6,6 +6,8 @@
 
 - `serviceAliases`
   - 服务别名到标准服务名的映射，如 `mall -> mall-service`
+- `serviceProfiles`
+  - 服务静态画像，包含 `application`、`composeService`、`containerName`，以及 Nacos 配置入口 `configEntries`
 - `resourceOwners`
   - 服务内 HTTP URI 到 owning service 的映射
 - `topics`
@@ -46,4 +48,4 @@
 - `Catalog Skill`：
   - `catalog_list_services` 先列出当前已知服务名
   - `catalog_list_topics` 先列出当前已知 Topic
-  - `catalog_describe_service` 再查看某个服务对应的 application、容器名、topic、database、pool 等静态拓扑
+  - `catalog_describe_service` 再查看某个服务对应的 application、容器名、configEntries/configDataIds、topic、database、pool 等静态拓扑

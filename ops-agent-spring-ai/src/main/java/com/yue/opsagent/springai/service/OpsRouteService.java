@@ -399,12 +399,19 @@ public class OpsRouteService {
     }
 
     private String summarizeDescribeService(Map<String, Object> resultData) {
+        if (!Boolean.parseBoolean(stringValue(resultData.get("found")))) {
+            String input = stringValue(resultData.get("input"));
+            return input.isBlank()
+                    ? "Catalog 未命中标准服务名"
+                    : "Catalog 未命中标准服务名（input=" + input + "）";
+        }
         String service = stringValue(resultData.get("service"));
         Map<String, Object> profile = mapValue(resultData.get("profile"));
         String application = stringValue(profile.get("application"));
         String container = stringValue(profile.get("containerName"));
+        int configEntryCount = listValue(profile.get("configEntries")).size();
         if (service.isBlank()) {
-            return "已获取候选服务的静态拓扑";
+            return "Catalog 返回的服务拓扑缺少标准服务名";
         }
         List<String> details = new ArrayList<>();
         if (!application.isBlank()) {
@@ -412,6 +419,9 @@ public class OpsRouteService {
         }
         if (!container.isBlank()) {
             details.add("container=" + container);
+        }
+        if (configEntryCount > 0) {
+            details.add("configEntries=" + configEntryCount);
         }
         if (details.isEmpty()) {
             return "已获取 " + service + " 的静态拓扑";

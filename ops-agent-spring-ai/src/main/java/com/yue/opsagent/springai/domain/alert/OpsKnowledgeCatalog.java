@@ -277,7 +277,7 @@ public class OpsKnowledgeCatalog {
             }
             return values.entrySet().stream().collect(Collectors.toUnmodifiableMap(
                     e -> norm(e.getKey()),
-                    e -> e.getValue() == null ? new ServiceProfile("", "", "") : e.getValue().normalized(),
+                    e -> e.getValue() == null ? new ServiceProfile("", "", "", List.of()) : e.getValue().normalized(),
                     (a, b) -> a));
         }
 
@@ -329,13 +329,39 @@ public class OpsKnowledgeCatalog {
     public record ServiceProfile(
             String application,
             String composeService,
-            String containerName
+            String containerName,
+            List<ConfigEntry> configEntries
     ) {
         ServiceProfile normalized() {
             return new ServiceProfile(
                     OpsKnowledgeCatalog.norm(application),
                     OpsKnowledgeCatalog.norm(composeService),
-                    OpsKnowledgeCatalog.norm(containerName));
+                    OpsKnowledgeCatalog.norm(containerName),
+                    normalize(configEntries));
+        }
+
+        private static List<ConfigEntry> normalize(List<ConfigEntry> values) {
+            return values == null ? List.of() : values.stream()
+                    .map(value -> value == null ? new ConfigEntry("", "") : value.normalized())
+                    .filter(value -> !value.dataId().isBlank())
+                    .distinct()
+                    .toList();
+        }
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ConfigEntry(
+            String dataId,
+            String group
+    ) {
+        ConfigEntry normalized() {
+            return new ConfigEntry(
+                    trim(dataId),
+                    trim(group));
+        }
+
+        private static String trim(String value) {
+            return value == null ? "" : value.trim();
         }
     }
 }

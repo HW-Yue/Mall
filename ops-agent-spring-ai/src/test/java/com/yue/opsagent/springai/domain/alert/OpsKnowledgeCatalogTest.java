@@ -24,6 +24,12 @@ class OpsKnowledgeCatalogTest {
                         OpsKnowledgeCatalog.ServiceProfile::composeService,
                         OpsKnowledgeCatalog.ServiceProfile::containerName)
                 .containsExactly("springcloud-gateway", "gateway", "nexus-gateway");
+        assertThat(catalog.serviceProfile("order-service").orElseThrow().configEntries())
+                .anySatisfy(entry -> assertThat(entry)
+                        .extracting(
+                                OpsKnowledgeCatalog.ConfigEntry::dataId,
+                                OpsKnowledgeCatalog.ConfigEntry::group)
+                        .containsExactly("order-service-mq-dev.yml", "DEFAULT_GROUP"));
 
         assertThat(catalog.resourcesByService("order-service")).contains("/api/v1/order/get_pay_url");
         assertThat(catalog.poolsByService("order-service")).contains("order_hikaricp");

@@ -156,13 +156,17 @@ public class OpsAgent {
                 - 对纯文本请求，第一条动作必须先调用 Catalog Skill，先查“当前有哪些服务”，再从服务清单里筛选候选服务。
                 - 在拿到服务清单之前，不要直接调用 Docker、Prometheus、MySQL、RocketMQ、Nacos、Redis 或 Elasticsearch。
                 - 如果文本只出现“下单链路”“支付链路”“退款链路”“拼团链路”“秒杀链路”等业务语义，不要把这些词直接当成服务名；必须先从服务清单里确定候选服务。
-                - 筛出候选服务后，优先继续用 Catalog Skill 查看候选服务的 application、container、topic、database、pool，再进入具体排查。
+                - 筛出候选服务后，优先继续用 Catalog Skill 查看候选服务的 application、container、configEntries、topic、database、pool，再进入具体排查。
+                - 如果有多个候选服务，必须逐个单独调用 catalog_describe_service；不能把多个服务名拼成一个参数。
+                - 只有拿到非空 containerName 后，才允许进入 Docker Skill；拿不到 containerName 时必须停在 Catalog 层并明确说明缺少哪条静态线索。
+                - 日志排查默认优先进入 Elasticsearch Skill 的“按服务检索错误日志”入口，不要先手写 DSL。
+                - 只有拿到 Catalog 返回的明确 configEntries / configDataIds 后，才允许读取 Nacos 配置；禁止猜 dataId、禁止使用 *。
 
                 调度原则：
                 - 如果上下文提供了 SOP，只把它当作参考材料，不要机械逐步执行。
-                - 调用 Catalog Skill 时，优先把 task 说成“先列出当前服务名，并从中筛出与问题最相关的候选服务；必要时继续查看候选服务拓扑”。
+                - 调用 Catalog Skill 时，优先把 task 说成“先列出当前服务名，并从中筛出与问题最相关的候选服务；必要时对候选服务逐个查看拓扑和配置入口”。
                 - 每次只把一个明确问题委派给一个子域，避免“全面排查”。
-                - 先利用文本与上下文里的 primaryService、candidateServices 判断主服务，再决定先查指标、日志、Nacos、Docker 或依赖。
+                - 先利用文本与上下文里的 primaryService、candidateServices 判断主服务，再决定先查指标、按服务错误日志、Nacos、Docker 或依赖。
                 - 没有命中 SOP 也必须继续排查，不要退回草案。
                 - 工具结果已经足够支撑结论时，立即 FINAL。
                 - 最终回复必须包含：结论、证据、下一步动作。证据不足时直接说明缺哪条证据。
@@ -200,7 +204,10 @@ public class OpsAgent {
 
                 额外要求：
                 1. 第一步先查当前有哪些服务，不要直接把“下单链路”“支付链路”等业务词当成服务名。
-                2. 先从服务清单里筛出候选服务，再根据服务去查容器、指标、Nacos、MQ、数据库。
+                2. 先从服务清单里筛出候选服务，再逐个查询候选服务拓扑和配置入口，再根据服务去查日志、容器、指标、Nacos、MQ、数据库。
+                3. 如果还没有从 Catalog 拿到非空 containerName，不要进入 Docker 排查。
+                4. 日志优先查该服务的错误日志样本，不要先手写 Elasticsearch DSL。
+                5. 如果还没有从 Catalog 拿到明确 configEntries / configDataIds，不要读取 Nacos 配置。
 
                 文本预警：
                 """

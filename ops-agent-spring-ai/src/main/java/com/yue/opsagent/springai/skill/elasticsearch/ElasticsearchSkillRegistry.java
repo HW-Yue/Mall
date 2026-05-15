@@ -13,7 +13,12 @@ public class ElasticsearchSkillRegistry implements OpsSkillRegistry {
 
     public static final String SKILL_NAME = "elasticsearch_ops";
 
-    private static final Set<String> DATA_TOOLS = Set.of("es_indices", "es_search", "es_count", "es_aggregation");
+    private static final Set<String> DATA_TOOLS = Set.of(
+            "es_indices",
+            "es_search_service_errors",
+            "es_search",
+            "es_count",
+            "es_aggregation");
 
     private final ElasticsearchToolkit toolkit;
 
@@ -28,7 +33,7 @@ public class ElasticsearchSkillRegistry implements OpsSkillRegistry {
 
     @Override
     public String description() {
-        return "Elasticsearch 只读：索引、搜索、计数、聚合（应用日志 nexus-* 与 SkyWalking OAP 的 sw_*，可选独立 ES 地址）";
+        return "Elasticsearch 只读：按服务检索错误日志、索引、搜索、计数、聚合（应用日志 nexus-* 与 SkyWalking OAP 的 sw_*，可选独立 ES 地址）";
     }
 
     @Override
@@ -40,6 +45,7 @@ public class ElasticsearchSkillRegistry implements OpsSkillRegistry {
     public String toolMenuBrief() {
         return """
                 - es_indices: 列出索引（可选 cluster=skywalking）
+                - es_search_service_errors: 按服务检索错误日志（默认入口，优先使用）
                 - es_search: DSL 搜索
                 - es_count: 文档计数
                 - es_aggregation: terms/date_histogram 等聚合
@@ -65,6 +71,14 @@ public class ElasticsearchSkillRegistry implements OpsSkillRegistry {
         String cluster = clusterArg(args);
         return switch (toolName) {
             case "es_indices" -> toolkit.listIndices(cluster);
+            case "es_search_service_errors" -> toolkit.searchServiceErrors(
+                    cluster,
+                    stringArg(args, "index"),
+                    stringArg(args, "service"),
+                    stringArg(args, "application"),
+                    stringArg(args, "lookback"),
+                    intArg(args, "size", 10),
+                    listArg(args, "keywords"));
             case "es_search" -> toolkit.search(cluster, stringArg(args, "index"), stringArg(args, "query"));
             case "es_count" -> toolkit.count(cluster, stringArg(args, "index"), stringArg(args, "query"));
             case "es_aggregation" -> toolkit.aggregate(cluster, stringArg(args, "index"), stringArg(args, "body"));
@@ -82,5 +96,47 @@ public class ElasticsearchSkillRegistry implements OpsSkillRegistry {
             return "";
         }
         return String.valueOf(args.get(key));
+    }
+
+    private static int intArg(Map<String, Object> args, String key, int def) {
+        if (args == null) {
+            return def;
+        }
+        Object value = args.get(key);
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value == null) {
+            return def;
+        }
+        try {
+            return Integer.parseInt(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    private static java.util.List<String> listArg(Map<String, Object> args, String key) {
+        if (args == null) {
+            return java.util.List.of();
+        }
+        Object value = args.get(key);
+        if (value instanceof java.util.List<?> list) {
+            return list.stream()
+                    .filter(java.util.Objects::nonNull)
+                    .map(String::valueOf)
+                    .toList();
+        }
+        if (value == null) {
+            return java.util.List.of();
+        }
+        String text = String.valueOf(value).trim();
+        if (text.isBlank()) {
+            return java.util.List.of();
+        }
+        return java.util.Arrays.stream(text.split("[,，;；|]+"))
+                .map(String::trim)
+                .filter(part -> !part.isBlank())
+                .toList();
     }
 }

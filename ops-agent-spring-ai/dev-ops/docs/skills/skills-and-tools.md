@@ -33,13 +33,13 @@
 
 | Parent Tool Name | 对应 Skill ID | 父工具描述 |
 |---|---|---|
-| `catalog_skill` | `catalog_ops` | Catalog Skill：可先列出当前服务名或 Topic，再查询 service/application/compose service/container 以及 topic/table/pool 静态归属。 |
+| `catalog_skill` | `catalog_ops` | Catalog Skill：可先列出当前服务名或 Topic，再查询 service/application/compose service/container/configEntries 以及 topic/table/pool 静态归属。 |
 | `docker_skill` | `docker_ops` | Docker Skill：日志、stats、inspect、受控 exec。传入 task 为自然语言任务说明。 |
 | `mysql_skill` | `mysql_inspect` | MySQL Skill：只读诊断会话、状态、锁、慢查询、SELECT 执行计划。传入 task 为自然语言任务说明。 |
 | `redis_skill` | `redis_inspect` | Redis Skill：只读 INFO、慢日志、客户端、内存、GET/SCAN。传入 task 为自然语言任务说明。 |
-| `nacos_skill` | `nacos_config` | Nacos Skill：配置读/写（写可能审批）、服务实例与服务列表。传入 task 为自然语言任务说明。 |
+| `nacos_skill` | `nacos_config` | Nacos Skill：配置读/写（写可能审批）、服务实例与服务列表。读配置前必须先拿到 Catalog 返回的明确 dataId/group。 |
 | `prometheus_skill` | `metrics_ops` | Prometheus Skill：Sentinel/DynamicTP/JVM/业务 PromQL。传入 task 为自然语言任务说明。 |
-| `elasticsearch_skill` | `elasticsearch_ops` | Elasticsearch Skill：索引、搜索、计数、聚合（应用日志 nexus-* 与 SkyWalking sw_*；args 可带 cluster=skywalking）。传入 task 为自然语言任务说明。 |
+| `elasticsearch_skill` | `elasticsearch_ops` | Elasticsearch Skill：按服务检索错误日志、索引、搜索、计数、聚合（应用日志 nexus-* 与 SkyWalking sw_*；args 可带 cluster=skywalking）。默认先按服务查错误样本。 |
 | `rocketmq_skill` | `rocketmq_inspect` | RocketMQ Skill：Topic 路由、消费统计、死信线索。传入 task 为自然语言任务说明。 |
 
 ## 子 Skill 内部 Function Tool
@@ -53,10 +53,10 @@
 | `catalog_resolve_service` | `query` (string, 可选) 或 `service/application/resource/topic/consumerGroup/table/database/pool` | 根据自由文本或结构化线索归因服务。 |
 | `catalog_list_services` | 无 | 列出当前已知标准服务名清单。 |
 | `catalog_list_topics` | 无 | 列出当前已知 Topic 名清单。 |
-| `catalog_describe_service` | `service` (string, 必填) | 返回某个服务对应的 application、compose service、container、topic、database、pool 等静态拓扑。 |
+| `catalog_describe_service` | `service` (string, 必填) | 返回某个服务对应的 application、compose service、container、configEntries/configDataIds、topic、database、pool 等静态拓扑。 |
 | `catalog_lookup_resource_owner` | `kind` (string, 必填), `value` (string, 必填) | 按 resource/topic/consumerGroup/table/database/pool 反查归属。 |
 
-**设计原则**：问题很模糊时，先用 `catalog_list_services` 或 `catalog_list_topics` 缩小范围，再用 `catalog_describe_service` 补全容器名、Topic、数据库名等静态线索。
+**设计原则**：问题很模糊时，先用 `catalog_list_services` 或 `catalog_list_topics` 缩小范围，再用 `catalog_describe_service` 补全容器名、配置入口、Topic、数据库名等静态线索。
 
 ---
 
@@ -109,12 +109,12 @@
 
 | 工具名 | 入参 | 描述 | 需审批 |
 |---|---|---|---|
-| `nacos_get_config` | `dataId` (string, 必填), `group` (string, 可选, 默认 `DEFAULT_GROUP`) | 读取 Nacos 配置内容。 | 否 |
+| `nacos_get_config` | `dataId` (string, 必填), `group` (string, 可选, 默认 `DEFAULT_GROUP`) | 读取 Nacos 配置内容。`dataId/group` 必须来自 Catalog 返回的配置入口，不支持 `*` 或一次传多个值。 | 否 |
 | `nacos_publish_config` | `dataId` (string, 必填), `group` (string, 可选), `content` (string, 必填) | 发布/修改 Nacos 配置。**高危写操作，需人工审批**。 | **是** |
 | `nacos_list_instances` | `serviceName` (string, 必填), `group` (string, 可选) | 查询服务健康实例列表。空列表是「服务未注册或无健康实例」的关键证据。 | 否 |
 | `nacos_list_services` / `nacos_get_services` | `pageNo` (number, 可选, 默认 1), `pageSize` (number, 可选, 默认 100) | 分页列出注册的服务名。两个名称是别名，行为一致。 | 否 |
 
-**设计原则**：排查服务错误率/不可用时，先用 `nacos_list_instances` 确认服务存在；空实例列表直接报告，不继续查无关配置。配置修改必须走 `nacos_publish_config` + 审批。
+**设计原则**：排查服务错误率/不可用时，先用 `nacos_list_instances` 确认服务存在；空实例列表直接报告，不继续查无关配置。读配置前先从 Catalog 拿明确 `dataId/group`。配置修改必须走 `nacos_publish_config` + 审批。
 
 ---
 
@@ -142,9 +142,12 @@
 | 工具名 | 入参 | 描述 |
 |---|---|---|
 | `es_indices` | `cluster` (string, 可选, 默认 `logs`, 可选 `skywalking`/`sw`) | 列出集群索引。 |
+| `es_search_service_errors` | `service`/`application` (至少一个), `lookback` (string, 可选, 默认 `1h`), `size` (number, 可选), `keywords` (array/string, 可选), `index` (string, 可选), `cluster` (string, 可选) | 按服务检索错误日志摘要，默认入口。 |
 | `es_search` | `index` (string, 必填), `query` (string, 可选), `cluster` (string, 可选) | DSL 搜索，query 为 JSON 字符串。 |
 | `es_count` | `index` (string, 必填), `query` (string, 可选), `cluster` (string, 可选) | 指定索引文档计数。 |
 | `es_aggregation` | `index` (string, 必填), `body` (string, 必填), `cluster` (string, 可选) | terms / date_histogram 等聚合查询。 |
+
+**设计原则**：优先用 `es_search_service_errors` 按服务名和时间窗口查错误样本，只有高层入口不足以回答问题时再手写 DSL。`es_search` 允许 bare query clause，工具会自动补 `query` 包装。
 
 ---
 

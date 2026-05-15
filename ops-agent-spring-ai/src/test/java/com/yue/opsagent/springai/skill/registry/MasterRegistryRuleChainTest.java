@@ -10,6 +10,7 @@ import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import com.yue.opsagent.springai.skill.support.SkillToolHelp;
 import com.yue.opsagent.springai.skill.registry.rule.RunCancelRuleFilter;
+import com.yue.opsagent.springai.skill.registry.rule.NacosConfigPrerequisiteRuleFilter;
 import com.yue.opsagent.springai.skill.registry.rule.SkillResolveRuleFilter;
 import com.yue.opsagent.springai.skill.registry.rule.ToolApprovalRuleFilter;
 import com.yue.opsagent.springai.skill.registry.rule.ToolExecuteRuleFilter;
@@ -105,22 +106,109 @@ class MasterRegistryRuleChainTest {
         }
     }
 
+    @Test
+    void rejectsNacosGetConfigWhenRunHasNoResolvedConfigEntry() {
+        NacosConfigTestSkillRegistry skill = new NacosConfigTestSkillRegistry();
+        OpsRunService opsRunService = new OpsRunService(new ObjectMapper());
+        MasterRegistry masterRegistry = masterRegistry(opsRunService, List.of(skill));
+        String runId = opsRunService.create(RouteRequest.text("test")).runId();
+
+        ToolResult result = executeWithRun(runId, () ->
+                masterRegistry.execute("nacos_config", "nacos_get_config", Map.of(
+                        "dataId", "order-service-runtime-dev.yml",
+                        "group", "DEFAULT_GROUP")));
+
+        assertThat(result).isInstanceOf(ToolResult.Error.class);
+        assertThat(result.toMap().get("message").toString()).contains("还没有解析到任何配置入口");
+        assertThat(skill.executions()).isZero();
+        assertToolResultEvent(opsRunService, runId, "prerequisite", "error", "nacos_config", "nacos_get_config");
+    }
+
+    @Test
+    void rejectsNacosGetConfigWhenGroupDoesNotMatchResolvedConfigEntry() {
+        NacosConfigTestSkillRegistry skill = new NacosConfigTestSkillRegistry();
+        OpsRunService opsRunService = new OpsRunService(new ObjectMapper());
+        MasterRegistry masterRegistry = masterRegistry(opsRunService, List.of(skill));
+        String runId = opsRunService.create(RouteRequest.text("test")).runId();
+        opsRunService.toolResult(runId, "catalog_ops", "catalog_describe_service", Map.of(
+                "skill", "catalog_ops",
+                "tool", "catalog_describe_service",
+                "outcome", "success",
+                "result", Map.of(
+                        "status", "ok",
+                        "message", "已返回服务静态拓扑 order-service",
+                        "data", Map.of(
+                                "found", true,
+                                "service", "order-service",
+                                "profile", Map.of(
+                                        "configEntries", List.of(Map.of(
+                                                "dataId", "order-service-flow-rules.json",
+                                                "group", "SENTINEL_GROUP")))))));
+
+        ToolResult result = executeWithRun(runId, () ->
+                masterRegistry.execute("nacos_config", "nacos_get_config", Map.of(
+                        "dataId", "order-service-flow-rules.json",
+                        "group", "DEFAULT_GROUP")));
+
+        assertThat(result).isInstanceOf(ToolResult.Error.class);
+        assertThat(result.toMap().get("message").toString()).contains("SENTINEL_GROUP");
+        assertThat(skill.executions()).isZero();
+        assertToolResultEvent(opsRunService, runId, "prerequisite", "error", "nacos_config", "nacos_get_config");
+    }
+
+    @Test
+    void allowsNacosGetConfigAfterCatalogResolvedConfigEntry() {
+        NacosConfigTestSkillRegistry skill = new NacosConfigTestSkillRegistry();
+        OpsRunService opsRunService = new OpsRunService(new ObjectMapper());
+        MasterRegistry masterRegistry = masterRegistry(opsRunService, List.of(skill));
+        String runId = opsRunService.create(RouteRequest.text("test")).runId();
+        opsRunService.toolResult(runId, "catalog_ops", "catalog_describe_service", Map.of(
+                "skill", "catalog_ops",
+                "tool", "catalog_describe_service",
+                "outcome", "success",
+                "result", Map.of(
+                        "status", "ok",
+                        "message", "已返回服务静态拓扑 order-service",
+                        "data", Map.of(
+                                "found", true,
+                                "service", "order-service",
+                                "profile", Map.of(
+                                        "configEntries", List.of(Map.of(
+                                                "dataId", "order-service-runtime-dev.yml",
+                                                "group", "DEFAULT_GROUP")))))));
+
+        ToolResult result = executeWithRun(runId, () ->
+                masterRegistry.execute("nacos_config", "nacos_get_config", Map.of(
+                        "dataId", "order-service-runtime-dev.yml",
+                        "group", "DEFAULT_GROUP")));
+
+        assertThat(result).isInstanceOf(ToolResult.Ok.class);
+        assertThat(skill.executions()).isEqualTo(1);
+        assertToolResultEvent(opsRunService, runId, "execute", "success", "nacos_config", "nacos_get_config");
+    }
+
     private static MasterRegistry masterRegistry(TestSkillRegistry skill) {
-        return masterRegistry(new OpsRunService(new ObjectMapper()), skill);
+        return masterRegistry(new OpsRunService(new ObjectMapper()), List.of(skill));
     }
 
     private static MasterRegistry masterRegistry(OpsRunService opsRunService, TestSkillRegistry skill) {
-        ApprovalService approvalService = new ApprovalService(List.of(skill), opsRunService);
+        return masterRegistry(opsRunService, List.of(skill));
+    }
+
+    private static MasterRegistry masterRegistry(OpsRunService opsRunService, List<? extends OpsSkillRegistry> skills) {
+        List<OpsSkillRegistry> registries = new java.util.ArrayList<>(skills);
+        ApprovalService approvalService = new ApprovalService(registries, opsRunService);
         ToolExecutionRuleFilterFactory factory = new ToolExecutionRuleFilterFactory();
         var chain = factory.toolExecutionRuleFilter(List.of(
                 new ToolExecuteRuleFilter(),
                 new ToolWhitelistRuleFilter(),
+                new NacosConfigPrerequisiteRuleFilter(opsRunService),
                 new ToolTraceStartRuleFilter(opsRunService),
                 new SkillResolveRuleFilter(),
                 new RunCancelRuleFilter(opsRunService),
                 new ToolApprovalRuleFilter(approvalService),
                 new ToolResultRecordRuleFilter(opsRunService, new ObjectMapper())));
-        return new MasterRegistry(List.of(skill), chain);
+        return new MasterRegistry(registries, chain);
     }
 
     private static ToolResult executeWithRun(String runId, java.util.function.Supplier<ToolResult> supplier) {
@@ -202,6 +290,50 @@ class MasterRegistryRuleChainTest {
         @Override
         public boolean requiresApproval(String toolName) {
             return approvalRequired && "test_tool".equals(toolName);
+        }
+
+        int executions() {
+            return executions.get();
+        }
+    }
+
+    private static class NacosConfigTestSkillRegistry implements OpsSkillRegistry {
+
+        private final AtomicInteger executions = new AtomicInteger();
+
+        @Override
+        public String name() {
+            return "nacos_config";
+        }
+
+        @Override
+        public String description() {
+            return "nacos";
+        }
+
+        @Override
+        public String promptFragment() {
+            return "nacos_get_config";
+        }
+
+        @Override
+        public Set<String> toolNames() {
+            return SkillToolHelp.toolNamesWithHelp(Set.of("nacos_get_config"), this);
+        }
+
+        @Override
+        public String documentationForDataTool(String dataToolName) {
+            return "nacos_get_config";
+        }
+
+        @Override
+        public ToolResult execute(String toolName, Map<String, Object> args) {
+            ToolResult help = SkillToolHelp.tryExecute(this, toolName, args);
+            if (help != null) {
+                return help;
+            }
+            executions.incrementAndGet();
+            return ToolResult.ok("nacos executed", args);
         }
 
         int executions() {

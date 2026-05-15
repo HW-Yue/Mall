@@ -103,12 +103,14 @@ public class NacosToolkit {
     }
 
     public ToolResult getConfig(String dataId, String group) {
-        if (dataId == null || dataId.isBlank()) {
-            return ToolResult.error("dataId 不能为空");
+        String normalizedDataId = normalizeDataId(dataId);
+        String invalidReason = invalidDataIdReason(normalizedDataId);
+        if (!invalidReason.isBlank()) {
+            return ToolResult.error(invalidReason);
         }
         String g = (group == null || group.isBlank()) ? "DEFAULT_GROUP" : group;
         try {
-            String content = configService().getConfig(dataId, g, 5000);
+            String content = configService().getConfig(normalizedDataId, g, 5000);
             return ToolResult.ok("配置内容", content == null ? "" : content);
         } catch (NacosException e) {
             return ToolResult.error("Nacos getConfig 失败: " + e.getMessage());
@@ -116,20 +118,42 @@ public class NacosToolkit {
     }
 
     public ToolResult publishConfig(String dataId, String group, String content) {
-        if (dataId == null || dataId.isBlank()) {
-            return ToolResult.error("dataId 不能为空");
+        String normalizedDataId = normalizeDataId(dataId);
+        String invalidReason = invalidDataIdReason(normalizedDataId);
+        if (!invalidReason.isBlank()) {
+            return ToolResult.error(invalidReason);
         }
         String g = (group == null || group.isBlank()) ? "DEFAULT_GROUP" : group;
         if (content == null) {
             content = "";
         }
         try {
-            boolean ok = configService().publishConfig(dataId, g, content);
+            boolean ok = configService().publishConfig(normalizedDataId, g, content);
             return ok
-                    ? ToolResult.ok("发布成功", Map.of("dataId", dataId, "group", g))
+                    ? ToolResult.ok("发布成功", Map.of("dataId", normalizedDataId, "group", g))
                     : ToolResult.error("publishConfig 返回 false");
         } catch (NacosException e) {
             return ToolResult.error("Nacos publishConfig 失败: " + e.getMessage());
         }
+    }
+
+    static String invalidDataIdReason(String dataId) {
+        if (dataId == null || dataId.isBlank()) {
+            return "dataId 不能为空";
+        }
+        if (dataId.contains("*") || dataId.contains("?")) {
+            return "dataId 不支持通配符；请提供单个明确 dataId";
+        }
+        if (dataId.contains(",") || dataId.contains("，") || dataId.contains(";") || dataId.contains("；")) {
+            return "dataId 只允许传单个明确值，不能一次传多个 dataId";
+        }
+        if (dataId.chars().anyMatch(Character::isWhitespace)) {
+            return "dataId 不能包含空白字符；请提供单个明确 dataId";
+        }
+        return "";
+    }
+
+    private static String normalizeDataId(String dataId) {
+        return dataId == null ? "" : dataId.trim();
     }
 }

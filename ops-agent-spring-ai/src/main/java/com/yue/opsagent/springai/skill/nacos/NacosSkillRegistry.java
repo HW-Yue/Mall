@@ -44,7 +44,7 @@ public class NacosSkillRegistry implements OpsSkillRegistry {
     @Override
     public String toolMenuBrief() {
         return """
-                - nacos_get_config: 读取配置
+                - nacos_get_config: 读取配置（必须先拿到明确 dataId/group）
                 - nacos_publish_config: 发布配置（需审批）
                 - nacos_list_instances: 健康实例列表
                 - nacos_list_services / nacos_get_services: 分页服务名列表

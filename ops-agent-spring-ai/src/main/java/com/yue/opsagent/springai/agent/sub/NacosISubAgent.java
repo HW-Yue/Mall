@@ -26,6 +26,6 @@ public class NacosISubAgent extends AbstractISubReactAgent {
 
     @Override
     public String parentToolDescription() {
-        return "Nacos Skill：配置读/写（写可能审批）、服务实例与服务列表。传入 task 为自然语言任务说明。";
+        return "Nacos Skill：配置读/写（写可能审批）、服务实例与服务列表。只有拿到 Catalog 返回的明确 dataId/group 后才允许读配置；传入 task 为自然语言任务说明。";
     }
 }
