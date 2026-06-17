@@ -53,6 +53,11 @@ services:
       - GF_DATABASE_PASSWORD=123456
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=qwertyuiop  # 这里填你想设的密码
+      # Docker 把宿主机 ~/.docker/config.json 的 httpProxy(127.0.0.1:7897) 注入了所有容器，
+      # 默认 NO_PROXY 不含内部服务名，导致 Grafana 查 prometheus:9090 被发往容器内不存在的代理 → 502。
+      # 这里覆盖 NO_PROXY，让内部服务名/网段绕过代理直连。
+      - NO_PROXY=localhost,127.0.0.1,prometheus,alertmanager,172.16.0.0/12,192.168.0.0/16,100.86.250.112,.nexus-devops
+      - no_proxy=localhost,127.0.0.1,prometheus,alertmanager,172.16.0.0/12,192.168.0.0/16,100.86.250.112,.nexus-devops
     networks:
       - my-network
 

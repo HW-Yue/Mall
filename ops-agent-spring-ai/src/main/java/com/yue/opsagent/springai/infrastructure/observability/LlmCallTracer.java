@@ -23,12 +23,15 @@ public class LlmCallTracer {
     private static final Logger log = LoggerFactory.getLogger(LlmCallTracer.class);
 
     private final GenAiTelemetry telemetry;
+    private final OpsAiMetrics metrics;
     private final String defaultModelName;
 
     public LlmCallTracer(
             ObjectProvider<GenAiTelemetry> telemetryProvider,
+            OpsAiMetrics metrics,
             @Value("${spring.ai.dashscope.chat.options.model:qwen-max}") String defaultModelName) {
         this.telemetry = telemetryProvider.getIfAvailable();
+        this.metrics = metrics;
         this.defaultModelName = defaultModelName;
     }
 
@@ -59,6 +62,7 @@ public class LlmCallTracer {
             telemetry.startReasoning(logicalAgentKey, defaultModelName);
         }
 
+        long startNanos = System.nanoTime();
         try {
             ChatResponse r = call.get();
             var meta = r.getMetadata();
@@ -76,7 +80,9 @@ public class LlmCallTracer {
                 if (u.getTotalTokens() != null) {
                     ActiveSpan.tag("gen_ai.usage.total_tokens", String.valueOf(u.getTotalTokens()));
                 }
+                metrics.recordTokens(logicalAgentKey, u.getPromptTokens(), u.getCompletionTokens());
             }
+            metrics.recordLlmCall(logicalAgentKey, model, System.nanoTime() - startNanos);
             // 把 SkyWalking traceId 注入 OTLP span，让两边能关联
             String swTraceId = TraceContext.traceId();
             if (telemetry != null) {
@@ -84,6 +90,8 @@ public class LlmCallTracer {
             }
             return logAndExtractText(logicalAgentKey, r, meta);
         } catch (RuntimeException e) {
+            metrics.recordLlmCall(logicalAgentKey, defaultModelName, System.nanoTime() - startNanos);
+            metrics.recordLlmError(logicalAgentKey);
             ActiveSpan.error(e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
             if (telemetry != null) {
                 telemetry.endWithError(logicalAgentKey, e);

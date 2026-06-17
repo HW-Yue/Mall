@@ -1,6 +1,7 @@
 package com.yue.opsagent.springai.agent.react;
 
 import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
+import com.yue.opsagent.springai.infrastructure.observability.OpsAiMetrics;
 import com.yue.opsagent.springai.infrastructure.observability.OpsLogFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +25,12 @@ public class ReactRunner {
 
     private final ChatClient chatClient;
     private final LlmCallTracer llmCallTracer;
+    private final OpsAiMetrics metrics;
 
-    public ReactRunner(ChatModel chatModel, LlmCallTracer llmCallTracer) {
+    public ReactRunner(ChatModel chatModel, LlmCallTracer llmCallTracer, OpsAiMetrics metrics) {
         this.chatClient = ChatClient.builder(chatModel).build();
         this.llmCallTracer = llmCallTracer;
+        this.metrics = metrics;
     }
 
     public String run(ReactAgentSpec spec) {
@@ -52,12 +55,14 @@ public class ReactRunner {
             if (parsed.isEmpty()) {
                 log.warn("[ReactRunner] agent={} 轮次 {} 模型输出无法解析为 JSON，已提示重试。snippet={}",
                         spec.agentName(), i + 1, preview(raw, 120));
+                metrics.incReactParseRetry(spec.agentName());
                 messages.add(new AssistantMessage(raw == null ? "" : raw));
                 messages.add(new UserMessage(ReactActionParser.jsonFormatReminder()));
                 continue;
             }
             if (parsed.get() instanceof ReactActionParser.ParsedAction.FinalAction f) {
                 log.info("[ReactRunner] agent={} FINAL answerChars={}", spec.agentName(), f.answer().length());
+                metrics.recordReactIterations(spec.agentName(), i + 1);
                 return ReactRunResult.finalAnswer(f.answer());
             }
             if (parsed.get() instanceof ReactActionParser.ParsedAction.CallTool c) {
@@ -65,6 +70,7 @@ public class ReactRunner {
                 if (tool == null) {
                     log.warn("[ReactRunner] agent={} 非法工具 tool={} 允许={}",
                             spec.agentName(), c.tool(), tools.keySet());
+                    metrics.incReactIllegalTool(spec.agentName());
                     messages.add(new AssistantMessage(raw));
                     messages.add(new UserMessage("非法工具: " + c.tool() + "。仅允许: " + tools.keySet()));
                     continue;
@@ -84,6 +90,8 @@ public class ReactRunner {
             }
         }
         log.warn("[ReactRunner] agent={} 达到最大轮次 {} 未收敛", spec.agentName(), spec.maxIters());
+        metrics.incReactUnconverged(spec.agentName());
+        metrics.recordReactIterations(spec.agentName(), spec.maxIters());
         return ReactRunResult.maxIters(spec.agentName() + "达到最大轮次 (" + spec.maxIters() + ")，未收敛。");
     }
 

@@ -2,6 +2,7 @@ package com.yue.opsagent.springai.agent.sub;
 
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
+import com.yue.opsagent.springai.infrastructure.observability.OpsAiMetrics;
 import com.yue.opsagent.springai.skill.mysql.MysqlSkillRegistry;
 import com.yue.opsagent.springai.skill.registry.MasterRegistry;
 import org.springframework.ai.chat.model.ChatModel;
@@ -15,8 +16,9 @@ public class MysqlISubAgent extends AbstractISubReactAgent {
             MasterRegistry masterRegistry,
             MysqlSkillRegistry registry,
             OpsAiProperties props,
-            LlmCallTracer llmCallTracer) {
-        super(chatModel, masterRegistry, registry, props, llmCallTracer);
+            LlmCallTracer llmCallTracer,
+            OpsAiMetrics metrics) {
+        super(chatModel, masterRegistry, registry, props, llmCallTracer, metrics);
     }
 
     @Override

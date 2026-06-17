@@ -1,0 +1,15 @@
+apiVersion: 1
+
+# 自动加载 ops-agent-spring-ai 的 GenAI / ReAct 看板。
+# 看板 JSON 放在 dev-ops/grafana/dashboards/（容器内 /etc/grafana/dashboards，随 ./grafana:/etc/grafana 挂载）。
+providers:
+  - name: 'ops-ai'
+    orgId: 1
+    folder: 'Ops Agent'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/dashboards
+      foldersFromFilesStructure: false

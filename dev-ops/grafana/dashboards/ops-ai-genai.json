@@ -1,0 +1,246 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "liveNow": false,
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["ops-agent", "genai", "react", "llm"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "definition": "label_values(llm_call_duration_seconds_count, agent)",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "label": "Agent",
+        "multi": true,
+        "name": "agent",
+        "options": [],
+        "query": {
+          "qryType": 1,
+          "query": "label_values(llm_call_duration_seconds_count, agent)",
+          "refId": "agent"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-30m", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Ops Agent — GenAI / ReAct 可观测",
+  "uid": "ops-ai-genai",
+  "version": 1,
+  "weekStart": "",
+  "panels": [
+    {
+      "type": "row",
+      "title": "LLM 调用",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM 调用延迟 P50 / P95 / P99",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "P50",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.50, sum(rate(llm_call_duration_seconds_bucket{agent=~\"$agent\"}[5m])) by (le))",
+          "legendFormat": "p50"
+        },
+        {
+          "refId": "P95",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(llm_call_duration_seconds_bucket{agent=~\"$agent\"}[5m])) by (le))",
+          "legendFormat": "p95"
+        },
+        {
+          "refId": "P99",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.99, sum(rate(llm_call_duration_seconds_bucket{agent=~\"$agent\"}[5m])) by (le))",
+          "legendFormat": "p99"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM 调用速率 (req/s, by agent)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "fieldConfig": {
+        "defaults": { "unit": "reqps", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(llm_call_duration_seconds_count{agent=~\"$agent\"}[1m])) by (agent)",
+          "legendFormat": "{{agent}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Token 速率 (tokens/s, input vs output)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 15, "lineWidth": 2, "stacking": { "mode": "normal" } } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(llm_tokens_total{agent=~\"$agent\"}[1m])) by (type)",
+          "legendFormat": "{{type}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "累计 Token (input / output)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 9 },
+      "fieldConfig": { "defaults": { "unit": "short", "color": { "mode": "palette-classic" } }, "overrides": [] },
+      "options": { "colorMode": "value", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(llm_tokens_total{agent=~\"$agent\"}) by (type)",
+          "legendFormat": "{{type}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "LLM 错误率 (err/s)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 9 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 0.001 } ] }
+        },
+        "overrides": []
+      },
+      "options": { "colorMode": "background", "graphMode": "area", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(llm_call_errors_total{agent=~\"$agent\"}[5m]))",
+          "legendFormat": "errors/s"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "ReAct 推理质量",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "ReAct 平均收敛轮次 (by agent)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(rate(react_iterations_sum{agent=~\"$agent\"}[5m])) by (agent) / sum(rate(react_iterations_count{agent=~\"$agent\"}[5m])) by (agent)",
+          "legendFormat": "{{agent}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "ReAct 收敛轮次 P95",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "drawStyle": "line", "fillOpacity": 10, "lineWidth": 2 } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["last", "max"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "histogram_quantile(0.95, sum(rate(react_iterations_bucket{agent=~\"$agent\"}[5m])) by (le))",
+          "legendFormat": "p95 轮次"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "ReAct 异常事件 (5m increase: 未收敛 / 解析重试 / 非法工具)",
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 26 },
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "drawStyle": "bars", "fillOpacity": 60, "lineWidth": 1 } },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["sum", "last"] }, "tooltip": { "mode": "multi" } },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(react_unconverged_total{agent=~\"$agent\"}[5m]))",
+          "legendFormat": "未收敛"
+        },
+        {
+          "refId": "B",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(react_parse_retry_total{agent=~\"$agent\"}[5m]))",
+          "legendFormat": "解析重试"
+        },
+        {
+          "refId": "C",
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(increase(react_illegal_tool_total{agent=~\"$agent\"}[5m]))",
+          "legendFormat": "非法工具"
+        }
+      ]
+    }
+  ]
+}

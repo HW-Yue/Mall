@@ -5,6 +5,7 @@ import com.yue.opsagent.springai.agent.react.ReactRunner;
 import com.yue.opsagent.springai.agent.react.ReactTool;
 import com.yue.opsagent.springai.infrastructure.config.OpsAiProperties;
 import com.yue.opsagent.springai.infrastructure.observability.LlmCallTracer;
+import com.yue.opsagent.springai.infrastructure.observability.OpsAiMetrics;
 import com.yue.opsagent.springai.skill.api.OpsSkillRegistry;
 import com.yue.opsagent.springai.skill.api.ToolResult;
 import com.yue.opsagent.springai.skill.registry.MasterRegistry;
@@ -29,11 +30,12 @@ public abstract class AbstractISubReactAgent implements ISubAgent {
             MasterRegistry masterRegistry,
             OpsSkillRegistry domainRegistry,
             OpsAiProperties props,
-            LlmCallTracer llmCallTracer) {
+            LlmCallTracer llmCallTracer,
+            OpsAiMetrics metrics) {
         this.masterRegistry = masterRegistry;
         this.domainRegistry = domainRegistry;
         this.maxSubIters = props.getReact().getMaxSubIters();
-        this.reactRunner = new ReactRunner(chatModel, llmCallTracer);
+        this.reactRunner = new ReactRunner(chatModel, llmCallTracer, metrics);
     }
 
     @Override
