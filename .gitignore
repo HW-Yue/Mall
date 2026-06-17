@@ -65,8 +65,7 @@ skills-lock.json
 docker-apps/.docker/
 
 # DevOps local runtime state
-dev-ops/docker/*
-!dev-ops/docker/.gitignore
+# 保留 dev-ops/docker 下的环境密钥/证书/portainer 数据（私有仓库，跨机器直接用）
 dev-ops/rocketmq/data/
 mall/docs/dev-ops/
 
